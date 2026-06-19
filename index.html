@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EmbedMaths — FlowState Learning</title>
+<style>
+:root{
+  --bg:#f5fafa; --surface:#ffffff; --surface2:#eaf4f5; --border:#c8e6e8;
+  --accent:#0e5d66; --text:#1a3a3f; --text-muted:#4a7a82;
+  --teal-light:#3eaeb8; --teal-dark:#0e5d66; --radius:14px;
+  --mono:'Courier New',monospace; --sans:-apple-system,'Segoe UI',sans-serif;
+  --shadow:0 1px 4px rgba(14,93,102,.07),0 4px 16px rgba(14,93,102,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;
+  background-image:radial-gradient(ellipse 70% 50% at 10% 0%,rgba(62,174,184,.08) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 50% at 95% 100%,rgba(14,93,102,.06) 0%,transparent 55%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;}
+.wrap{width:100%;max-width:760px;}
+.brand{display:flex;align-items:baseline;gap:10px;margin-bottom:4px;}
+.brand-name{font-size:24px;font-weight:800;letter-spacing:-.5px;color:var(--teal-dark);}
+.tagline{font-size:12px;color:var(--text-muted);font-family:var(--mono);margin-bottom:28px;}
+h1{font-size:clamp(28px,5vw,44px);font-weight:800;letter-spacing:-1px;margin-bottom:6px;}
+h1 em{font-style:normal;color:var(--teal-dark);}
+.subtitle{font-size:14px;color:var(--text-muted);margin-bottom:28px;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:560px){.grid{grid-template-columns:1fr;}}
+.card{display:block;text-decoration:none;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);transition:all .2s ease;}
+.card:hover{border-color:var(--accent);background:rgba(14,93,102,.04);transform:translateY(-2px);}
+.card .tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  background:rgba(14,93,102,.08);color:var(--accent);border-radius:5px;padding:3px 9px;font-family:var(--mono);margin-bottom:12px;}
+.card .title{font-size:20px;font-weight:800;color:var(--accent);margin-bottom:6px;}
+.card .desc{font-size:13px;color:var(--text-muted);line-height:1.5;}
+.foot{margin-top:28px;font-size:11px;color:var(--text-muted);font-family:var(--mono);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><span class="brand-name">EmbedMaths</span></div>
+  <div class="tagline">Build maths skills that stick.</div>
+  <h1><em>Calculation skills</em> practice</h1>
+  <p class="subtitle">Step-by-step formal written algorithms — choose a tool to begin.</p>
+  <div class="grid">
+    <a class="card" href="embedmaths-addition-subtraction.html">
+      <span class="tag">Add &amp; Subtract</span>
+      <div class="title">Addition &amp; Subtraction</div>
+      <div class="desc">Column addition and subtraction with carrying and trading, including decimals.</div>
+    </a>
+    <a class="card" href="embedmaths-multiplication.html">
+      <span class="tag">Multiply</span>
+      <div class="title">Multiplication</div>
+      <div class="desc">Short and long multiplication, with carries, partial products and decimal placement.</div>
+    </a>
+  </div>
+  <div class="foot">FlowState Learning · EmbedMaths</div>
+</div>
+</body>
+</html>
