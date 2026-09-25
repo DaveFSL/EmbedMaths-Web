@@ -312,31 +312,46 @@
         let from = i + 1;
         while (from < L && wTop[from] === 0) from++;
         if (from >= L) break;
-        const donorOrig = wTop[from];
+        const hereBefore = ad;
         const zeroIdx = [];
-        tradedFrom[from] = true;
-        newVals[from] = wTop[from] - 1;
-        wTop[from]--;
-        for (let k = from - 1; k > i; k--) {
-          zeroIdx.push(k);
+        for (let z = i + 1; z < from; z++) zeroIdx.push(z);
+        const hops = [];
+        let k = from;
+        while (k > i) {
+          const to = k - 1;
+          const fromBefore = wTop[k];
+          const toBefore = wTop[to];
+          const fromAfter = fromBefore - 1;
+          const toAfter = toBefore + 10;
+          hops.push({
+            fromName: colName(k, dp),
+            toName: colName(to, dp),
+            fromBefore: fromBefore,
+            fromAfter: fromAfter,
+            toBefore: toBefore,
+            toAfter: toAfter
+          });
           tradedFrom[k] = true;
-          newVals[k] = 9;
-          wTop[k] = 9;
+          newVals[k] = fromAfter;
+          wTop[k] = fromAfter;
+          wTop[to] = toAfter;
+          if (to === i) {
+            tradedTo[i] = true;
+            newVals[i] = toAfter;
+          }
+          k = to;
         }
-        wTop[i] += 10;
-        tradedTo[i] = true;
-        newVals[i] = wTop[i];
         ad = wTop[i];
         tradeInfo = {
           place: cn,
-          origHere: origTop[i],
+          dp: dp,
+          origHere: hereBefore,
           sub: b2,
           nowHere: ad,
           donor: from,
           donorName: colName(from, dp),
-          donorOrig: donorOrig,
-          donorNew: newVals[from],
-          zeros: zeroIdx.slice().reverse()
+          zeros: zeroIdx,
+          hops: hops
         };
         text = 'Trade for the ' + cn;
         calc = ad + ' − ' + b2 + ' = ' + (ad - b2);
@@ -358,36 +373,41 @@
         results: results.slice(),
         isTrade: !!tradeInfo,
         tradeInfo: tradeInfo,
+        dp: dp,
         final: false
       });
     }
     return { steps: steps, result: (ai - bi) / mult };
   }
 
-  function tradeSentence(info) {
-    const place = info.place;
-    const here = singular(place, info.origHere);
-    const open = info.origHere + ' ' + here + ' is not enough to take ' + info.sub + '. ';
-    const zeroNames = info.zeros.map(function (idx, n) {
-      return info.zeroNames[n];
-    });
-    let middle;
-    if (!info.zeros.length) {
-      middle = 'Trade from the ' + info.donorName;
-    } else if (info.zeros.length === 1) {
-      middle = 'The ' + info.zeroNames[0] + ' digit is 0, so trade from the ' + info.donorName;
-    } else if (info.zeros.length === 2) {
-      middle = 'The ' + info.zeroNames[0] + ' and ' + info.zeroNames[1] + ' are both 0, so trade from the ' + info.donorName;
+  function hopPhrase(hop) {
+    return hop.fromBefore + ' ' + singular(hop.fromName, hop.fromBefore) + ' becomes ' + hop.fromAfter + ', ' +
+      hop.toBefore + ' ' + singular(hop.toName, hop.toBefore) + ' becomes ' + hop.toAfter;
+  }
+
+  function columnText(s, isLast, answerText) {
+    const place = colName(s.col, s.dp);
+    const digit = s.results[s.col];
+    let text;
+    if (s.tradeInfo) {
+      const info = s.tradeInfo;
+      const zeroNames = info.zeros.map(function (idx) { return colName(idx, info.dp); });
+      text = titleCase(place) + ': ' + info.origHere + ' is not enough to take ' + info.sub + '. ';
+      if (!zeroNames.length) text += 'Trade from the ' + info.donorName + ': ';
+      else if (zeroNames.length === 1) text += 'The ' + zeroNames[0] + ' is 0, so trade from the ' + info.donorName + ': ';
+      else if (zeroNames.length === 2) text += 'The ' + zeroNames[0] + ' and ' + zeroNames[1] + ' are 0, so trade from the ' + info.donorName + ': ';
+      else text += 'The ' + joinAnd(zeroNames) + ' are 0, so trade from the ' + info.donorName + ': ';
+      text += hopPhrase(info.hops[0]);
+      for (let h = 1; h < info.hops.length; h++) {
+        const hop = info.hops[h];
+        text += '. Trade 1 ' + singular(hop.fromName, 1) + ' to the ' + hop.toName + ': ' + hopPhrase(hop);
+      }
+      text += '. ' + info.nowHere + ' − ' + info.sub + ' = ' + digit + '. Write ' + digit + '.';
     } else {
-      middle = 'The ' + joinAnd(info.zeroNames) + ' are 0, so trade from the ' + info.donorName;
+      text = titleCase(place) + ': ' + s.wTop[s.col] + ' − ' + s.bd[s.col] + ' = ' + digit + '. Write ' + digit + '.';
     }
-    const changes = [info.donorOrig + ' ' + singular(info.donorName, info.donorOrig) + ' becomes ' + info.donorNew];
-    info.becomeNames.forEach(function (name) { changes.push('the ' + name + ' become 9'); });
-    changes.push('the ' + place + ' become ' + info.nowHere);
-    const body = changes.length === 2
-      ? changes[0] + ', and ' + changes[1]
-      : changes.slice(0, -1).join(', ') + ', and ' + changes[changes.length - 1];
-    return open + middle + ': ' + body + '.';
+    if (isLast) text += ' Answer ' + answerText + '.';
+    return text;
   }
 
   function buildSteps(q) {
@@ -405,80 +425,26 @@
         hiCols: []
       });
     }
-    raw.steps.forEach(function (s) {
-      if (s.isTrade && s.tradeInfo) {
-        const info = s.tradeInfo;
-        info.zeroNames = info.zeros.map(function (idx) { return colName(idx, q.dp); });
-        info.becomeNames = info.zeros.slice().reverse().map(function (idx) { return colName(idx, q.dp); });
-        const snap = {
-          col: s.col,
-          wTop: s.wTop.slice(),
-          origTop: s.origTop.slice(),
-          bd: s.bd.slice(),
-          tradedFrom: s.tradedFrom.slice(),
-          tradedTo: s.tradedTo.slice(),
-          newVals: s.newVals.slice(),
-          results: s.results.slice()
-        };
-        snap.results[s.col] = null;
-        ui.push({
-          title: info.zeros.length ? 'Trade across the zeros' : 'Trade',
-          text: tradeSentence(info),
-          stepTag: 'Trading',
-          kind: 'trade',
-          algo: snap,
-          hiCols: [info.donor].concat(info.zeros).concat([s.col])
-        });
-      }
+    const answerText = q.dp ? Number(raw.result).toFixed(q.dp) : String(Math.round(raw.result));
+    raw.steps.forEach(function (s, idx) {
       const place = colName(s.col, q.dp);
-      const ad = s.wTop[s.col];
       const tag = (place === 'hundreds' || place === 'thousands' || place === 'ten-thousands')
         ? 'Hundreds / thousands'
         : titleCase(place);
+      const hi = s.tradeInfo ? [s.col, s.tradeInfo.donor].concat(s.tradeInfo.zeros) : [s.col];
       ui.push({
         title: titleCase(place),
-        text: titleCase(place) + ': ' + ad + ' − ' + s.bd[s.col] + ' = ' + s.results[s.col],
+        text: columnText(s, idx === raw.steps.length - 1, answerText),
         stepTag: tag,
         kind: 'calc',
         place: place,
         traded: s.isTrade,
         algo: s,
-        hiCols: [s.col],
-        equation: ad + ' − ' + s.bd[s.col] + ' = ' + s.results[s.col]
+        hiCols: hi
       });
     });
-
-    const out = [];
-    let i = 0;
-    while (i < ui.length) {
-      const s = ui[i];
-      const high = s.kind === 'calc' && (s.place === 'hundreds' || s.place === 'thousands' || s.place === 'ten-thousands');
-      if (high && !s.traded) {
-        const run = [s];
-        let j = i + 1;
-        while (j < ui.length && ui[j].kind === 'calc' && !ui[j].traded &&
-          (ui[j].place === 'hundreds' || ui[j].place === 'thousands' || ui[j].place === 'ten-thousands')) {
-          run.push(ui[j]);
-          j++;
-        }
-        if (run.length > 1) {
-          out.push({
-            title: 'Hundreds / thousands',
-            text: run.map(function (r) { return r.text; }).join(' · '),
-            stepTag: 'Hundreds / thousands',
-            kind: 'calc',
-            algo: run[run.length - 1].algo,
-            hiCols: run.reduce(function (acc, r) { return acc.concat(r.hiCols); }, [])
-          });
-          i = j;
-          continue;
-        }
-      }
-      out.push(s);
-      i++;
-    }
     q.answer = raw.result;
-    return out;
+    return ui;
   }
 
   /* Ported from embedmaths-addition-subtraction.html and fixed for
