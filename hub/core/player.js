@@ -93,7 +93,7 @@ const Player = (function () {
       EM.icons.close + ' Stop</button><div class="progress-wrap"><p>Level ' + session.level + ' · Question ' +
       (session.index + 1) + ' of ' + session.count + '</p><div class="progress" aria-hidden="true">' + segments +
       '</div></div>' + (question.tricky ? '<span class="tricky-tag">Tricky one</span>' : '<span></span>') + '</header>' +
-      '<div class="work"><section class="paper"><p class="equation">' + question.textA + ' − ' + question.textB + '</p>' +
+      '<div class="work"><section class="paper"><p class="equation">' + (question.equation || (question.textA + ' − ' + question.textB)) + '</p>' +
       estimateHtml + '<div id="algo"></div>' + foot + '</section><section class="steps-col"><p class="eyebrow">The steps</p>' +
       (phase === 'steps' ? '<ol class="steps">' + stepHtml + '</ol>' : '<p class="wait-note">' +
         (phase === 'estimate' ? 'The working stays hidden until you are ready.' : 'Setting out is shown. Tap Next step to work through it.') + '</p>') +

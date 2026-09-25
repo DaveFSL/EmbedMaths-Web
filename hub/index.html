@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#0E5D66">
 <script>
   /* Bump this to refresh cached scripts and styles on student devices. */
-  var VERSION = '7190811';
+  var VERSION = 'cf22c66';
   document.write('<link rel="stylesheet" href="core/styles.css?v=' + VERSION + '">');
 </script>
 </head>
@@ -15,7 +15,7 @@
 <div id="app"></div>
 <div id="note" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="noteText"></div>
 <script>
-  ['core/store.js', 'core/app.js', 'topics/subtraction.js', 'core/levels.js', 'core/player.js', 'core/summary.js', 'core/extend.js'].forEach(function (src) {
+  ['core/store.js', 'core/app.js', 'topics/subtraction.js', 'topics/addition.js', 'topics/multiplication.js', 'core/levels.js', 'core/player.js', 'core/summary.js', 'core/extend.js'].forEach(function (src) {
     document.write('<script src="' + src + '?v=' + VERSION + '"><\/script>');
   });
 </script>

@@ -70,8 +70,12 @@ const EM = (function () {
   function renderHome() {
     screen = 'home';
     const sub = topics.sub;
+    const add = topics.add;
+    const mul = topics.mul;
     const prog = Store.progressFor('sub');
     const subMeta = 'Level ' + prog.level + ' of ' + sub.levels.length;
+    const addMeta = 'Level ' + Store.progressFor('add').level + ' of ' + add.levels.length;
+    const mulMeta = 'Level ' + Store.progressFor('mul').level + ' of ' + mul.levels.length;
     let strip = '';
     if (link && link.hasLink) {
       const topic = topics[link.t];
@@ -92,9 +96,9 @@ const EM = (function () {
       strip +
       '<div class="home-grid"><section class="panel wide"><div class="panel-head"><h2>Written methods</h2><p>Work it out, then check each step</p></div>' +
       '<div class="tile-grid">' +
-      tile(ICONS.plus, 'Addition', 'Coming soon', { soon: true }) +
+      tile(ICONS.plus, 'Addition', addMeta, { action: 'add' }) +
       tile(ICONS.minus, 'Subtraction', subMeta, { action: 'sub' }) +
-      tile(ICONS.times, 'Multiplication', 'Coming soon', { soon: true }) +
+      tile(ICONS.times, 'Multiplication', mulMeta, { action: 'mul' }) +
       tile(ICONS.divide, 'Division', 'Coming soon', { soon: true }) +
       '</div></section><div class="side-col">' +
       '<section class="panel"><h2>Place value</h2><div class="tile-row">' +
@@ -112,6 +116,10 @@ const EM = (function () {
 
     const subBtn = app.querySelector('[data-go="sub"]');
     if (subBtn) subBtn.onclick = function () { openLevels('sub'); };
+    const addBtn = app.querySelector('[data-go="add"]');
+    if (addBtn) addBtn.onclick = function () { openLevels('add'); };
+    const mulBtn = app.querySelector('[data-go="mul"]');
+    if (mulBtn) mulBtn.onclick = function () { openLevels('mul'); };
     document.getElementById('classLink').onclick = function () {
       showNote('The class link builder is coming in a later step.');
     };
