@@ -1,6 +1,8 @@
 const Player = (function () {
   let phase = 'layout';
   let step = -1;
+  let col = -1;
+  let revealAll = false;
   let choice = null;
   let tag = null;
 
@@ -10,6 +12,8 @@ const Player = (function () {
   function resetQuestion() {
     phase = EM.session.est ? 'estimate' : 'layout';
     step = -1;
+    col = -1;
+    revealAll = false;
     choice = null;
     tag = null;
   }
@@ -18,7 +22,9 @@ const Player = (function () {
     const session = EM.session;
     const question = q();
     const steps = question.steps;
-    const last = step >= steps.length - 1 && phase === 'steps';
+    const row = step >= 0 ? steps[step] : null;
+    const inCols = row && col >= 0 && row.columns && row.columns[col];
+    const last = phase === 'steps' && (revealAll || (step >= steps.length - 1 && col < 0));
     const segments = session.questions.map(function (_, i) {
       const result = session.results[i];
       let cls = 'seg-bit';
@@ -49,16 +55,40 @@ const Player = (function () {
         : 'The answer is ' + shown + '. The estimate was ' + est.answer + '.') + '</p>';
     }
 
-    const stepHtml = phase !== 'steps' ? '' : steps.map(function (s, i) {
-      if (i > step) return '';
-      let cls = 'step';
-      if (i === step) cls += ' current';
-      else cls += ' done';
+    function doneLine(label) {
+      return '<li class="step done"><span class="n">✓</span><div><p>' + label + '</p></div></li>';
+    }
+    function fullLine(s, extra) {
       const body = s.kind === 'trade' || s.kind === 'lineup'
         ? '<p class="step-title">' + s.title + '</p><p>' + s.text + '</p>'
         : '<p>' + s.text + '</p>';
-      return '<li class="' + cls + '"><span class="n">' + (i + 1) + '</span><div>' + body + '</div></li>';
-    }).join('');
+      return '<li class="step current"><span class="n">•</span><div>' + body + (extra || '') + '</div></li>';
+    }
+    let stepHtml = '';
+    if (phase === 'steps') {
+      const lines = [];
+      steps.forEach(function (s, i) {
+        if (i > step) return;
+        const name = s.label || s.title || 'Step';
+        if (i < step || revealAll) {
+          lines.push(doneLine(name));
+          return;
+        }
+        if (inCols) {
+          s.columns.forEach(function (c, ci) {
+            if (ci < col) lines.push(doneLine(c.label || 'Column'));
+          });
+          lines.push(fullLine(s.columns[col]));
+          return;
+        }
+        const link = s.columns && s.columns.length
+          ? '<button type="button" class="col-link" id="eachCol">Show me each column</button>'
+          : '';
+        lines.push(fullLine(s, link));
+      });
+      if (revealAll) lines.push(fullLine({ text: 'The whole answer is shown.' }));
+      stepHtml = lines.join('');
+    }
 
     let check = '';
     if (last) {
@@ -86,7 +116,8 @@ const Player = (function () {
       : (phase === 'layout'
         ? '<button type="button" class="btn primary" id="nextStep">Next step ' + EM.icons.arrow + '</button>'
         : '<button type="button" class="btn ghost" id="prevStep">Back</button>' +
-          (last ? '' : '<button type="button" class="btn primary" id="nextStep">Next step ' + EM.icons.arrow + '</button>'));
+          (last ? '' : '<button type="button" class="btn primary" id="nextStep">Next step ' + EM.icons.arrow + '</button>') +
+          (last || session.topicId !== 'mul' ? '' : '<button type="button" class="btn ghost" id="wholeAnswer">Show the whole answer</button>'));
 
     document.getElementById('app').innerHTML =
       '<div class="shell play"><header class="play-top"><button type="button" class="btn ghost" id="stop">' +
@@ -102,21 +133,42 @@ const Player = (function () {
         (session.index + 1 >= session.count ? 'See summary' : 'Next question') + ' ' + EM.icons.arrow + '</button>' : '') +
       '</div></div>';
 
-    if (phase !== 'estimate') topic().render(question, step, document.getElementById('algo'));
+    question.view = { col: col, reveal: revealAll };
+    if (phase !== 'estimate') topic().render(question, revealAll ? steps.length - 1 : step, document.getElementById('algo'));
 
     document.getElementById('stop').onclick = function () { EM.home(); };
     const show = document.getElementById('showSolution');
-    if (show) show.onclick = function () { phase = 'layout'; step = -1; paint(false); };
+    if (show) show.onclick = function () { phase = 'layout'; step = -1; col = -1; revealAll = false; paint(false); };
+    const each = document.getElementById('eachCol');
+    if (each) each.onclick = function () { col = 0; paint(false); };
+    const whole = document.getElementById('wholeAnswer');
+    if (whole) whole.onclick = function () {
+      phase = 'steps';
+      revealAll = true;
+      col = -1;
+      step = steps.length - 1;
+      paint(false);
+    };
     const next = document.getElementById('nextStep');
     if (next) next.onclick = function () {
       phase = 'steps';
-      step = Math.min(steps.length - 1, step + 1);
+      const current = steps[step];
+      if (col >= 0 && current && current.columns) {
+        if (col < current.columns.length - 1) col += 1;
+        else col = -1;
+      } else {
+        step = Math.min(steps.length - 1, step + 1);
+        col = -1;
+      }
       paint(false);
     };
     const prev = document.getElementById('prevStep');
     if (prev) prev.onclick = function () {
+      if (revealAll) { revealAll = false; col = -1; paint(false); return; }
+      if (col > 0) { col -= 1; paint(false); return; }
+      if (col === 0) { col = -1; paint(false); return; }
       if (step <= 0) { phase = 'layout'; step = -1; }
-      else step -= 1;
+      else { step -= 1; col = -1; }
       paint(false);
     };
     document.querySelectorAll('[data-choice]').forEach(function (btn) {

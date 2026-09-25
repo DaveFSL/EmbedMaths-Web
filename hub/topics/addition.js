@@ -285,7 +285,7 @@
     hiCols.forEach(function (c) { hi[c] = true; });
 
     function cells(rowKind, rowIndex) {
-      let html = '<div class="algo-row"><div class="dc ' + (rowKind === 'op' ? 'op' : 'spacer') + '">' + (rowKind === 'op' ? '+' : '') + '</div>';
+      let html = '<div class="algo-row' + (rowKind === 'carry' ? ' carry-row' : '') + '"><div class="dc ' + (rowKind === 'op' ? 'op' : 'spacer') + '">' + (rowKind === 'op' ? '+' : '') + '</div>';
       for (let ci = 0; ci < cols; ci++) {
         const fromRight = cols - 1 - ci;
         const active = hi[fromRight] ? ' on' : '';
@@ -311,7 +311,8 @@
       return html;
     }
 
-    let html = '<div class="algo-grid-wrap">' + cells('carry');
+    const anyCarry = snap && snap.carries && snap.carries.some(function (c) { return c; });
+    let html = '<div class="algo-grid-wrap">' + (anyCarry ? cells('carry') : '');
     q.ints.forEach(function (_, row) {
       html += cells(row === q.ints.length - 1 ? 'op' : 'add', row);
     });
