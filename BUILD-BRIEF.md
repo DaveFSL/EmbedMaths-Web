@@ -109,9 +109,9 @@ The mockup canvas has nine screens. Build these:
 - Footer: "Show your teacher: this summary is saved on this device." and "Last 5 sessions: 5, 6, 5, 7, 6".
 
 ### Class link builder (teachers and parents)
-- Pick topic, level, number of questions, extension answers (Teacher reveals / Open), and tick boxes for Estimate first, Mental strategy and Add 2 tricky ones.
+- Pick topic, level, number of questions, and tick boxes for Estimate first, Mental strategy and Add 2 tricky ones.
 - Shows the link, a **Copy link** button and a **QR code** so students can scan from the board.
-- Note on screen: "The answer PIN is set on your device only and is never shown on student screens."
+- Extension challenges use commit-before-reveal: the student writes an answer (or taps True / False) before **Show answer** is available. A hint shows the first step only.
 
 ---
 
@@ -126,11 +126,12 @@ The hub reads these on load. A link with `t=` and `lvl=` fills the "Set by your 
 | `q` | questions | `5`, `8`, `10` |
 | `est` | estimate first | `1` / `0` |
 | `strat` | show mental strategy | `1` / `0` |
-| `tricky` | extra tricky questions | `0`–`3` |
-| `ext` | extension answers | `pin` / `open` |
+| `tricky` | tricky questions included in `q` | `0`–`3` |
 | `go` | skip home, start straight away | `1` |
 
 Example: `…/?t=sub&lvl=6&q=8&est=1&strat=1&tricky=2`
+
+`tricky` is part of `q`, not added on top. `q=8` and `tricky=2` is 8 questions: 6 at the level and 2 tricky.
 
 ---
 
@@ -225,7 +226,7 @@ Example: `…/?t=sub&lvl=6&q=8&est=1&strat=1&tricky=2`
 {
   progress: { sub: { level: 6, streak: 1 }, mul: { level: 4, streak: 0 }, … },
   history: [ { t:'sub', lvl:6, date:'2026-09-24', score:6, of:8, errors:{ Trading:2 } }, … ],  // keep last 30
-  teacherPin: '4827'   // set only in the link builder / teacher settings; never shown on student screens
+  extensions: { sub: { score: 5, of: 8 } }
 }
 ```
 
@@ -237,7 +238,7 @@ No accounts and no server. A class dashboard would need a back end; not in scope
 
 Port these instead of rewriting:
 
-- `embedmaths-addition-subtraction.html`: `buildAddSteps`, `buildSubSteps`, `renderAlgo`, `mentalStrategy`, `genExtBank` / `genExtProblems`, and the PIN overlay.
+- `embedmaths-addition-subtraction.html`: `buildAddSteps`, `buildSubSteps`, `renderAlgo`, `mentalStrategy`, `genExtBank` / `genExtProblems`.
 - `embedmaths-multiplication.html`: `buildShortSteps`, `buildLongSteps`, `renderShortAlgo`, `renderLongAlgo`, `buildMentalStrategy`, and the extension bank.
 
 ---
@@ -245,7 +246,7 @@ Port these instead of rewriting:
 ## 9. Bugs and fixes to carry over
 
 - **The generators never make the hardest cases.** Both numbers are always the same length and decimals always have the same number of places. Generate them on purpose for the levels above: different lengths, trading across zeros, different decimal places.
-- **The PIN is shown to students.** The setup screen shows "(default: 1234)" and the PIN is readable in the page code. Move PIN setup to the teacher side, don't show a default, and default to "Open" for parents.
+- **Extension answers stay hidden until the student commits.** Each challenge has a My answer box (True / False buttons on those questions). Show answer stays unavailable until something is entered, and says "Write your answer first" if it is tapped early. The reveal puts their answer beside the correct one. A hint shows the first step only, not the answer. There is no teacher PIN.
 - The session badge text reads "mixeddp decimals" and "4d"; replace these with the level name.
 - Choosing "1dp × 1dp" with 2-digit × 1-digit quietly becomes 1dp × whole. Level-based generation removes this.
 - The mental strategy's "round and adjust" picks awkward numbers (e.g. 1455 → 1460). Round to the nearest number that makes the sum easy (7257 − 1457 = 5800, then + 2).
