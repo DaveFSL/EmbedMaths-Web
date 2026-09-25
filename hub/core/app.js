@@ -72,10 +72,12 @@ const EM = (function () {
     const sub = topics.sub;
     const add = topics.add;
     const mul = topics.mul;
+    const pv = topics.pv;
     const prog = Store.progressFor('sub');
     const subMeta = 'Level ' + prog.level + ' of ' + sub.levels.length;
     const addMeta = 'Level ' + Store.progressFor('add').level + ' of ' + add.levels.length;
     const mulMeta = 'Level ' + Store.progressFor('mul').level + ' of ' + mul.levels.length;
+    const pvMeta = 'Level ' + Store.progressFor('pv').level + ' of ' + pv.levels.length;
     let strip = '';
     if (link && link.hasLink) {
       const topic = topics[link.t];
@@ -102,7 +104,7 @@ const EM = (function () {
       tile(ICONS.divide, 'Division', 'Coming soon', { soon: true }) +
       '</div></section><div class="side-col">' +
       '<section class="panel"><h2>Place value</h2><div class="tile-row">' +
-      tile(ICONS.place, '× and ÷ by 10, 100, 1000', 'Coming soon', { soon: true }) +
+      tile(ICONS.place, '× and ÷ by 10, 100, 1000', pvMeta, { action: 'pv' }) +
       '</div></section>' +
       '<section class="panel"><h2>Measurement</h2><div class="tile-row two">' +
       tile(ICONS.ruler, 'Converting units', 'Coming soon', { soon: true }) +
@@ -120,6 +122,8 @@ const EM = (function () {
     if (addBtn) addBtn.onclick = function () { openLevels('add'); };
     const mulBtn = app.querySelector('[data-go="mul"]');
     if (mulBtn) mulBtn.onclick = function () { openLevels('mul'); };
+    const pvBtn = app.querySelector('[data-go="pv"]');
+    if (pvBtn) pvBtn.onclick = function () { openLevels('pv'); };
     document.getElementById('classLink').onclick = function () {
       showNote('The class link builder is coming in a later step.');
     };

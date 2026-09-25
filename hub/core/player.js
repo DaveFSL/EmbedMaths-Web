@@ -10,7 +10,7 @@ const Player = (function () {
   function topic() { return EM.topics[EM.session.topicId]; }
 
   function resetQuestion() {
-    phase = EM.session.est ? 'estimate' : 'layout';
+    phase = EM.session.est ? 'estimate' : 'ready';
     step = -1;
     col = -1;
     revealAll = false;
@@ -59,7 +59,7 @@ const Player = (function () {
       return '<li class="step done"><span class="n">✓</span><div><p>' + label + '</p></div></li>';
     }
     function fullLine(s, extra) {
-      const body = s.kind === 'trade' || s.kind === 'lineup'
+      const body = s.kind === 'trade' || s.kind === 'lineup' || s.kind === 'teach'
         ? '<p class="step-title">' + s.title + '</p><p>' + s.text + '</p>'
         : '<p>' + s.text + '</p>';
       return '<li class="step current"><span class="n">•</span><div>' + body + (extra || '') + '</div></li>';
@@ -111,34 +111,50 @@ const Player = (function () {
     }
 
     const showNext = last && choice;
-    const actions = phase === 'estimate'
+    const actions = (phase === 'estimate' || phase === 'ready')
       ? '<button type="button" class="btn primary" id="showSolution">Show solution ' + EM.icons.arrow + '</button>'
-      : (phase === 'layout'
-        ? '<button type="button" class="btn primary" id="nextStep">Next step ' + EM.icons.arrow + '</button>'
+      : (revealAll
+        ? '<button type="button" class="btn ghost" id="prevStep">Back</button>' +
+          '<button type="button" class="btn primary" id="eachStep">Show me each step ' + EM.icons.arrow + '</button>'
         : '<button type="button" class="btn ghost" id="prevStep">Back</button>' +
           (last ? '' : '<button type="button" class="btn primary" id="nextStep">Next step ' + EM.icons.arrow + '</button>') +
-          (last || session.topicId !== 'mul' ? '' : '<button type="button" class="btn ghost" id="wholeAnswer">Show the whole answer</button>'));
+          '<button type="button" class="btn ghost" id="wholeAnswer">Show the whole answer</button>');
 
     document.getElementById('app').innerHTML =
       '<div class="shell play"><header class="play-top"><button type="button" class="btn ghost" id="stop">' +
       EM.icons.close + ' Stop</button><div class="progress-wrap"><p>Level ' + session.level + ' · Question ' +
       (session.index + 1) + ' of ' + session.count + '</p><div class="progress" aria-hidden="true">' + segments +
       '</div></div>' + (question.tricky ? '<span class="tricky-tag">Tricky one</span>' : '<span></span>') + '</header>' +
-      '<div class="work"><section class="paper"><p class="equation">' + (question.equation || (question.textA + ' − ' + question.textB)) + '</p>' +
+      '<div class="work"><section class="paper"><p class="equation">' +
+      ((question.solvedEquation && (revealAll || (phase === 'steps' && step >= steps.length - 1 && col < 0)))
+        ? question.solvedEquation
+        : (question.equation || (question.textA + ' − ' + question.textB))) + '</p>' +
       estimateHtml + '<div id="algo"></div>' + foot + '</section><section class="steps-col"><p class="eyebrow">The steps</p>' +
-      (phase === 'steps' ? '<ol class="steps">' + stepHtml + '</ol>' : '<p class="wait-note">' +
-        (phase === 'estimate' ? 'The working stays hidden until you are ready.' : 'Setting out is shown. Tap Next step to work through it.') + '</p>') +
+      (phase === 'steps' ? '<ol class="steps">' + stepHtml + '</ol>' : '<p class="wait-note">The working stays hidden until you are ready.</p>') +
       strategy + check + '</section></div><div class="action-row">' + actions +
       (showNext ? '<button type="button" class="btn primary" id="nextQ">' +
         (session.index + 1 >= session.count ? 'See summary' : 'Next question') + ' ' + EM.icons.arrow + '</button>' : '') +
       '</div></div>';
 
     question.view = { col: col, reveal: revealAll };
-    if (phase !== 'estimate') topic().render(question, revealAll ? steps.length - 1 : step, document.getElementById('algo'));
+    if (phase === 'steps') topic().render(question, revealAll ? steps.length - 1 : step, document.getElementById('algo'));
 
     document.getElementById('stop').onclick = function () { EM.home(); };
     const show = document.getElementById('showSolution');
-    if (show) show.onclick = function () { phase = 'layout'; step = -1; col = -1; revealAll = false; paint(false); };
+    if (show) show.onclick = function () {
+      phase = 'steps';
+      revealAll = true;
+      col = -1;
+      step = steps.length - 1;
+      paint(false);
+    };
+    const eachStep = document.getElementById('eachStep');
+    if (eachStep) eachStep.onclick = function () {
+      revealAll = false;
+      col = -1;
+      step = 0;
+      paint(false);
+    };
     const each = document.getElementById('eachCol');
     if (each) each.onclick = function () { col = 0; paint(false); };
     const whole = document.getElementById('wholeAnswer');
@@ -167,7 +183,7 @@ const Player = (function () {
       if (revealAll) { revealAll = false; col = -1; paint(false); return; }
       if (col > 0) { col -= 1; paint(false); return; }
       if (col === 0) { col = -1; paint(false); return; }
-      if (step <= 0) { phase = 'layout'; step = -1; }
+      if (step <= 0) { phase = EM.session.est ? 'estimate' : 'ready'; step = -1; revealAll = false; }
       else { step -= 1; col = -1; }
       paint(false);
     };

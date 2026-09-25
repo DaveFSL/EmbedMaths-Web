@@ -100,7 +100,7 @@ The mockup canvas has nine screens. Build these:
 - Left card: the question in large type, the estimate line, then the written layout drawn by the topic's `render()`.
 - Right: the step list. The current or key step is highlighted.
 - After the full reveal: **How did you go?** with the buttons **I got it right** / **I made an error**. If error, show "Which step went wrong?" chips from `errorTags`. One tap each; it's optional to pick a chip.
-- Keep the existing reveal flow: estimate first (optional), Show solution, Next step / Back, Next question.
+- **Reference first.** Show solution opens the complete working and the full answer at once. **Show me each step** then walks the steps (one column at a time for addition and subtraction, one row at a time for multiplication, with **Show me each column** inside a row). Self-check stays **How did you go?** after the full working. Estimate first is still optional.
 
 ### Summary
 - "6 out of 8. Nice work." with a row of question tiles (tick, or the error tag in orange).
@@ -197,7 +197,8 @@ Example: `…/?t=sub&lvl=6&q=8&est=1&strat=1&tricky=2`
 ### Place value slide (screens 8 and 9)
 - Columns: Th · H · T · O · **.** · t · h (add th for 3 dp). The decimal point has its own fixed column.
 - **The digits move. The decimal point never moves.** Never teach "add a zero" or "move the decimal point".
-- Step titles: **Which way?** (× makes it bigger → move left; ÷ → move right), then **How far?** (10 = 1 place, 100 = 2, 1000 = 3), then **Fill the gap** (put placeholder zeros in any empty places before the point).
+- Step titles: **Which way?** (× makes it bigger, so the digits move left; ÷ makes it smaller, so the digits move right), then **How far?** (10 = 1 place, 100 = 2, 1000 = 3), then **Fill the gaps** (placeholder zeros in empty places between the digits and the decimal point, and a 0 in the ones place when the answer is less than 1, e.g. 0.45).
+- The finished chart and the answer show first. **Show me each step** walks Which way, How far, then Fill the gaps.
 - Draw an arrow showing the move ("3 places left").
 - Colours: the digit that moves has a teal fill; a placeholder zero is orange with a dashed border.
 
