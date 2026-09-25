@@ -118,9 +118,7 @@ const PlaceValue = (function () {
       bits.push('the ' + digit + ' lands in the ' + PLACE[pos + delta]);
     }
     const landed = bits.join(' and ');
-    if (!gaps.length) {
-      return 'Every place between the digits and the decimal point is already filled. The answer is ' + resultText + '.';
-    }
+    if (!gaps.length) return 'No gaps to fill this time.';
     const names = gaps.map(function (pos) { return 'the ' + PLACE[pos]; });
     const where = names.length === 1 ? names[0] + ' place is' : names.join(' and ') + ' are';
     const zeros = gaps.length === 1 ? 'a 0' : 'a 0 in each';
@@ -165,7 +163,8 @@ const PlaceValue = (function () {
       q.equation = startText + ' ' + spec.op + ' ___ = ' + resultText;
       q.solvedEquation = startText + ' ' + spec.op + ' ' + spec.power + ' = ' + resultText;
     } else {
-      q.equation = startText + ' ' + spec.op + ' ' + spec.power + ' = ' + resultText;
+      q.equation = startText + ' ' + spec.op + ' ' + spec.power + ' = ?';
+      q.solvedEquation = startText + ' ' + spec.op + ' ' + spec.power + ' = ' + resultText;
     }
     q.steps = buildSteps(q);
     return q;
@@ -234,20 +233,16 @@ const PlaceValue = (function () {
     Object.keys(q.moved).forEach(function (key) { answerMap[key] = q.moved[key]; });
     if (showGaps) q.gaps.forEach(function (pos) { answerMap[pos] = 0; });
     const placesWord = q.places + ' place' + (q.places === 1 ? '' : 's') + ' ' + q.dir;
-    const arrow = showAnswer
-      ? '<svg viewBox="0 0 160 32" aria-hidden="true"><path d="' + (q.dir === 'left'
-        ? 'M130 26 C 100 4, 60 4, 30 26'
-        : 'M30 26 C 60 4, 100 4, 130 26') + '" fill="none" stroke="#B85A1E" stroke-width="2" stroke-dasharray="4 3"/>' +
-        '<path d="' + (q.dir === 'left' ? 'M38 20 L28 26 L40 30' : 'M122 20 L132 26 L120 30') +
-        '" fill="none" stroke="#B85A1E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>' +
-        placesWord + '</span>'
-      : '';
     el.innerHTML = PlaceChart.render({
       columns: columnsFor([q.parsed.map, showAnswer ? answerMap : { 0: 0 }]),
       start: start,
       answer: showAnswer ? answer : null,
       answerLabel: q.op + ' ' + (q.missing && stepIndex < 1 ? '?' : q.power),
-      arrow: arrow
+      arrow: showAnswer ? {
+        from: String(q.parsed.sigMax),
+        to: String(q.parsed.sigMax + q.delta),
+        label: placesWord
+      } : null
     });
   }
 
@@ -329,6 +324,12 @@ const PlaceValue = (function () {
   function normal(level) {
     if (level === 7) return GENS[ri(1, 6)]();
     return GENS[level]();
+  }
+
+  function predict(q) {
+    return q.op === '×'
+      ? { before: 'Will the answer be bigger or smaller?', after: 'Bigger — we multiplied' }
+      : { before: 'Will the answer be bigger or smaller?', after: 'Smaller — we divided' };
   }
 
   function estimate(q) {
@@ -430,6 +431,7 @@ const PlaceValue = (function () {
       return q;
     },
     estimate: estimate,
+    predict: predict,
     buildSteps: function (q) { return q.steps || buildSteps(q); },
     render: render,
     strategy: strategy,

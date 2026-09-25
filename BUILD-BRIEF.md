@@ -100,7 +100,7 @@ The mockup canvas has nine screens. Build these:
 - Left card: the question in large type, the estimate line, then the written layout drawn by the topic's `render()`.
 - Right: the step list. The current or key step is highlighted.
 - After the full reveal: **How did you go?** with the buttons **I got it right** / **I made an error**. If error, show "Which step went wrong?" chips from `errorTags`. One tap each; it's optional to pick a chip.
-- **Reference first.** Show solution opens the complete working and the full answer at once. **Show me each step** then walks the steps (one column at a time for addition and subtraction, one row at a time for multiplication, with **Show me each column** inside a row). Self-check stays **How did you go?** after the full working. Estimate first is still optional.
+- **Reference first.** The heading stays the question (`31 ÷ 10 = ?`, or the plain sum for written methods) until **Show solution**. That opens the complete working, the full answer, and **How did you go?** **Next question** (or **See my summary**) appears after a self-check tap. **Show me each step** is optional: Next walks the steps (one column at a time for addition and subtraction, one row at a time for multiplication, with **Show me each column** inside a row), then returns to the whole answer. Back from the first step returns there too. Estimate first is still optional. Place value asks "Will the answer be bigger or smaller?" instead of an estimate.
 
 ### Summary
 - "6 out of 8. Nice work." with a row of question tiles (tick, or the error tag in orange).
