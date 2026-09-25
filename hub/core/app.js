@@ -107,7 +107,8 @@ const EM = (function () {
       '<section class="panel"><h2>Number facts</h2><div class="tile-row">' +
       tile(ICONS.bolt, 'Times tables', 'Open FlashFlips', { href: 'https://davefsl.github.io/FlashFlips-Web/', warm: true }) +
       '</div></section></div></div>' +
-      '<p class="foot">Progress is saved on this device only.</p></div>';
+      '<p class="foot">Progress is saved on this device only.</p>' +
+      '<p class="ver">' + VERSION + '</p></div>';
 
     const subBtn = app.querySelector('[data-go="sub"]');
     if (subBtn) subBtn.onclick = function () { openLevels('sub'); };
