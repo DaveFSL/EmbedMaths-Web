@@ -147,27 +147,86 @@
     return len === 2 ? [82, 47] : len === 3 ? [624, 258] : [7257, 1455];
   }
 
-  function gen6(twoOnly) {
-    const patterns = twoOnly ? ['double', 'triple'] : ['double', 'triple', 'tensZero', 'hunsZero', 'endZeros'];
+  function digitZeros(n) {
+    return String(n).split('').filter(function (d) { return d === '0'; }).length;
+  }
+
+  function countTrades(aInt, bInt) {
+    const a = String(aInt).split('').map(Number);
+    const b = String(bInt).padStart(a.length, '0').split('').map(Number);
+    const top = a.slice();
+    let n = 0;
+    let nonZero = 0;
+    for (let i = a.length - 1; i >= 0; i--) {
+      if (top[i] < b[i]) {
+        n++;
+        if (top[i] !== 0) nonZero++;
+        let from = i - 1;
+        while (from >= 0 && top[from] === 0) from--;
+        if (from < 0) return { n: 0, nonZero: 0 };
+        top[from]--;
+        for (let k = from + 1; k < i; k++) top[k] = 9;
+        top[i] += 10;
+      }
+      top[i] -= b[i];
+    }
+    return { n: n, nonZero: nonZero };
+  }
+
+  function gen6() {
+    const roll = Math.random();
+    const kind = roll < 0.4 ? 1 : roll < 0.7 ? 2 : roll < 0.85 ? 3 : 0;
     for (let attempt = 0; attempt < 80; attempt++) {
       const thou = ri(2, 9);
-      const roll = patterns[ri(0, patterns.length - 1)];
-      let hun = 0;
-      let tens = 0;
-      let ones = 0;
-      if (roll === 'double') { ones = ri(1, 8); }
-      else if (roll === 'tensZero') { hun = ri(1, 9); ones = ri(0, 8); }
-      else if (roll === 'hunsZero') { tens = ri(1, 8); ones = ri(0, 9); }
-      else if (roll === 'endZeros') { hun = ri(1, 9); }
+      let hun = ri(1, 9);
+      let tens = ri(1, 9);
+      let ones = ri(1, 9);
+      if (kind === 3) {
+        hun = 0; tens = 0; ones = 0;
+      } else if (kind === 2) {
+        const shape = ri(0, 2);
+        hun = shape === 2 ? ri(1, 8) : 0;
+        tens = shape === 1 ? ri(1, 8) : 0;
+        ones = shape === 0 ? ri(1, 8) : 0;
+      } else if (kind === 1) {
+        const slot = ri(0, 2);
+        hun = slot === 0 ? 0 : ri(1, 9);
+        tens = slot === 1 ? 0 : ri(1, 8);
+        ones = slot === 2 ? 0 : ri(1, 8);
+      } else {
+        hun = ri(1, 8); tens = ri(1, 8); ones = ri(1, 8);
+      }
       const A = thou * 1000 + hun * 100 + tens * 10 + ones;
-      const onesBorrow = roll !== 'hunsZero';
-      const bOnes = onesBorrow ? ri(ones + 1, 9) : ri(0, ones);
-      const bTens = onesBorrow ? ri(0, 9) : ri(tens + 1, 9);
-      const bHun = ri(0, 9);
       const bThou = ri(1, thou - 1);
+      let bHun = ri(0, 9);
+      let bTens = ri(0, 9);
+      let bOnes = ri(0, 9);
+      if (kind === 0) {
+        bOnes = ri(ones + 1, 9);
+        bTens = ri(tens + 1, 9);
+        bHun = ri(0, hun);
+      } else if (kind === 3) {
+        bOnes = ri(1, 9);
+        bHun = ri(1, 9);
+      } else if (ones === 0 && tens > 0) {
+        bOnes = ri(1, 9);
+        bTens = ri(tens + 1, 9);
+      } else if (tens === 0 && ones > 0) {
+        bOnes = ri(ones + 1, 9);
+      } else if (hun === 0 && tens > 0) {
+        bTens = ri(tens + 1, 9);
+      } else if (ones === 0) {
+        bOnes = ri(1, 9);
+      }
       const B = bThou * 1000 + bHun * 100 + bTens * 10 + bOnes;
-      if (A - B < 100) continue;
-      if (String(A).length === 4 && String(B).length === 4 && crossesZero(A, B)) return [A, B];
+      if (A - B < 100 || String(A).length !== 4 || String(B).length !== 4) continue;
+      if (digitZeros(A) !== kind) continue;
+      const trades = countTrades(A, B);
+      if (trades.n < 1) continue;
+      if (kind === 0 && trades.n < 2) continue;
+      if (kind === 1 && (trades.nonZero < 1 || !crossesZero(A, B))) continue;
+      if (kind >= 2 && !crossesZero(A, B)) continue;
+      return [A, B];
     }
     return [4003, 1257];
   }
@@ -244,7 +303,7 @@
 
   function trickyQ(level, focus) {
     if (level === 6 || focus === 'Trading') {
-      if (level === 6) { const p = gen6(true); return makeQ(p[0], p[1], 0, 0, 0, true); }
+      if (level === 6) { const p = gen6(); return makeQ(p[0], p[1], 0, 0, 0, true); }
     }
     if (level === 7) { const p = [ri(1000, 9999), ri(10, 99)]; return makeQ(p[0], p[1], 0, 0, 0, true); }
     if (level === 9 || focus === 'Hundredths' || focus === 'Tenths') {
@@ -272,7 +331,7 @@
     if (level === 3) return sameLen && String(q.aInt).length === 3 && !hasTrade(q.aInt, q.bInt);
     if (level === 4) return sameLen && String(q.aInt).length === 3 && hasTrade(q.aInt, q.bInt) && !crossesZero(q.aInt, q.bInt);
     if (level === 5) return sameLen && String(q.aInt).length === 4 && hasTrade(q.aInt, q.bInt) && !crossesZero(q.aInt, q.bInt);
-    if (level === 6) return sameLen && String(q.aInt).length === 4 && crossesZero(q.aInt, q.bInt);
+    if (level === 6) return sameLen && String(q.aInt).length === 4 && hasTrade(q.aInt, q.bInt) && q.aInt - q.bInt >= 100;
     if (level === 7) return q.dp === 0 && String(q.aInt).length !== String(q.bInt).length;
     if (level === 8) return q.dpA === q.dpB && q.dpA > 0 && q.textA.indexOf('.') > 0 && q.textB.indexOf('.') > 0;
     if (level === 9) return q.dpA !== q.dpB && (q.phA.length + q.phB.length) > 0;
@@ -308,6 +367,27 @@
       let text;
       let calc;
       let tradeInfo = null;
+      function snap(extra) {
+        return {
+          text: extra.text || '',
+          calc: extra.calc || '',
+          col: i,
+          wTop: wTop.slice(),
+          origTop: origTop.slice(),
+          bd: bd.slice(),
+          tradedFrom: tradedFrom.slice(),
+          tradedTo: tradedTo.slice(),
+          newVals: newVals.slice(),
+          results: results.slice(),
+          isTrade: !!extra.isTrade,
+          tradeInfo: extra.tradeInfo || null,
+          dp: dp,
+          final: false,
+          readyText: extra.readyText || null,
+          chip: extra.chip || null,
+          hiCols: extra.hiCols || [i]
+        };
+      }
       if (ad < b2) {
         let from = i + 1;
         while (from < L && wTop[from] === 0) from++;
@@ -319,40 +399,79 @@
         let k = from;
         while (k > i) {
           const to = k - 1;
-          const fromBefore = wTop[k];
-          const toBefore = wTop[to];
-          const fromAfter = fromBefore - 1;
-          const toAfter = toBefore + 10;
+          const fromBefore = k === from ? wTop[k] : 10;
           hops.push({
+            fromCol: k,
+            toCol: to,
             fromName: colName(k, dp),
             toName: colName(to, dp),
             fromBefore: fromBefore,
-            fromAfter: fromAfter,
-            toBefore: toBefore,
-            toAfter: toAfter
+            fromAfter: fromBefore - 1,
+            toBefore: wTop[to],
+            toAfter: wTop[to] + 10
           });
-          tradedFrom[k] = true;
-          newVals[k] = fromAfter;
-          wTop[k] = fromAfter;
-          wTop[to] = toAfter;
-          if (to === i) {
-            tradedTo[i] = true;
-            newVals[i] = toAfter;
-          }
           k = to;
         }
-        ad = wTop[i];
         tradeInfo = {
           place: cn,
           dp: dp,
           origHere: hereBefore,
           sub: b2,
-          nowHere: ad,
           donor: from,
           donorName: colName(from, dp),
           zeros: zeroIdx,
           hops: hops
         };
+        if (zeroIdx.length) {
+          const zeroNames = zeroIdx.map(function (idx) { return colName(idx, dp); });
+          let intro = hereBefore + ' is not enough to take ' + b2 + '. ';
+          if (zeroNames.length === 1) intro += 'The ' + zeroNames[0] + ' is 0, so we go to the ' + tradeInfo.donorName + '.';
+          else intro += 'The ' + joinAnd(zeroNames) + ' are 0, so we go to the ' + tradeInfo.donorName + '.';
+          steps.push(snap({ readyText: intro, isTrade: true, chip: 'Trading', hiCols: [i] }));
+          hops.forEach(function (hop) {
+            tradedFrom[hop.fromCol] = true;
+            newVals[hop.fromCol] = hop.fromAfter;
+            wTop[hop.fromCol] = hop.fromAfter;
+            wTop[hop.toCol] = hop.toAfter;
+            if (hop.toCol === i) {
+              tradedTo[i] = true;
+              newVals[i] = hop.toAfter;
+            } else {
+              tradedFrom[hop.toCol] = true;
+              newVals[hop.toCol] = hop.toAfter;
+            }
+            steps.push(snap({
+              readyText: hopPhrase(hop) + '.',
+              isTrade: true,
+              chip: 'Trading',
+              hiCols: [hop.fromCol, hop.toCol]
+            }));
+          });
+          ad = wTop[i];
+          tradeInfo.nowHere = ad;
+          results[i] = ad - b2;
+          steps.push(snap({
+            readyText: ad + ' − ' + b2 + ' = ' + results[i] + '. Write ' + results[i] + '.',
+            isTrade: true,
+            tradeInfo: tradeInfo,
+            chip: 'Trading',
+            calc: ad + ' − ' + b2 + ' = ' + results[i],
+            hiCols: [i]
+          }));
+          continue;
+        }
+        hops.forEach(function (hop) {
+          tradedFrom[hop.fromCol] = true;
+          newVals[hop.fromCol] = hop.fromAfter;
+          wTop[hop.fromCol] = hop.fromAfter;
+          wTop[hop.toCol] = hop.toAfter;
+          if (hop.toCol === i) {
+            tradedTo[i] = true;
+            newVals[i] = hop.toAfter;
+          }
+        });
+        ad = wTop[i];
+        tradeInfo.nowHere = ad;
         text = 'Trade for the ' + cn;
         calc = ad + ' − ' + b2 + ' = ' + (ad - b2);
       } else {
@@ -360,22 +479,13 @@
         calc = '= ' + (ad - b2);
       }
       results[i] = ad - b2;
-      steps.push({
+      steps.push(snap({
         text: text,
         calc: calc,
-        col: i,
-        wTop: wTop.slice(),
-        origTop: origTop.slice(),
-        bd: bd.slice(),
-        tradedFrom: tradedFrom.slice(),
-        tradedTo: tradedTo.slice(),
-        newVals: newVals.slice(),
-        results: results.slice(),
         isTrade: !!tradeInfo,
         tradeInfo: tradeInfo,
-        dp: dp,
-        final: false
-      });
+        hiCols: tradeInfo ? [i, tradeInfo.donor].concat(tradeInfo.zeros) : [i]
+      }));
     }
     return { steps: steps, result: (ai - bi) / mult };
   }
@@ -385,29 +495,21 @@
       hop.toBefore + ' ' + singular(hop.toName, hop.toBefore) + ' becomes ' + hop.toAfter;
   }
 
-  function columnText(s, isLast, answerText) {
+  function bottomEmpty(q, col) {
+    if (q.phB && q.phB.indexOf(col) !== -1) return true;
+    return col >= String(q.bInt).length;
+  }
+
+  function columnText(s, q) {
     const place = colName(s.col, s.dp);
     const digit = s.results[s.col];
-    let text;
     if (s.tradeInfo) {
       const info = s.tradeInfo;
-      const zeroNames = info.zeros.map(function (idx) { return colName(idx, info.dp); });
-      text = titleCase(place) + ': ' + info.origHere + ' is not enough to take ' + info.sub + '. ';
-      if (!zeroNames.length) text += 'Trade from the ' + info.donorName + ': ';
-      else if (zeroNames.length === 1) text += 'The ' + zeroNames[0] + ' is 0, so trade from the ' + info.donorName + ': ';
-      else if (zeroNames.length === 2) text += 'The ' + zeroNames[0] + ' and ' + zeroNames[1] + ' are 0, so trade from the ' + info.donorName + ': ';
-      else text += 'The ' + joinAnd(zeroNames) + ' are 0, so trade from the ' + info.donorName + ': ';
-      text += hopPhrase(info.hops[0]);
-      for (let h = 1; h < info.hops.length; h++) {
-        const hop = info.hops[h];
-        text += '. Trade 1 ' + singular(hop.fromName, 1) + ' to the ' + hop.toName + ': ' + hopPhrase(hop);
-      }
-      text += '. ' + info.nowHere + ' − ' + info.sub + ' = ' + digit + '. Write ' + digit + '.';
-    } else {
-      text = titleCase(place) + ': ' + s.wTop[s.col] + ' − ' + s.bd[s.col] + ' = ' + digit + '. Write ' + digit + '.';
+      return titleCase(place) + ': ' + info.origHere + ' is not enough to take ' + info.sub + '. Trade from the ' +
+        info.donorName + ': ' + hopPhrase(info.hops[0]) + '. ' + info.nowHere + ' − ' + info.sub + ' = ' + digit + '. Write ' + digit + '.';
     }
-    if (isLast) text += ' Answer ' + answerText + '.';
-    return text;
+    if (bottomEmpty(q, s.col)) return titleCase(place) + ': Nothing to take away, so write ' + digit + '.';
+    return titleCase(place) + ': ' + s.wTop[s.col] + ' − ' + s.bd[s.col] + ' = ' + digit + '. Write ' + digit + '.';
   }
 
   function buildSteps(q) {
@@ -428,19 +530,20 @@
     const answerText = q.dp ? Number(raw.result).toFixed(q.dp) : String(Math.round(raw.result));
     raw.steps.forEach(function (s, idx) {
       const place = colName(s.col, q.dp);
-      const tag = (place === 'hundreds' || place === 'thousands' || place === 'ten-thousands')
+      const tag = s.chip || ((place === 'hundreds' || place === 'thousands' || place === 'ten-thousands')
         ? 'Hundreds / thousands'
-        : titleCase(place);
-      const hi = s.tradeInfo ? [s.col, s.tradeInfo.donor].concat(s.tradeInfo.zeros) : [s.col];
+        : titleCase(place));
+      let text = s.readyText || columnText(s, q);
+      if (idx === raw.steps.length - 1) text += ' Answer ' + answerText + '.';
       ui.push({
         title: titleCase(place),
-        text: columnText(s, idx === raw.steps.length - 1, answerText),
+        text: text,
         stepTag: tag,
         kind: 'calc',
         place: place,
         traded: s.isTrade,
         algo: s,
-        hiCols: hi
+        hiCols: s.hiCols || [s.col]
       });
     });
     q.answer = raw.result;
