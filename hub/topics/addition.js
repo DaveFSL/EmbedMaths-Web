@@ -218,31 +218,24 @@
       let calc = titleCase(place) + ': ' + vals.join(' + ');
       if (incoming > 0) calc += ' + the ' + incoming + ' carried';
       calc += ' = ' + sum + '.';
-      if (incoming === 0 && nc === 0) {
-        results[i] = write;
-        steps.push(snap({ col: i, chip: tag, text: calc.slice(0, -1) + '. Write ' + write + '.' }));
-        continue;
-      }
-      steps.push(snap({ col: i, chip: tag, text: calc }));
       if (incoming > 0) used[i] = true;
       results[i] = write;
-      steps.push(snap({ col: i, chip: tag, text: 'Write ' + write + '.' }));
       carry = nc;
+      const tags = [];
       if (nc > 0) {
         carries[i + 1] = nc;
-        steps.push(snap({ col: i + 1, chip: tag, tags: ['Carrying'], hiCols: [i + 1], text: 'Carry ' + nc + '.' }));
+        tags.push('Carrying');
+        if (i === L - 1) {
+          results[i + 1] = nc;
+          used[i + 1] = true;
+          calc += ' Write ' + sum + '.';
+        } else {
+          calc += ' Write ' + write + ', carry ' + nc + '.';
+        }
+      } else {
+        calc += ' Write ' + write + '.';
       }
-    }
-    if (carry > 0) {
-      results[L] = carry;
-      used[L] = true;
-      const place = colName(L, dp);
-      steps.push(snap({
-        col: L,
-        chip: placeTag(place),
-        tags: ['Carrying'],
-        text: 'The ' + carry + ' carried makes a new ' + place + ' digit. Write ' + carry + '.'
-      }));
+      steps.push(snap({ col: i, chip: tag, tags: tags, hiCols: nc && i === L - 1 ? [i, i + 1] : [i], text: calc }));
     }
     return { steps: steps, total: q.ints.reduce(function (n, v) { return n + v; }, 0) };
   }

@@ -158,8 +158,9 @@
     steps.push({ text: text, chip: chip, tags: tags || [], algo: algo, hiCols: [col] });
   }
 
-  function multiplyByDigit(steps, state, aInt, digit, shift, chip) {
+  function multiplyByDigit(steps, state, aInt, digit, shift, chip, named) {
     const digs = digitsOf(aInt);
+    const row = state.phase === 1 ? state.p1 : state.p2;
     let carry = 0;
     for (let i = 0; i < digs.length; i++) {
       const prod = digs[i] * digit;
@@ -168,33 +169,30 @@
       const nc = Math.floor(sum / 10);
       const place = colName(i + shift);
       const incoming = carry;
-      let calc = titleCase(place) + ': ' + digs[i] + ' × ' + digit + ' = ' + prod;
+      let calc = named
+        ? 'The ' + digs[i] + ' in the ' + place + ' place × ' + digit + ' = ' + prod
+        : titleCase(place) + ': ' + digs[i] + ' × ' + digit + ' = ' + prod;
       if (incoming > 0) calc += ', plus the ' + incoming + ' carried = ' + sum;
       calc += '.';
-      const simple = incoming === 0 && nc === 0;
-      if (simple) {
-        if (state.phase === 1) state.p1[i] = write;
-        else state.p2[i + shift] = write;
-        pushCalc(steps, state, calc.slice(0, -1) + '. Write ' + write + '.', i + shift, chip, []);
-        continue;
-      }
-      pushCalc(steps, state, calc, i + shift, chip, []);
       if (incoming > 0) state.used[i] = true;
-      if (state.phase === 1) state.p1[i] = write;
-      else state.p2[i + shift] = write;
-      pushCalc(steps, state, 'Write ' + write + '.', i + shift, chip, []);
+      const at = state.phase === 1 ? i : i + shift;
+      row[at] = write;
       carry = nc;
+      const tags = [];
       if (nc > 0) {
         state.carries[i + 1] = nc;
-        pushCalc(steps, state, 'Carry ' + nc + '.', i + shift, chip, ['Carrying']);
+        tags.push('Carrying');
+        if (i === digs.length - 1) {
+          row[at + 1] = nc;
+          state.used[i + 1] = true;
+          calc += ' Write ' + sum + '.';
+        } else {
+          calc += ' Write ' + write + ', carry ' + nc + '.';
+        }
+      } else {
+        calc += ' Write ' + write + '.';
       }
-    }
-    if (carry > 0) {
-      const at = digs.length + shift;
-      if (state.phase === 1) state.p1[at] = carry;
-      else state.p2[at] = carry;
-      state.used[digs.length] = true;
-      pushCalc(steps, state, 'Write ' + carry + '.', at, 'Carrying', ['Carrying']);
+      pushCalc(steps, state, calc, at, chip, tags);
     }
   }
 
@@ -208,42 +206,41 @@
     state.carries = state.carries.map(function (c) { return c; });
     for (let i = 0; i < state.used.length; i++) if (state.carries[i]) state.used[i] = true;
     for (let i = 0; i < L; i++) {
-      const present = [];
-      if (d1.length > i) present.push(d1[i]);
-      if (d2.length > i) present.push(d2[i]);
+      const bits = [];
+      if (d1.length > i) bits.push(String(d1[i]));
+      if (d2.length > i) bits.push(i === 0 && state.phOnes ? 'the placeholder 0' : String(d2[i]));
       const incoming = carry;
-      const sum = present.reduce(function (n, v) { return n + v; }, 0) + incoming;
+      const sum = (d1[i] || 0) + (d2[i] || 0) + incoming;
       const write = sum % 10;
       const nc = Math.floor(sum / 10);
       const place = colName(i);
       const missing = d1.length <= i || d2.length <= i;
-      if (present.length === 1 && incoming === 0 && nc === 0 && missing) {
+      if (bits.length === 1 && incoming === 0 && nc === 0 && missing) {
         state.total[i] = write;
         pushCalc(steps, state, titleCase(place) + ': Nothing to add, so write ' + write + '.', i, 'Adding the rows', []);
         continue;
       }
-      let calc = titleCase(place) + ': ' + present.join(' + ');
+      let calc = titleCase(place) + ': ' + bits.join(' + ');
       if (incoming > 0) calc += ' + the ' + incoming + ' carried';
       calc += ' = ' + sum + '.';
-      if (incoming === 0 && nc === 0) {
-        state.total[i] = write;
-        pushCalc(steps, state, calc.slice(0, -1) + '. Write ' + write + '.', i, 'Adding the rows', []);
-        continue;
-      }
-      pushCalc(steps, state, calc, i, 'Adding the rows', []);
       if (incoming > 0) state.addUsed[i] = true;
       state.total[i] = write;
-      pushCalc(steps, state, 'Write ' + write + '.', i, 'Adding the rows', []);
       carry = nc;
+      const tags = [];
       if (nc > 0) {
         state.addCarries[i + 1] = nc;
-        pushCalc(steps, state, 'Carry ' + nc + '.', i, 'Adding the rows', ['Carrying']);
+        tags.push('Carrying');
+        if (i === L - 1) {
+          state.total[i + 1] = nc;
+          state.addUsed[i + 1] = true;
+          calc += ' Write ' + sum + '.';
+        } else {
+          calc += ' Write ' + write + ', carry ' + nc + '.';
+        }
+      } else {
+        calc += ' Write ' + write + '.';
       }
-    }
-    if (carry > 0) {
-      state.total[L] = carry;
-      state.addUsed[L] = true;
-      pushCalc(steps, state, 'The ' + carry + ' carried makes a new ' + colName(L) + ' digit. Write ' + carry + '.', L, 'Adding the rows', ['Carrying']);
+      pushCalc(steps, state, calc, i, 'Adding the rows', tags);
     }
   }
 
@@ -274,8 +271,18 @@
     const ones = q.bInt % 10;
     const tens = Math.floor(q.bInt / 10);
 
+    if (q.dpTotal > 0) {
+      steps.push({
+        title: 'Whole numbers',
+        text: 'Ignore the decimal points for now. Work out ' + q.aInt + ' × ' + q.bInt + '.',
+        stepTag: null,
+        kind: 'lineup',
+        algo: clone(state),
+        hiCols: []
+      });
+    }
     if (!q.long) {
-      multiplyByDigit(steps, state, q.aInt, q.bInt, 0, 'Times fact');
+      multiplyByDigit(steps, state, q.aInt, q.bInt, 0, 'Times fact', false);
     } else {
       steps.push({
         title: 'Row 1',
@@ -285,7 +292,7 @@
         algo: clone(state),
         hiCols: []
       });
-      multiplyByDigit(steps, state, q.aInt, ones, 0, 'Times fact');
+      multiplyByDigit(steps, state, q.aInt, ones, 0, 'Times fact', true);
       state.p1Carries = state.carries.slice();
       state.p1Used = state.carries.map(function (c) { return c ? true : null; });
       state.phase = 2;
@@ -303,7 +310,7 @@
       state.p2[0] = 0;
       state.phOnes = true;
       pushCalc(steps, state, 'We are multiplying by the tens digit, so write a 0 in the ones column as a placeholder.', 0, 'Placeholder zero', ['Placeholder zero']);
-      multiplyByDigit(steps, state, q.aInt, tens, 1, 'Times fact');
+      multiplyByDigit(steps, state, q.aInt, tens, 1, 'Times fact', true);
       const p1 = q.aInt * ones;
       const p2 = q.aInt * tens * 10;
       steps.push({
@@ -319,14 +326,16 @@
 
     if (q.dpTotal > 0) {
       state.showDecimal = true;
+      const answerNow = (q.aInt * q.bInt) / Math.pow(10, q.dpTotal);
+      const answerShown = answerNow.toFixed(q.dpTotal);
       const places = q.dpA + ' + ' + q.dpB + ' = ' + q.dpTotal;
-      pushCalc(steps, state, 'Count the decimal places: ' + places + '. Put the decimal point so the answer has ' + q.dpTotal + ' decimal place' + (q.dpTotal === 1 ? '' : 's') + '.', 0, 'Decimal point', ['Decimal point']);
+      const placeWord = q.dpTotal === 1 ? 'place' : 'places';
+      pushCalc(steps, state, 'Count the decimal places: ' + places + '. Put the decimal point so the answer has ' + q.dpTotal + ' decimal ' + placeWord + ': ' + answerShown + '.', 0, 'Decimal point', ['Decimal point']);
       const ra = q.a >= 1 ? Math.round(q.a) : q.a;
       const rb = q.b < 1 ? q.b : Math.round(q.b);
       const right = q.b < 1 ? q.textB : String(rb);
-      const left = String(ra);
       const product = Math.round(ra * rb * 1000) / 1000;
-      pushCalc(steps, state, 'Check with an estimate: ' + q.textA + ' × ' + q.textB + ' ≈ ' + left + ' × ' + right + ' = ' + product + '.', 0, 'Decimal point', []);
+      pushCalc(steps, state, 'Check: ' + q.textA + ' × ' + q.textB + ' ≈ ' + ra + ' × ' + right + ' = ' + product + '. ' + answerShown + ' is close to ' + product + ', so it makes sense.', 0, 'Decimal point', []);
     }
 
     const answer = (q.aInt * q.bInt) / Math.pow(10, q.dpTotal);
@@ -334,7 +343,7 @@
     const ui = steps.map(function (s, idx) {
       if (s.kind === 'lineup') return s;
       let text = s.text;
-      if (idx === steps.length - 1) text += ' Answer ' + answerText + '.';
+      if (idx === steps.length - 1 && !q.dpTotal) text += ' Answer ' + answerText + '.';
       return {
         title: s.chip || '',
         text: text,
