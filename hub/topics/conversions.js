@@ -352,44 +352,65 @@ const Conversions = (function () {
     q.answer = sorted[0].small;
     return q;
   }
-  function pointShift(text, places) {
-    const negative = false;
-    const raw = text.replace('.', '');
-    const point = text.indexOf('.') === -1 ? text.length : text.indexOf('.');
-    const at = point - places;
-    const padded = (at < 0 ? '0'.repeat(-at) : '') + raw + (at > raw.length ? '0'.repeat(at - raw.length) : '');
-    const cut = at < 0 ? 0 : at;
-    let body = padded.slice(0, cut) + '.' + padded.slice(cut);
-    if (body.charAt(0) === '.') body = '0' + body;
-    return body.replace(/^0+(?=\d)/, '').replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '') || '0';
+  function nb(amount, unit) { return amount + '\u00a0' + unit; }
+  function choiceRow(options) {
+    return '<span class="eq-choices">' + options.map(function (opt, i) {
+      opt.letter = 'ABCD'[i];
+      return '<span class="eq-choice"><span class="eq-letter">' + opt.letter + '</span>' + opt.label + '</span>';
+    }).join('') + '</span>';
+  }
+  function finishChoice(q, options) {
+    q.kind = 'choice';
+    q.options = options;
+    q.solvedEquation = q.equation;
+    q.steps = q.revealLines.map(function (text) { return { text: text }; });
+    q.hasDecimal = true;
+    return q;
   }
   function gen7() {
-    const whole = ri(1, 8);
-    const rem = pick([25, 35, 5, 50, 75]);
-    const milli = whole * 1000 + rem * 10;
+    const whole = ri(1, 9);
+    const rem = ri(0, 9) * 10 + ri(1, 9);
+    const metresMilli = whole * 1000 + rem * 10;
     const cm = whole * 100 + rem;
     const mm = cm * 10;
-    const mixed = whole + ' m ' + rem + ' cm';
-    const kmText = pointShift(fmt(milli), 3);
-    if (Math.random() < 0.5) {
-      const wrong = pointShift(fmt(milli), 2);
-      const q = convert('length', 'm', true, milli);
-      q.kind = 'choice';
-      q.equation = 'Which is NOT equal to ' + fmt(milli) + ' m?  ' + cm + ' cm, ' + mm + ' mm, ' + wrong + ' km, ' + mixed;
-      q.solvedEquation = wrong + ' km is not equal';
-      q.another = fmt(milli) + ' m = ' + cm + ' cm = ' + mm + ' mm = ' + kmText + ' km = ' + mixed;
-      q.revealLines[q.revealLines.length - 1] = 'Say it another way: ' + q.another + '.';
-      q.revealLines.push(wrong + ' km is not equal to ' + fmt(milli) + ' m.');
-      q.answerText = wrong + ' km';
-      return q;
+    const metresText = nb(fmt(metresMilli), 'm');
+    const cmText = nb(String(cm), 'cm');
+    const mmText = nb(String(mm), 'mm');
+    const mixedText = whole + '\u00a0m ' + rem + '\u00a0cm';
+    const q = convert('length', 'm', true, metresMilli);
+    if (Math.random() < 0.4) {
+      const options = shuffle([
+        { label: 'm', shown: metresText, ok: true },
+        { label: 'cm', shown: cmText, ok: false },
+        { label: 'mm', shown: mmText, ok: false },
+        { label: 'm and cm', shown: mixedText, ok: false }
+      ]);
+      q.choiceKind = 'builder';
+      q.equation = 'Which unit would a builder use for ' + metresText + '?' + choiceRow(options);
+      q.revealLines = options.map(function (opt) {
+        return opt.letter + ' ' + opt.label + ' → ' + opt.shown + (opt.ok ? ' ✓' : '');
+      }).concat(['A builder would use metres. ' + fmt(metresMilli) + ' is easy to hold in your head.']);
+      q.answerText = 'm';
+      return finishChoice(q, options);
     }
-    const q = convert('length', 'm', true, milli);
-    q.kind = 'choice';
-    q.equation = 'Which unit would a builder use for ' + fmt(milli) + ' m?  m, cm, mm or km?';
-    q.solvedEquation = 'm — a builder\'s plan';
-    q.revealLines.push('A builder\'s plan uses metres. ' + fmt(milli) + ' m is a number you can hold in your head.');
-    q.answerText = 'm';
-    return q;
+    const wrong = Math.random() < 0.5
+      ? { label: nb(String(cm / 10), 'cm'), mm: cm, ok: false }
+      : { label: nb(String(mm / 10), 'mm'), mm: mm / 10, ok: false };
+    const options = shuffle([
+      { label: cmText, mm: mm, ok: true },
+      { label: mmText, mm: mm, ok: true },
+      { label: mixedText, mm: mm, ok: true },
+      wrong
+    ]);
+    q.choiceKind = 'notequal';
+    q.equation = 'Which is NOT equal to ' + metresText + '?' + choiceRow(options);
+    q.revealLines = options.map(function (opt) {
+      return opt.letter + ' ' + opt.label + ' = ' + nb(fmt(opt.mm), 'm') + ' ' + (opt.ok ? '✓' : '✗');
+    });
+    const odd = options.filter(function (opt) { return !opt.ok; })[0];
+    q.revealLines.push('The odd one out is ' + odd.letter + ', ' + odd.label + '.');
+    q.answerText = odd.label;
+    return finishChoice(q, options);
   }
 
   const GENS = { 1: gen1, 2: gen2, 3: gen3, 4: gen4, 5: gen5, 6: gen6, 7: gen7 };
@@ -461,6 +482,11 @@ const Conversions = (function () {
     if (q && q.kind === 'order') {
       return { lines: ['Change them all to the same unit first. Which unit will you use?'] };
     }
+    if (q && q.kind === 'choice') {
+      return { lines: [q.choiceKind === 'builder'
+        ? 'Which unit gives a number that\'s easy to hold in your head?'
+        : 'Change each one into the same unit. Which one doesn\'t match?'] };
+    }
     return { lines: [
       'Going to a bigger or smaller unit?',
       'Will your number get bigger or smaller?',
@@ -499,7 +525,7 @@ const Conversions = (function () {
       { id: 4, name: 'Decimal amounts', example: '2.5 km → m' },
       { id: 5, name: 'Mixed units', example: '2 m 35 cm → cm' },
       { id: 6, name: 'Order amounts', example: '0.4 kg · 412 g · 0.5 kg' },
-      { id: 7, name: 'One measurement, many ways', example: 'Which is not equal to 2.35 m?' }
+      { id: 7, name: 'One measurement, many ways', example: 'Which is NOT equal to 6.35 m?' }
     ],
     tricky: [
       { id: 'decimal', tags: ['Decimal point'], levels: [4, 7] },
