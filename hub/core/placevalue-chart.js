@@ -15,7 +15,7 @@ var PlaceChart = (function () {
     cols.forEach(function (col) {
       html += '<span class="pv-head">' + col.label + '</span>';
     });
-    html += '<span class="pv-lab">Start</span>';
+    html += '<span class="pv-lab">' + (model.startLabel || 'Start') + '</span>';
     cols.forEach(function (col) {
       if (col.id === 'dot') { html += cell('point', '·'); return; }
       const item = model.start[col.id];

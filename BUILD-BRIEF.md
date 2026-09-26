@@ -176,12 +176,12 @@ Example: `…/?t=sub&lvl=6&q=8&est=1&strat=1&tricky=2`
 7. Mixed
 
 ### Converting units
-1. m ↔ cm, cm ↔ mm
+1. m ↔ cm, cm ↔ mm (whole numbers)
 2. km ↔ m
-3. kg ↔ g, t ↔ kg, L ↔ mL
-4. Decimal amounts (2.5 km → m, 450 g → kg)
-5. Compare and order mixed units (1.2 m or 115 cm?)
-6. Word problems with mixed units
+3. Mass and capacity: t ↔ kg, kg ↔ g, L ↔ mL
+4. Decimal amounts (2.5 km → m, 450 g → kg, 0.75 L → mL)
+5. Mixed units (2 m 35 cm = ___ cm, 3450 m = ___ km ___ m)
+6. Compare and order (1.2 m or 115 cm? Order 0.5 kg, 450 g, 0.55 kg)
 7. **One measurement, many ways**: "Which is not equal to 2.35 m?" or "Which unit would a builder use?"
 8. Later: area units (1 m² = 10 000 cm², not 100)
 
@@ -206,11 +206,9 @@ Example: `…/?t=sub&lvl=6&q=8&est=1&strat=1&tricky=2`
 ### Converting units (match the laminated Metric Place Value Chart)
 - Tabs: **Length** (blue), **Mass** (purple), **Capacity** (green), using the chart's colours.
 - Pairs with arrows both ways: km ⇄ m (× 1000 / ÷ 1000), m ⇄ cm (× 100 / ÷ 100), cm ⇄ mm (× 10 / ÷ 10), t ⇄ kg and kg ⇄ g (× 1000), L ⇄ mL (× 1000). Highlight the pair in the question and fade the others.
-- Orange box before calculating, **"Check yourself before you calculate"**:
-  - "Am I going to a BIGGER unit? Then my number gets SMALLER."
-  - "Am I going to a SMALLER unit? Then my number gets BIGGER."
-- Then use the place value slide for the × or ÷.
-- Finish with **"Say it another way"**: 2.5 km = 2500 m = 2 km 500 m.
+- Before the reveal: "Going to a bigger or smaller unit?", "Will your number get bigger or smaller?", "Which way will the digits move — left or right?"
+- On reveal, everything at once: the unit chart (highlight the pair), the orange **Check yourself** box ("Going to a SMALLER unit? Then my number gets BIGGER." or "Going to a BIGGER unit? Then my number gets SMALLER."), then **Which rule?**, **Which way?**, **How many places?**, **Do the jumps** on the place value chart, **Zeros hold the place** only when a place is empty, and **Say it another way** (2.5 km = 2500 m = 2 km 500 m).
+- Self-check chips: Which rule, Which way, How many places, Zeros hold the place, Decimal point.
 - Level 7 uses the chart's "one measurement, five ways" idea: pick the unit that gives a number you can hold in your head.
 
 ### Written methods
