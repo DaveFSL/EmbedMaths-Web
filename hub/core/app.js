@@ -32,12 +32,52 @@ const EM = (function () {
     const q = qRaw === 5 || qRaw === 8 || qRaw === 10 ? qRaw : 8;
     const est = params.get('est') === '0' ? false : true;
     const strat = params.get('strat') === '0' ? false : true;
-    let tricky = parseInt(params.get('tricky') || '0', 10);
+    const trickyRaw = params.get('tricky');
+    let tricky = trickyRaw == null || trickyRaw === ''
+      ? (t === 'mix' ? 1 : 0)
+      : parseInt(trickyRaw, 10);
     if (!isFinite(tricky) || tricky < 0) tricky = 0;
     if (tricky > 3) tricky = 3;
     const go = params.get('go') === '1';
-    const hasLink = !!(t && lvl && !isNaN(lvl));
-    return { t: t, lvl: lvl, q: q, est: est, strat: strat, tricky: tricky, go: go, hasLink: hasLink };
+    let msg = params.get('msg') || '';
+    msg = msg.replace(/[\u0000-\u001F\u007F]/g, '').trim().slice(0, 40);
+    const hasLink = t === 'mix' || !!(t && lvl && !isNaN(lvl));
+    return { t: t, lvl: lvl, q: q, est: est, strat: strat, tricky: tricky, go: go, msg: msg, hasLink: hasLink };
+  }
+
+  function escapeHtml(text) {
+    return String(text == null ? '' : text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function describeLink(info) {
+    const qWord = info.q === 1 ? 'question' : 'questions';
+    const trickyBit = info.tricky ? ', including ' + info.tricky + ' tricky' : '';
+    if (info.t === 'mix') {
+      return {
+        title: 'Daily mix',
+        detail: info.q + ' ' + qWord + ' across the topics' + trickyBit,
+        msg: info.msg || ''
+      };
+    }
+    const topic = topics[info.t];
+    const meta = topic ? levelMeta(topic, info.lvl) : null;
+    const title = (topic ? topic.name : 'This practice') + ' · Level ' + info.lvl;
+    const detail = meta
+      ? meta.name + ', like ' + meta.example + ' · ' + info.q + ' ' + qWord + trickyBit
+      : 'Level ' + info.lvl + ' · ' + info.q + ' ' + qWord;
+    return { title: title, detail: detail, msg: info.msg || '' };
+  }
+
+  function teacherStrip(info, actions) {
+    const described = describeLink(info);
+    const msg = described.msg ? '<p class="teacher-msg">' + escapeHtml(described.msg) + '</p>' : '';
+    return '<section class="teacher"><div><p class="eyebrow light">Set by your teacher</p><h2>' +
+      escapeHtml(described.title) + '</h2>' + msg + '<p>' + escapeHtml(described.detail) + '</p></div>' +
+      (actions || '') + '</section>';
   }
 
   function levelMeta(topic, level) {
@@ -82,16 +122,8 @@ const EM = (function () {
     const convMeta = 'Level ' + Store.progressFor('conv').level + ' of ' + conv.levels.length;
     let strip = '';
     if (link && link.hasLink) {
-      const topic = topics[link.t];
-      const meta = topic ? levelMeta(topic, link.lvl) : null;
-      const title = (topic ? topic.name : 'This practice') + ' · Level ' + link.lvl;
-      const detail = meta
-        ? meta.name + ', like ' + meta.example + ' · ' + link.q + ' question' + (link.q === 1 ? '' : 's') +
-          (link.tricky ? ', including ' + link.tricky + ' tricky' : '')
-        : 'Level ' + link.lvl + ' · ' + link.q + ' questions';
-      strip = '<section class="teacher"><div><p class="eyebrow light">Set by your teacher</p><h2>' + title +
-        '</h2><p>' + detail + '</p></div><div class="teacher-actions"><button type="button" class="btn light" id="teacherStart">Start ' +
-        ICONS.arrow + '</button><button type="button" class="btn dark" id="dailyMix">Daily mix instead</button></div></section>';
+      strip = teacherStrip(link, '<div class="teacher-actions"><button type="button" class="btn light" id="teacherStart">Start ' +
+        ICONS.arrow + '</button><button type="button" class="btn dark" id="dailyMix">Daily mix instead</button></div>');
     }
     const app = document.getElementById('app');
     app.innerHTML =
@@ -128,14 +160,16 @@ const EM = (function () {
     if (pvBtn) pvBtn.onclick = function () { openLevels('pv'); };
     const convBtn = app.querySelector('[data-go="conv"]');
     if (convBtn) convBtn.onclick = function () { openLevels('conv'); };
-    document.getElementById('classLink').onclick = function () {
-      showNote('The class link builder is coming in a later step.');
-    };
+    document.getElementById('classLink').onclick = function () { LinkBuilder.open(); };
     const start = document.getElementById('teacherStart');
     if (start) {
       start.onclick = function () {
+        if (link.t === 'mix') {
+          startMix({ count: link.q, tricky: link.tricky, est: link.est, strat: link.strat, msg: link.msg });
+          return;
+        }
         if (!topics[link.t]) {
-          showNote('That topic is coming in a later step. Subtraction is ready now.');
+          showNote('That topic is not ready yet.');
           return;
         }
         startSession({
@@ -144,13 +178,14 @@ const EM = (function () {
           count: link.q,
           tricky: link.tricky,
           est: link.est,
-          strat: link.strat
+          strat: link.strat,
+          msg: link.msg
         });
       };
     }
     const mix = document.getElementById('dailyMix');
     if (mix) mix.onclick = function () {
-      showNote('Daily mix across topics is coming in a later step.');
+      startMix({ count: 8, tricky: 1, est: true, strat: true, msg: link.msg });
     };
     window.scrollTo(0, 0);
   }
@@ -176,10 +211,14 @@ const EM = (function () {
     const count = opts.count;
     const trickyN = focus ? 0 : Math.min(opts.tricky || 0, count);
     for (let i = 0; i < count - trickyN; i++) {
-      questions.push(topic.makeQuestion(level, { tricky: false, focus: focus }));
+      const made = topic.makeQuestion(level, { tricky: false, focus: focus });
+      made.topicId = opts.topicId;
+      questions.push(made);
     }
     for (let i = 0; i < trickyN; i++) {
-      questions.push(topic.makeQuestion(level, { tricky: true }));
+      const made = topic.makeQuestion(level, { tricky: true });
+      made.topicId = opts.topicId;
+      questions.push(made);
     }
     for (let i = questions.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -195,7 +234,87 @@ const EM = (function () {
       count: questions.length,
       est: opts.est !== false,
       strat: opts.strat !== false,
+      msg: opts.msg || '',
       focus: focus,
+      questions: questions,
+      index: 0,
+      results: []
+    };
+    screen = 'player';
+    Player.open();
+  }
+
+  function shuffle(list) {
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = list[i];
+      list[i] = list[j];
+      list[j] = tmp;
+    }
+    return list;
+  }
+
+  function mixLevel(topicId) {
+    const topic = topics[topicId];
+    let level = topicId === 'conv' ? 2 : 3;
+    const row = Store.load().progress[topicId];
+    if (row && typeof row.level === 'number') level = row.level;
+    if (level < 1) level = 1;
+    if (topic && level > topic.levels.length) level = topic.levels.length;
+    return level;
+  }
+
+  function buildMixQuestions(opts) {
+    const ids = ['add', 'sub', 'mul', 'pv', 'conv'];
+    const count = opts.count === 5 || opts.count === 10 ? opts.count : 8;
+    let trickyN = opts.tricky == null ? 1 : opts.tricky;
+    if (!isFinite(trickyN) || trickyN < 0) trickyN = 0;
+    if (trickyN > count) trickyN = count;
+    if (trickyN > 3) trickyN = 3;
+    const counts = {};
+    ids.forEach(function (id) { counts[id] = 0; });
+    let left = count;
+    shuffle(ids.slice()).forEach(function (id) {
+      if (left <= 0) return;
+      counts[id] += 1;
+      left -= 1;
+    });
+    shuffle(ids.slice()).forEach(function (id) {
+      if (left <= 0 || counts[id] >= 2) return;
+      counts[id] += 1;
+      left -= 1;
+    });
+    const slots = [];
+    ids.forEach(function (id) {
+      for (let i = 0; i < counts[id]; i++) slots.push(id);
+    });
+    shuffle(slots);
+    const trickyAt = {};
+    shuffle(slots.map(function (_, i) { return i; })).slice(0, trickyN).forEach(function (i) {
+      trickyAt[i] = true;
+    });
+    return slots.map(function (id, i) {
+      const level = mixLevel(id);
+      const made = topics[id].makeQuestion(level, { tricky: !!trickyAt[i] });
+      made.topicId = id;
+      made.mixLevel = level;
+      return made;
+    });
+  }
+
+  function startMix(opts) {
+    opts = opts || {};
+    const questions = buildMixQuestions(opts);
+    EM.session = {
+      topicId: 'mix',
+      mix: true,
+      level: 0,
+      levelName: 'Daily mix',
+      count: questions.length,
+      est: opts.est !== false,
+      strat: opts.strat !== false,
+      msg: opts.msg || '',
+      focus: null,
       questions: questions,
       index: 0,
       results: []
@@ -210,6 +329,10 @@ const EM = (function () {
     prefs.est = link.est;
     prefs.strat = link.strat;
     prefs.tricky = link.tricky;
+    if (link.go && link.t === 'mix') {
+      startMix({ count: link.q, tricky: link.tricky, est: link.est, strat: link.strat, msg: link.msg });
+      return;
+    }
     if (link.go && link.hasLink && topics[link.t]) {
       startSession({
         topicId: link.t,
@@ -217,7 +340,8 @@ const EM = (function () {
         count: link.q,
         tricky: link.tricky,
         est: link.est,
-        strat: link.strat
+        strat: link.strat,
+        msg: link.msg
       });
       return;
     }
@@ -233,7 +357,12 @@ const EM = (function () {
     home: renderHome,
     openLevels: openLevels,
     startSession: startSession,
+    startMix: startMix,
+    buildMixQuestions: buildMixQuestions,
     showNote: showNote,
-    levelMeta: levelMeta
+    levelMeta: levelMeta,
+    escapeHtml: escapeHtml,
+    describeLink: describeLink,
+    teacherStrip: teacherStrip
   };
 })();

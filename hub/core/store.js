@@ -53,6 +53,13 @@ const Store = (function () {
     return rows.slice(-n).map(function (row) { return row.score; });
   }
 
+  function appendHistory(entry) {
+    const data = load();
+    data.history.push(entry);
+    if (data.history.length > 30) data.history = data.history.slice(-30);
+    save(data);
+  }
+
   function recordSession(entry) {
     const data = load();
     const prev = data.progress[entry.t] || { level: 1, streak: 0 };
@@ -95,6 +102,7 @@ const Store = (function () {
     progressFor: progressFor,
     doneLevels: doneLevels,
     recentScores: recentScores,
-    recordSession: recordSession
+    recordSession: recordSession,
+    appendHistory: appendHistory
   };
 })();

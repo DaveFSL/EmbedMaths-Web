@@ -15,9 +15,9 @@ One page where students, teachers and parents choose what to practise. It replac
 2. **Addition and Multiplication.** Port from the existing pages into topic files.
 3. **Place value: × ÷ by 10, 100, 1000.** New topic with the place value slide.
 4. **Converting units.** New topic that reuses the place value slide.
-5. **Class link builder + QR code.**
+5. **Class link builder + QR code**, and Daily mix across the topics that are ready.
 6. **Redirects.** Hub becomes `index.html`. Old pages forward to the matching topic. Daily-Add-Sub-Algorithm forwards, then gets archived.
-7. Later: Division, Time, area units, Daily mix across topics.
+7. Later: Division, Time, area units.
 
 Build steps 1–5 in `/hub/` until they're tested with a class, then do step 6.
 

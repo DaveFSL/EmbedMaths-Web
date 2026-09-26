@@ -13,8 +13,56 @@ const Summary = (function () {
     return count + (count === 1 ? ' error was' : ' errors were') + ' in the ' + name + '.';
   }
 
+  function openMix() {
+    const session = EM.session;
+    const score = session.results.filter(function (r) { return r.correct; }).length;
+    const total = session.results.length;
+    const order = ['add', 'sub', 'mul', 'pv', 'conv'];
+    const by = {};
+    session.results.forEach(function (r) {
+      const id = r.topicId;
+      if (!by[id]) by[id] = { right: 0, of: 0 };
+      by[id].of += 1;
+      if (r.correct) by[id].right += 1;
+    });
+    const parts = [];
+    let weakest = null;
+    order.forEach(function (id) {
+      if (!by[id] || !EM.topics[id]) return;
+      const row = by[id];
+      const share = row.of ? row.right / row.of : 1;
+      parts.push(EM.topics[id].name + ' ' + row.right + '/' + row.of);
+      const miss = row.of - row.right;
+      if (!weakest || share < weakest.share || (share === weakest.share && miss > weakest.miss)) {
+        weakest = { name: EM.topics[id].name, share: share, miss: miss };
+      }
+    });
+    Store.appendHistory({ t: 'mix', lvl: 0, date: today(), score: score, of: total, errors: {} });
+    const tiles = session.results.map(function (r, i) {
+      if (r.correct) return '<li class="q-tile good"><span>Q' + (i + 1) + '</span>' + EM.icons.check + '</li>';
+      const name = EM.topics[r.topicId] ? EM.topics[r.topicId].name : 'Error';
+      return '<li class="q-tile bad"><span>Q' + (i + 1) + '</span><b>' + (r.tag || name) + '</b></li>';
+    }).join('');
+    const allRight = score === total;
+    const watch = allRight
+      ? '<section class="watch"><p class="eyebrow warn">What to watch</p><h2>Every topic was right.</h2><p>' + parts.join(' · ') + '</p></section>'
+      : '<section class="watch"><p class="eyebrow warn">What to watch</p><h2>' + weakest.name + ' was the weakest.</h2><p>' + parts.join(' · ') + '</p></section>';
+    const recent = Store.recentScores('mix', 5);
+    document.getElementById('app').innerHTML =
+      '<div class="shell summary"><p class="eyebrow">Daily mix</p><h1>' + score + ' out of ' + total + '. Nice work.</h1>' +
+      '<ol class="q-row">' + tiles + '</ol><div class="summary-grid">' + watch +
+      '<section class="next-card"><p class="eyebrow light">Next time</p><h2>Each topic stays on its saved level.</h2>' +
+      '<p>A daily mix uses the level saved on this device for each topic.</p>' +
+      '<button type="button" class="btn light" id="homeBtn">Back to home</button></section></div>' +
+      '<footer class="summary-foot"><span>Show your teacher: this summary is saved on this device.</span><span>Last 5 sessions: ' +
+      (recent.length ? recent.join(', ') : 'none yet') + '</span></footer></div>';
+    document.getElementById('homeBtn').onclick = function () { EM.home(); };
+    window.scrollTo(0, 0);
+  }
+
   function open() {
     const session = EM.session;
+    if (session.mix) { openMix(); return; }
     const topic = EM.topics[session.topicId];
     const score = session.results.filter(function (r) { return r.correct; }).length;
     const total = session.results.length;

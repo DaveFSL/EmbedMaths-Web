@@ -7,7 +7,11 @@ const Player = (function () {
   let tag = null;
 
   function q() { return EM.session.questions[EM.session.index]; }
-  function topic() { return EM.topics[EM.session.topicId]; }
+  function topic() {
+    const question = q();
+    const id = (question && question.topicId) || EM.session.topicId;
+    return EM.topics[id];
+  }
 
   function resetQuestion() {
     phase = EM.session.est ? 'estimate' : 'ready';
@@ -134,8 +138,11 @@ const Player = (function () {
 
     document.getElementById('app').innerHTML =
       '<div class="shell play"><header class="play-top"><button type="button" class="btn ghost" id="stop">' +
-      EM.icons.close + ' Stop</button><div class="progress-wrap"><p>Level ' + session.level + ' · Question ' +
-      (session.index + 1) + ' of ' + session.count + '</p><div class="progress" aria-hidden="true">' + segments +
+      EM.icons.close + ' Stop</button><div class="progress-wrap"><p>' +
+      (session.mix ? 'Daily mix' : ('Level ' + session.level)) + ' · Question ' +
+      (session.index + 1) + ' of ' + session.count + '</p>' +
+      (session.msg ? '<p class="session-msg">' + EM.escapeHtml(session.msg) + '</p>' : '') +
+      '<div class="progress" aria-hidden="true">' + segments +
       '</div></div>' + (question.tricky ? '<span class="tricky-tag">Tricky one</span>' : '<span></span>') + '</header>' +
       '<div class="work"><section class="paper"><p class="equation">' +
       ((revealed && question.solvedEquation) ? question.solvedEquation : (question.equation || (question.textA + ' − ' + question.textB))) + '</p>' +
@@ -229,7 +236,8 @@ const Player = (function () {
     session.results.push({
       correct: choice === 'right',
       tag: choice === 'error' ? tag : null,
-      tricky: !!q().tricky
+      tricky: !!q().tricky,
+      topicId: topic().id
     });
     session.index += 1;
     if (session.index >= session.questions.length) {
