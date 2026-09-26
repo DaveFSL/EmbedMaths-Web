@@ -182,7 +182,7 @@ Example: `…/?t=sub&lvl=6&q=8&est=1&strat=1&tricky=2`
 4. Decimal amounts (2.5 km → m, 450 g → kg, 0.75 L → mL)
 5. Mixed units (2 m 35 cm = ___ cm, 3450 m = ___ km ___ m)
 6. Order 3, 4 or 5 amounts, including close values (0.4 kg · 412 g · 0.71 kg). Change them all to the same unit first.
-7. **One measurement, many ways**: "Which is NOT equal to 6.35 m?" with lettered options (a one-step mistake, never km for a small length), or "Which unit would a builder use?"
+7. **One measurement, many ways**: "Which is NOT equal to 5.5 m?" with lettered tiles. The odd one out is a one-step mistake (55 cm, 550 mm, or 5 m 5 cm). No km for a length under 10 m. Or "Which unit would a builder use?"
 8. Later: area units (1 m² = 10 000 cm², not 100)
 
 ### Level suggestion rule

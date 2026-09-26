@@ -369,7 +369,7 @@ const Conversions = (function () {
   }
   function gen7() {
     const whole = ri(1, 9);
-    const rem = ri(0, 9) * 10 + ri(1, 9);
+    const rem = Math.random() < 0.5 ? ri(1, 9) * 10 : (ri(1, 9) * 10 + ri(1, 9));
     const metresMilli = whole * 1000 + rem * 10;
     const cm = whole * 100 + rem;
     const mm = cm * 10;
@@ -378,7 +378,7 @@ const Conversions = (function () {
     const mmText = nb(String(mm), 'mm');
     const mixedText = whole + '\u00a0m ' + rem + '\u00a0cm';
     const q = convert('length', 'm', true, metresMilli);
-    if (Math.random() < 0.4) {
+    if (Math.random() < 0.35) {
       const options = shuffle([
         { label: 'm', shown: metresText, ok: true },
         { label: 'cm', shown: cmText, ok: false },
@@ -393,9 +393,13 @@ const Conversions = (function () {
       q.answerText = 'm';
       return finishChoice(q, options);
     }
-    const wrong = Math.random() < 0.5
-      ? { label: nb(String(cm / 10), 'cm'), mm: cm, ok: false }
-      : { label: nb(String(mm / 10), 'mm'), mm: mm / 10, ok: false };
+    const slipKind = pick(['cm', 'mm', 'mixed']);
+    const slipCm = rem % 10 === 0 ? rem / 10 : Math.floor(rem / 10);
+    const wrong = slipKind === 'cm'
+      ? { label: nb(String(cm / 10), 'cm'), mm: cm, ok: false, slip: 'cm' }
+      : (slipKind === 'mm'
+        ? { label: nb(String(mm / 10), 'mm'), mm: mm / 10, ok: false, slip: 'mm' }
+        : { label: whole + '\u00a0m ' + slipCm + '\u00a0cm', mm: whole * 1000 + slipCm * 10, ok: false, slip: 'mixed' });
     const options = shuffle([
       { label: cmText, mm: mm, ok: true },
       { label: mmText, mm: mm, ok: true },
