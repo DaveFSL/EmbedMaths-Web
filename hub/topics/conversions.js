@@ -202,59 +202,83 @@ const Conversions = (function () {
     if (dpOf(q.fromMilli) > 3 || dpOf(q.resultMilli) > 3) return false;
     if (q.parsed.sigMax > 4 || parseDigits(q.resultMilli).sigMax > 4) return false;
     if (q.parsed.sigMin < -3 || parseDigits(q.resultMilli).sigMin < -3) return false;
-    const whole = dpOf(q.fromMilli) === 0 && dpOf(q.resultMilli) === 0;
-    if (level === 1) return q.kind === 'convert' && q.measure === 'length' && q.factor !== 1000 && whole;
-    if (level === 2) return q.kind === 'convert' && q.big === 'km' && whole;
-    if (level === 3) return q.kind === 'convert' && q.measure !== 'length' && whole;
-    if (level === 4) return q.kind === 'convert' && !whole;
+    if (level === 1) return q.kind === 'convert' && q.measure === 'length' && q.factor !== 1000;
+    if (level === 2) return q.kind === 'convert' && q.big === 'km';
+    if (level === 3) return q.kind === 'convert' && q.measure !== 'length';
+    if (level === 4) return q.kind === 'convert';
     if (level === 5) return q.kind === 'mixed';
-    if (level === 6) return q.kind === 'compare' || q.kind === 'order';
+    if (level === 6) return q.kind === 'order' && q.count >= 3 && q.count <= 5;
     if (level === 7) return q.kind === 'choice';
     return false;
   }
 
-  function wholeDown(measure, big, cap) {
+  function category(q) {
+    if (q.gaps && q.gaps.length) return 'placeholder';
+    if (dpOf(q.fromMilli) > 0 || dpOf(q.resultMilli) > 0) return 'decimal';
+    return 'clean';
+  }
+  function cleanConvert(measure, big) {
     const row = rowOf(measure, big);
-    return convert(measure, big, true, ri(2, cap || Math.min(40, Math.floor(90000 / row.factor))) * 1000);
+    const n = ri(2, 9);
+    return convert(measure, big, false, n * row.factor * 1000);
   }
-  function wholeUp(measure, big, cap) {
+  function decimalConvert(measure, big) {
     const row = rowOf(measure, big);
-    const result = ri(2, cap || 40);
-    return convert(measure, big, false, result * row.factor * 1000);
+    const places = placesOf(row.factor);
+    if (Math.random() < 0.5) {
+      const digits = places + ri(1, 2);
+      let n = ri(1, 9);
+      for (let i = 1; i < digits - 1; i++) n = n * 10 + ri(0, 9);
+      n = n * 10 + ri(1, 9);
+      return convert(measure, big, false, n * 1000);
+    }
+    let frac = 0;
+    for (let i = 0; i < places; i++) frac = frac * 10 + (i === places - 1 ? ri(1, 9) : ri(0, 9));
+    const milli = ri(1, 9) * 1000 + frac * Math.pow(10, 3 - places);
+    return convert(measure, big, true, milli);
   }
-  function gen1() {
-    const big = pick(['m', 'cm']);
-    return Math.random() < 0.5 ? wholeDown('length', big, 40) : wholeUp('length', big, 40);
+  function placeholderConvert(measure, big) {
+    const row = rowOf(measure, big);
+    const places = placesOf(row.factor);
+    if (places === 1 || Math.random() < 0.55) {
+      const digits = ri(1, places);
+      let n = ri(1, 9);
+      for (let i = 1; i < digits; i++) n = n * 10 + ri(1, 9);
+      return convert(measure, big, false, n * 1000);
+    }
+    const depth = ri(1, places - 1);
+    const whole = Math.random() < 0.45 ? 0 : ri(1, 9);
+    const milli = whole * 1000 + ri(1, 9) * Math.pow(10, 3 - depth);
+    return convert(measure, big, true, milli);
   }
-  function gen2() {
-    return Math.random() < 0.5 ? wholeDown('length', 'km', 40) : wholeUp('length', 'km', 40);
+  function messy(measure, big) {
+    const roll = Math.random();
+    const want = roll < 0.3 ? 'clean' : (roll < 0.5 ? 'placeholder' : 'decimal');
+    for (let i = 0; i < 40; i++) {
+      const q = want === 'clean' ? cleanConvert(measure, big) : (want === 'placeholder' ? placeholderConvert(measure, big) : decimalConvert(measure, big));
+      if (category(q) === want) { q.mix = want; return q; }
+    }
+    const q = cleanConvert(measure, big);
+    q.mix = category(q);
+    return q;
   }
+  function gen1() { return messy('length', pick(['m', 'cm'])); }
+  function gen2() { return messy('length', 'km'); }
   function gen3() {
     const choice = pick([{ m: 'mass', b: 't' }, { m: 'mass', b: 'kg' }, { m: 'capacity', b: 'L' }]);
-    return Math.random() < 0.5 ? wholeDown(choice.m, choice.b, 40) : wholeUp(choice.m, choice.b, 20);
+    return messy(choice.m, choice.b);
   }
   function gen4() {
     const choice = pick([
-      { m: 'length', b: 'km' }, { m: 'length', b: 'm' }, { m: 'mass', b: 'kg' }, { m: 'capacity', b: 'L' }
+      { m: 'length', b: 'km' }, { m: 'length', b: 'm' }, { m: 'length', b: 'cm' },
+      { m: 'mass', b: 'kg' }, { m: 'mass', b: 't' }, { m: 'capacity', b: 'L' }
     ]);
-    const row = rowOf(choice.m, choice.b);
-    if (Math.random() < 0.5) {
-      const dp = pick([1, 2]);
-      const whole = ri(0, 12);
-      const frac = ri(1, Math.pow(10, dp) - 1);
-      const milli = whole * 1000 + frac * Math.pow(10, 3 - dp);
-      return convert(choice.m, choice.b, true, milli);
-    }
-    const dp = pick([1, 2]);
-    const whole = ri(0, 9);
-    const frac = ri(1, Math.pow(10, dp) - 1);
-    const resultMilli = whole * 1000 + frac * Math.pow(10, 3 - dp);
-    return convert(choice.m, choice.b, false, resultMilli * row.factor);
+    return messy(choice.m, choice.b);
   }
   function gen5() {
     if (Math.random() < 0.5) {
       const metres = ri(1, 9);
-      const cm = ri(1, 99);
+      const cm = Math.random() < 0.3 ? pick([20, 50, 200, 500]) : (ri(1, 9) * 10 + ri(1, 9));
       const milli = metres * 1000 + cm * 10;
       const q = convert('length', 'm', true, milli, metres + ' m ' + cm + ' cm');
       q.kind = 'mixed';
@@ -265,7 +289,7 @@ const Conversions = (function () {
       return q;
     }
     const km = ri(1, 9);
-    const m = ri(1, 999);
+    const m = Math.random() < 0.3 ? pick([200, 250, 500]) : (ri(1, 9) * 100 + ri(0, 9) * 10 + ri(1, 9));
     const fromMilli = (km * 1000 + m) * 1000;
     const q = convert('length', 'km', false, fromMilli, (km * 1000 + m) + ' m');
     q.kind = 'mixed';
@@ -275,39 +299,57 @@ const Conversions = (function () {
     q.revealLines[q.revealLines.length - 1] = 'Say it another way: ' + q.another + '.';
     return q;
   }
-  function gen6() {
-    if (Math.random() < 0.5) {
-      const metresMilli = ri(1, 20) * 100 + ri(0, 9) * 10;
-      const cm = ri(20, 400);
-      const q = convert('length', 'm', true, metresMilli);
-      const leftCm = q.resultMilli / 1000;
-      const longer = leftCm === cm ? 'the same' : (leftCm > cm ? q.fromText : cm + ' cm');
-      q.kind = 'compare';
-      q.equation = 'Which is longer: ' + q.fromText + ' or ' + cm + ' cm?';
-      q.solvedEquation = longer === 'the same'
-        ? q.fromText + ' and ' + cm + ' cm are the same length'
-        : longer + ' is longer';
-      q.revealLines[q.revealLines.length - 1] = 'Say it another way: ' + q.fromText + ' = ' + fmt(q.resultMilli) +
-        ' cm. ' + (longer === 'the same' ? 'They are the same length.' : longer + ' is longer.');
-      q.answer = leftCm;
-      return q;
+  function shuffle(list) {
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = ri(0, i);
+      const tmp = list[i];
+      list[i] = list[j];
+      list[j] = tmp;
     }
-    const a = ri(1, 9) * 100;
-    const b = ri(100, 900);
-    const c = ri(1, 9) * 100 + ri(1, 9) * 10;
-      const items = [
-      { text: fmt(a) + ' kg', grams: a },
-      { text: b + ' g', grams: b },
-      { text: fmt(c) + ' kg', grams: c }
-    ];
-    items.sort(function (x, y) { return x.grams - y.grams; });
-    const q = convert('mass', 'kg', true, a);
+    return list;
+  }
+  function gen6() {
+    const count = Math.random() < 1 / 3 ? 5 : (Math.random() < 0.5 ? 3 : 4);
+    const descending = Math.random() < 0.5;
+    const pair = pick([
+      { measure: 'mass', big: 'kg', small: 'g', factor: 1000 },
+      { measure: 'length', big: 'm', small: 'cm', factor: 100 },
+      { measure: 'length', big: 'cm', small: 'mm', factor: 10 },
+      { measure: 'capacity', big: 'L', small: 'mL', factor: 1000 },
+      { measure: 'length', big: 'km', small: 'm', factor: 1000 }
+    ]);
+    const anchor = ri(2, 9) * (pair.factor / 10) * ri(1, 4);
+    const smalls = [anchor, anchor + ri(2, 18)];
+    const used = {};
+    used[smalls[0]] = true;
+    used[smalls[1]] = true;
+    while (smalls.length < count) {
+      const v = anchor + ri(-40, 40);
+      if (v < 1 || used[v]) continue;
+      used[v] = true;
+      smalls.push(v);
+    }
+    const items = shuffle(smalls.map(function (small, i) {
+      const asBig = i < 2 ? i === 0 : Math.random() < 0.5;
+      const text = asBig ? (fmt(Math.round(small * 1000 / pair.factor)) + ' ' + pair.big) : (small + ' ' + pair.small);
+      return { text: text, small: small, asBig: asBig };
+    }));
+    const bigItem = items.filter(function (item) { return item.asBig; })[0] || items[0];
+    const q = convert(pair.measure, pair.big, true, Math.round(bigItem.small * 1000 / pair.factor));
+    const sorted = items.slice().sort(function (a, b) { return descending ? b.small - a.small : a.small - b.small; });
+    const heading = descending ? 'Order from largest to smallest:' : 'Order from smallest to largest:';
+    const amounts = items.map(function (item) { return item.text; }).join(' · ');
     q.kind = 'order';
-    q.equation = 'Order from smallest: ' + fmt(a) + ' kg, ' + b + ' g, ' + fmt(c) + ' kg';
-    q.solvedEquation = items.map(function (item) { return item.text; }).join(', ');
-    q.revealLines[q.revealLines.length - 1] = 'Say it another way: ' + fmt(a) + ' kg = ' + a + ' g and ' + fmt(c) +
-      ' kg = ' + c + ' g. Smallest to largest: ' + q.solvedEquation + '.';
-    q.answer = a;
+    q.count = count;
+    q.mix = category(q);
+    q.equation = heading + '<span class="eq-amounts">' + amounts + '</span>';
+    q.solvedEquation = q.equation;
+    q.revealLines = ['Change them all to ' + pair.small + '.'].concat(items.map(function (item) {
+      return item.text + ' = ' + item.small + ' ' + pair.small;
+    })).concat([(descending ? 'Largest to smallest: ' : 'Smallest to largest: ') + sorted.map(function (item) { return item.text; }).join(' · ')]);
+    q.steps = q.revealLines.map(function (text) { return { text: text }; });
+    q.hasDecimal = items.some(function (item) { return item.text.indexOf('.') >= 0; });
+    q.answer = sorted[0].small;
     return q;
   }
   function pointShift(text, places) {
@@ -415,7 +457,10 @@ const Conversions = (function () {
       });
   }
 
-  function predict() {
+  function predict(q) {
+    if (q && q.kind === 'order') {
+      return { lines: ['Change them all to the same unit first. Which unit will you use?'] };
+    }
     return { lines: [
       'Going to a bigger or smaller unit?',
       'Will your number get bigger or smaller?',
@@ -448,12 +493,12 @@ const Conversions = (function () {
     section: 'measurement',
     plain: true,
     levels: [
-      { id: 1, name: 'm ↔ cm, cm ↔ mm', example: '3 m → cm' },
+      { id: 1, name: 'm ↔ cm, cm ↔ mm', example: '352 cm → m' },
       { id: 2, name: 'km ↔ m', example: '4 km → m' },
       { id: 3, name: 'Mass and capacity', example: '2 kg → g' },
       { id: 4, name: 'Decimal amounts', example: '2.5 km → m' },
       { id: 5, name: 'Mixed units', example: '2 m 35 cm → cm' },
-      { id: 6, name: 'Compare and order', example: '1.2 m or 115 cm?' },
+      { id: 6, name: 'Order amounts', example: '0.4 kg · 412 g · 0.5 kg' },
       { id: 7, name: 'One measurement, many ways', example: 'Which is not equal to 2.35 m?' }
     ],
     tricky: [
