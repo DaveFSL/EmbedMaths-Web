@@ -277,6 +277,9 @@ h2 { font-size: 22px; margin: 0; }
   width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
   background: var(--soft); color: var(--muted); font-weight: 700; flex-shrink: 0;
 }
+.reveal-line { margin: 0; font-weight: 650; line-height: 1.45; }
+.reveal-lines { display: flex; flex-direction: column; gap: 8px; }
+.check .btn { margin-top: 12px; }
 .step p { margin: 0; }
 .step-title { font-weight: 740; margin-bottom: 4px; }
 .step.current { background: var(--tint); border-color: #f0d2c0; }

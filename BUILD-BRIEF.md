@@ -99,8 +99,8 @@ The mockup canvas has nine screens. Build these:
 - Top: Stop, "Level N · Question x of y", a progress strip of coloured segments (teal = right, orange = error, grey = to do), and a "Tricky one" tag when relevant.
 - Left card: the question in large type, the estimate line, then the written layout drawn by the topic's `render()`.
 - Right: the step list. The current or key step is highlighted.
-- After the full reveal: **How did you go?** with the buttons **I got it right** / **I made an error**. If error, show "Which step went wrong?" chips from `errorTags`. One tap each; it's optional to pick a chip.
-- **Reference first.** The heading stays the question (`31 ÷ 10 = ?`, or the plain sum for written methods) until **Show solution**. That opens the complete working, the full answer, and **How did you go?** **Next question** (or **See my summary**) appears after a self-check tap. **Show me each step** is optional: Next walks the steps (one column at a time for addition and subtraction, one row at a time for multiplication, with **Show me each column** inside a row), then returns to the whole answer. Back from the first step returns there too. Estimate first is still optional. Place value asks "Will the answer be bigger or smaller?" instead of an estimate.
+- After the full reveal: **How did you go?** **I got it right** records the result and goes straight to the next question (or the summary after the last one). **I made an error** shows "Which step went wrong?" chips from `errorTags`, plus **Next question**. The chip is optional. Stepping through the working never blocks moving on.
+- **Reference first.** The heading stays the question (`31 ÷ 10 = ?`, or the plain sum for written methods) until **Show solution**. That opens the complete working and the full answer. **Show me each step** is optional on written methods: Next walks the steps (one column at a time for addition and subtraction, one row at a time for multiplication, with **Show me each column** inside a row), then returns to the whole answer. Back from the first step returns there too. Estimate first is still optional. Place value shows the chart and the short lines all at once, with no step list.
 
 ### Summary
 - "6 out of 8. Nice work." with a row of question tiles (tick, or the error tag in orange).
@@ -197,8 +197,9 @@ Example: `…/?t=sub&lvl=6&q=8&est=1&strat=1&tricky=2`
 ### Place value slide (screens 8 and 9)
 - Columns: Th · H · T · O · **.** · t · h (add th for 3 dp). The decimal point has its own fixed column.
 - **The digits move. The decimal point never moves.** Never teach "add a zero" or "move the decimal point".
-- Step titles: **Which way?** (× makes it bigger, so the digits move left; ÷ makes it smaller, so the digits move right), then **How far?** (10 = 1 place, 100 = 2, 1000 = 3), then **Fill the gaps** (placeholder zeros in empty places between the digits and the decimal point, and a 0 in the ones place when the answer is less than 1, e.g. 0.45).
-- The finished chart and the answer show first. **Show me each step** walks Which way, How far, then Fill the gaps.
+- Before the reveal, two prompts only: "Will the answer be bigger or smaller?" and "Which way will the digits move — left or right?"
+- On reveal, the chart and the answer appear with the lines together (no step list): **Which way?** ("Left — × makes it bigger." or "Right — ÷ makes it smaller."), **How many places?** (10 = 1, 100 = 2, 1000 = 3), **Do the jumps** (name each digit's jump, or "Every digit jumps 2 places left." when there are more than 3). When a place is empty: **Zeros hold the place** ("The ones place is empty, so a 0 holds it: 60." or "There are no ones, so a 0 holds the ones place: 0.45.").
+- Self-check chips: Which way, How many places, The jumps, Zeros hold the place.
 - Draw an arrow showing the move ("3 places left").
 - Colours: the digit that moves has a teal fill; a placeholder zero is orange with a dashed border.
 

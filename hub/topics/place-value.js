@@ -104,26 +104,54 @@ const PlaceValue = (function () {
     return cols;
   }
 
-  function howPhrase(power, places) {
-    if (places === 1) return '10 is one ten, so each digit moves 1 place.';
-    if (places === 2) return '100 is 10 × 10, so each digit moves 2 places.';
-    return '1000 is 10 × 10 × 10, so each digit moves 3 places.';
+  function sourceName(pos, digit) {
+    if (pos === 0) return digit === 1 ? 'one' : 'ones';
+    return PLACE[pos];
   }
 
-  function fillText(parsed, delta, gaps, resultText) {
-    const bits = [];
-    for (let pos = parsed.sigMax; pos >= parsed.sigMin; pos--) {
-      const digit = parsed.map[pos];
+  function jumpsLine(q) {
+    const named = [];
+    for (let pos = q.parsed.sigMax; pos >= q.parsed.sigMin; pos--) {
+      const digit = q.parsed.map[pos];
       if (!digit) continue;
-      bits.push('the ' + digit + ' lands in the ' + PLACE[pos + delta]);
+      named.push(digit + ' ' + sourceName(pos, digit) + ' jumps to the ' + PLACE[pos + q.delta]);
     }
-    const landed = bits.join(' and ');
-    if (!gaps.length) return 'No gaps to fill this time.';
-    const names = gaps.map(function (pos) { return 'the ' + PLACE[pos]; });
-    const where = names.length === 1 ? names[0] + ' place is' : names.join(' and ') + ' are';
-    const zeros = gaps.length === 1 ? 'a 0' : 'a 0 in each';
-    return landed.charAt(0).toUpperCase() + landed.slice(1) + '. ' + where.charAt(0).toUpperCase() + where.slice(1) +
-      ' empty, so put ' + zeros + ' to hold the place: ' + resultText + '.';
+    if (named.length > 3) {
+      return 'Do the jumps. Every digit jumps ' + q.places + ' place' + (q.places === 1 ? '' : 's') + ' ' + q.dir + '.';
+    }
+    return 'Do the jumps. ' + named.join(', ') + ': ' + q.resultText + '.';
+  }
+
+  function zerosLine(q) {
+    if (!q.gaps.length) return '';
+    if (q.resultMilli < 1000) {
+      const extras = q.gaps.filter(function (pos) { return pos !== 0; });
+      let line = 'Zeros hold the place. There are no ones, so a 0 holds the ones place';
+      if (!extras.length) return line + ': ' + q.resultText + '.';
+      const names = extras.map(function (pos) { return 'the ' + PLACE[pos]; });
+      const be = extras.length === 1 ? ' is' : ' are';
+      const hold = extras.length === 1 ? 'it' : 'each';
+      return line + '. ' + names.join(' and ').replace(/^the/, 'The') + be + ' empty, so a 0 holds ' + hold + ': ' + q.resultText + '.';
+    }
+    if (q.gaps.length === 1) {
+      return 'Zeros hold the place. The ' + PLACE[q.gaps[0]] + ' place is empty, so a 0 holds it: ' + q.resultText + '.';
+    }
+    const names = q.gaps.map(function (pos) { return 'the ' + PLACE[pos]; });
+    return 'Zeros hold the place. ' + names.join(' and ').replace(/^the/, 'The') + ' are empty, so a 0 holds each: ' + q.resultText + '.';
+  }
+
+  function revealLines(q) {
+    const side = q.dir === 'left' ? 'Left' : 'Right';
+    const why = q.op === '×' ? '× makes it bigger' : '÷ makes it smaller';
+    const placeWord = q.places === 1 ? 'place' : 'places';
+    const lines = [
+      'Which way? ' + side + ' — ' + why + '.',
+      'How many places? ' + q.places + ' — ' + q.op + ' ' + q.power + ' is ' + q.places + ' ' + placeWord + '.',
+      jumpsLine(q)
+    ];
+    const zeros = zerosLine(q);
+    if (zeros) lines.push(zeros);
+    return lines;
   }
 
   function make(spec) {
@@ -166,39 +194,9 @@ const PlaceValue = (function () {
       q.equation = startText + ' ' + spec.op + ' ' + spec.power + ' = ?';
       q.solvedEquation = startText + ' ' + spec.op + ' ' + spec.power + ' = ' + resultText;
     }
-    q.steps = buildSteps(q);
+    q.revealLines = revealLines(q);
+    q.steps = q.revealLines.map(function (text) { return { text: text }; });
     return q;
-  }
-
-  function buildSteps(q) {
-    const which = q.missing
-      ? (q.op === '×'
-        ? q.resultText + ' is bigger than ' + q.startText + ', so the number got bigger. The digits move left. This is multiplying.'
-        : q.resultText + ' is smaller than ' + q.startText + ', so the number got smaller. The digits move right. This is dividing.')
-      : (q.op === '×'
-        ? 'Multiplying by ' + q.power + ' makes the number bigger, so the digits move left.'
-        : 'Dividing by ' + q.power + ' makes the number smaller, so the digits move right.');
-    let far;
-    if (q.missing) {
-      const from = PLACE[q.parsed.sigMax];
-      const to = PLACE[q.parsed.sigMax + q.delta];
-      const digit = q.parsed.map[q.parsed.sigMax];
-      far = 'The ' + digit + ' moves from the ' + from + ' place to the ' + to + ' place. That is ' +
-        q.places + ' place' + (q.places === 1 ? '' : 's') + '. ' + q.places + ' place' + (q.places === 1 ? '' : 's') +
-        ' means ' + q.op + ' ' + q.power + '.';
-    } else {
-      far = howPhrase(q.power, q.places);
-    }
-    let fill = fillText(q.parsed, q.delta, q.gaps, q.resultText);
-    if (q.missing) fill += ' The missing number is ' + q.power + '.';
-    const tags = ['Which way', 'How far'];
-    if (q.gaps.length) tags.push('Placeholder zero');
-    tags.push('Decimal point');
-    return [
-      { kind: 'teach', title: 'Which way?', label: 'Which way?', text: which, stepTag: 'Which way', tags: tags },
-      { kind: 'teach', title: 'How far?', label: 'How far?', text: far, stepTag: 'How far', tags: tags },
-      { kind: 'teach', title: 'Fill the gaps', label: 'Fill the gaps', text: fill, stepTag: q.gaps.length ? 'Placeholder zero' : 'How far', tags: tags }
-    ];
   }
 
   function rowCells(map, highlight) {
@@ -210,8 +208,8 @@ const PlaceValue = (function () {
   }
 
   function render(q, stepIndex, el) {
-    const showAnswer = stepIndex >= 1;
-    const showGaps = stepIndex >= 2;
+    const showAnswer = true;
+    const showGaps = true;
     const startHighlight = {};
     for (let pos = q.parsed.sigMin; pos <= q.parsed.sigMax; pos++) {
       if (q.parsed.map[pos]) startHighlight[String(pos)] = true;
@@ -326,10 +324,14 @@ const PlaceValue = (function () {
     return GENS[level]();
   }
 
-  function predict(q) {
-    return q.op === '×'
-      ? { before: 'Will the answer be bigger or smaller?', after: 'Bigger — we multiplied' }
-      : { before: 'Will the answer be bigger or smaller?', after: 'Smaller — we divided' };
+  function predict() {
+    return {
+      before: 'Will the answer be bigger or smaller?',
+      lines: [
+        'Will the answer be bigger or smaller?',
+        'Which way will the digits move — left or right?'
+      ]
+    };
   }
 
   function estimate(q) {
@@ -391,10 +393,10 @@ const PlaceValue = (function () {
   }
 
   const TIPS = {
-    'Which way': 'Multiplying makes the number bigger, so the digits move left. Dividing makes it smaller, so they move right.',
-    'How far': '10 is 1 place, 100 is 2 places, and 1000 is 3 places.',
-    'Placeholder zero': 'If a place between the digits and the decimal point is empty, write a 0 there. Do not say "add a zero".',
-    'Decimal point': 'The decimal point stays in its column. Only the digits move.'
+    'Which way': 'Multiplying makes the number bigger, so the digits jump left. Dividing makes it smaller, so they jump right.',
+    'How many places': '10 is 1 place, 100 is 2 places, and 1000 is 3 places.',
+    'The jumps': 'Name the place each digit starts in, and the place it lands in.',
+    'Zeros hold the place': 'If a place between the digits and the decimal point is empty, a 0 holds it. Do not say "add a zero".'
   };
 
   EM.registerTopic({
@@ -411,10 +413,11 @@ const PlaceValue = (function () {
       { id: 7, name: 'Mixed', example: '7 ÷ 1000' }
     ],
     tricky: [
-      { id: 'gaps', tags: ['Placeholder zero'], levels: [5, 7] },
-      { id: 'missing', tags: ['Which way', 'How far'], levels: [6, 7] }
+      { id: 'gaps', tags: ['Zeros hold the place'], levels: [5, 7] },
+      { id: 'missing', tags: ['Which way', 'How many places'], levels: [6, 7] }
     ],
-    errorTags: ['Which way', 'How far', 'Placeholder zero', 'Decimal point'],
+    errorTags: ['Which way', 'How many places', 'The jumps', 'Zeros hold the place'],
+    plain: true,
     tips: TIPS,
     makeQuestion: function (level, opts) {
       opts = opts || {};
@@ -432,15 +435,13 @@ const PlaceValue = (function () {
     },
     estimate: estimate,
     predict: predict,
-    buildSteps: function (q) { return q.steps || buildSteps(q); },
+    buildSteps: function (q) { return q.steps || []; },
     render: render,
     strategy: strategy,
     chipsFor: function (q) {
-      const used = {};
-      (q.steps || []).forEach(function (s) {
-        (s.tags || []).forEach(function (tag) { used[tag] = true; });
-      });
-      return this.errorTags.filter(function (tag) { return used[tag]; });
+      const chips = ['Which way', 'How many places', 'The jumps'];
+      if (q.gaps && q.gaps.length) chips.push('Zeros hold the place');
+      return chips;
     },
     extensions: function () { return extBank(); }
   });

@@ -35,10 +35,12 @@ const Player = (function () {
     }).join('');
 
     let estimateHtml = '';
-    if (topic().predict) {
+    const plain = !!(topic().plain);
+    if (topic().predict && !revealed) {
       const pred = topic().predict(question);
-      estimateHtml = '<p class="estimate">' + (revealed ? pred.after : pred.before) + '</p>';
-    } else if (session.est) {
+      const lines = pred.lines || [pred.before];
+      estimateHtml = lines.map(function (line) { return '<p class="estimate">' + line + '</p>'; }).join('');
+    } else if (session.est && !plain) {
       if (!revealed) {
         estimateHtml = '<p class="estimate">Estimate first. Write a reasonable estimate on your paper.</p>';
       } else {
@@ -69,7 +71,11 @@ const Player = (function () {
       return '<li class="step current"><span class="n">•</span><div>' + body + (extra || '') + '</div></li>';
     }
     let stepHtml = '';
-    if (phase === 'steps') {
+    if (plain && revealed) {
+      stepHtml = (question.revealLines || []).map(function (text) {
+        return '<p class="reveal-line">' + text + '</p>';
+      }).join('');
+    } else if (phase === 'steps') {
       const lines = [];
       steps.forEach(function (s, i) {
         if (i > step) return;
@@ -95,33 +101,36 @@ const Player = (function () {
     }
 
     let check = '';
-    if (whole) {
+    if (revealed) {
       const chips = topic().chipsFor(question).map(function (name, i) {
         const on = tag === name ? ' on' : '';
         return '<button type="button" class="chip' + on + '" data-tag="' + name + '">' + (i + 1) + ' · ' + name + '</button>';
       }).join('');
+      const nextLabel = session.index + 1 >= session.count ? 'See my summary' : 'Next question';
       check = '<section class="check"><h3>How did you go?</h3><div class="check-row">' +
         '<button type="button" class="choice right' + (choice === 'right' ? ' on' : '') + '" data-choice="right">' +
         EM.icons.check + ' I got it right</button>' +
         '<button type="button" class="choice wrong' + (choice === 'error' ? ' on' : '') + '" data-choice="error">I made an error</button>' +
         '</div>' + (choice === 'error'
-          ? '<p class="which">Which step went wrong?</p><div class="chips">' + chips + '</div>'
+          ? '<p class="which">Which step went wrong?</p><div class="chips">' + chips + '</div>' +
+            '<button type="button" class="btn primary" id="nextQ">' + nextLabel + ' ' + EM.icons.arrow + '</button>'
           : '') + '</section>';
     }
 
     let strategy = '';
-    if (whole && session.strat) {
+    if (whole && session.strat && !plain) {
       strategy = '<aside class="strategy"><p class="eyebrow">One way in your head</p>' + topic().strategy(question) + '</aside>';
     }
 
-    const showNext = whole && choice;
     const actions = !revealed
       ? '<button type="button" class="btn primary" id="showSolution">Show solution ' + EM.icons.arrow + '</button>'
-      : (whole
-        ? '<button type="button" class="btn ghost" id="prevStep">Back</button>' +
-          '<button type="button" class="btn primary" id="eachStep">Show me each step ' + EM.icons.arrow + '</button>'
-        : '<button type="button" class="btn ghost" id="prevStep">Back</button>' +
-          '<button type="button" class="btn primary" id="nextStep">Next step ' + EM.icons.arrow + '</button>');
+      : (plain
+        ? '<button type="button" class="btn ghost" id="prevStep">Back</button>'
+        : (whole
+          ? '<button type="button" class="btn ghost" id="prevStep">Back</button>' +
+            '<button type="button" class="btn primary" id="eachStep">Show me each step ' + EM.icons.arrow + '</button>'
+          : '<button type="button" class="btn ghost" id="prevStep">Back</button>' +
+            '<button type="button" class="btn primary" id="nextStep">Next step ' + EM.icons.arrow + '</button>'));
 
     document.getElementById('app').innerHTML =
       '<div class="shell play"><header class="play-top"><button type="button" class="btn ghost" id="stop">' +
@@ -130,12 +139,12 @@ const Player = (function () {
       '</div></div>' + (question.tricky ? '<span class="tricky-tag">Tricky one</span>' : '<span></span>') + '</header>' +
       '<div class="work"><section class="paper"><p class="equation">' +
       ((revealed && question.solvedEquation) ? question.solvedEquation : (question.equation || (question.textA + ' − ' + question.textB))) + '</p>' +
-      estimateHtml + '<div id="algo"></div>' + foot + '</section><section class="steps-col"><p class="eyebrow">The steps</p>' +
-      (phase === 'steps' ? '<ol class="steps">' + stepHtml + '</ol>' : '<p class="wait-note">The working stays hidden until you are ready.</p>') +
-      strategy + check + '</section></div><div class="action-row">' + actions +
-      (showNext ? '<button type="button" class="btn primary" id="nextQ">' +
-        (session.index + 1 >= session.count ? 'See my summary' : 'Next question') + ' ' + EM.icons.arrow + '</button>' : '') +
-      '</div></div>';
+      estimateHtml + '<div id="algo"></div>' + foot + '</section><section class="steps-col">' +
+      (plain ? '' : '<p class="eyebrow">The steps</p>') +
+      (plain && revealed
+        ? '<div class="reveal-lines">' + stepHtml + '</div>'
+        : (phase === 'steps' ? '<ol class="steps">' + stepHtml + '</ol>' : '<p class="wait-note">The working stays hidden until you are ready.</p>')) +
+      strategy + check + '</section></div><div class="action-row">' + actions + '</div></div>';
 
     question.view = { col: col, reveal: revealAll };
     if (phase === 'steps') topic().render(question, revealAll ? steps.length - 1 : step, document.getElementById('algo'));
@@ -199,7 +208,7 @@ const Player = (function () {
     document.querySelectorAll('[data-choice]').forEach(function (btn) {
       btn.onclick = function () {
         choice = btn.getAttribute('data-choice');
-        if (choice === 'right') tag = null;
+        if (choice === 'right') { tag = null; commit(); return; }
         paint(false);
       };
     });
