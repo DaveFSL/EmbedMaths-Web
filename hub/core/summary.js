@@ -64,17 +64,27 @@ const Summary = (function () {
     return { parts: parts, weakest: weakest };
   }
 
+  function scoreHeading(score, total) {
+    if (score === total) return 'All ' + total + ' correct!';
+    return score + ' out of ' + total;
+  }
+
+  function finishLine(session) {
+    const text = (session.fin && String(session.fin).trim()) ||
+      'Take a screenshot of this card and share it with your teacher.';
+    return '<p class="hw-fin">' + EM.escapeHtml(text) + '</p>';
+  }
+
   function hwCard(session, score, total, parts) {
-    if (!(session.set || session.title || session.due)) return '';
+    if (!(session.set || session.title || session.due || session.fin)) return '';
     const title = session.title || (session.set ? 'A set' : (session.levelName || 'Homework'));
     const due = session.due ? '<p>Due: ' + EM.escapeHtml(EM.formatDue(session.due)) + '</p>' : '';
-    const chip = weakestChip(session.results);
     return '<section class="hw-card" id="homeworkCard"><p class="eyebrow">Homework done</p><h2>' +
       EM.escapeHtml(title) + '</h2>' + due +
       '<p>Completed ' + completedStamp() + '</p>' +
-      '<p class="hw-score">' + score + ' out of ' + total + '</p>' +
+      '<p class="hw-score">' + scoreHeading(score, total) + '</p>' +
       '<p>' + parts.join(' · ') + '</p>' +
-      '<p><strong>Weakest:</strong> ' + (chip ? EM.escapeHtml(chip) : 'No step was marked.') + '</p></section>';
+      finishLine(session) + '</section>';
   }
 
   function openMix() {
@@ -92,11 +102,11 @@ const Summary = (function () {
     }).join('');
     const allRight = score === total;
     const watch = allRight
-      ? '<section class="watch"><p class="eyebrow warn">What to watch</p><h2>Every topic was right.</h2><p>' + parts.join(' · ') + '</p></section>'
+      ? ''
       : '<section class="watch"><p class="eyebrow warn">What to watch</p><h2>' + weakest.name + ' was the weakest.</h2><p>' + parts.join(' · ') + '</p></section>';
     const recent = Store.recentScores('mix', 5);
     document.getElementById('app').innerHTML =
-      '<div class="shell summary"><p class="eyebrow">Daily mix</p><h1>' + score + ' out of ' + total + '. Nice work.</h1>' +
+      '<div class="shell summary"><p class="eyebrow">Daily mix</p><h1>' + scoreHeading(score, total) + '</h1>' +
       hwCard(session, score, total, parts) +
       '<ol class="q-row">' + tiles + '</ol><div class="summary-grid">' + watch +
       '<section class="next-card"><p class="eyebrow light">Next time</p><h2>Each topic stays on its saved level.</h2>' +
@@ -121,16 +131,14 @@ const Summary = (function () {
     }).join('');
     const allRight = score === total;
     const watch = allRight
-      ? '<section class="watch"><p class="eyebrow warn">What to watch</p><h2>Every topic was right.</h2><p>' + grouped.parts.join(' · ') + '</p></section>'
+      ? ''
       : '<section class="watch"><p class="eyebrow warn">What to watch</p><h2>' + grouped.weakest.name + ' was the weakest.</h2><p>' + grouped.parts.join(' · ') + '</p></section>';
     document.getElementById('app').innerHTML =
       '<div class="shell summary"><p class="eyebrow">Set by your teacher</p>' +
       hwCard(session, score, total, grouped.parts) +
-      '<h1>' + score + ' out of ' + total + '. Nice work.</h1><ol class="q-row">' + tiles + '</ol>' +
-      '<div class="summary-grid">' + watch +
-      '<section class="next-card"><p class="eyebrow light">Next time</p><h2>Show this card to your teacher.</h2>' +
-      '<p>A screenshot of Homework done is enough to post in Teams.</p>' +
-      '<button type="button" class="btn light" id="homeBtn">Back to home</button></section></div></div>';
+      '<h1>' + scoreHeading(score, total) + '</h1><ol class="q-row">' + tiles + '</ol>' +
+      (watch ? '<div class="summary-grid">' + watch + '</div>' : '') +
+      '<button type="button" class="btn ghost" id="homeBtn">Back to home</button></div>';
     document.getElementById('homeBtn').onclick = function () { EM.home(); };
     window.scrollTo(0, 0);
   }
@@ -176,7 +184,7 @@ const Summary = (function () {
         '</h2><p>' + (topic.tips[top.tag] || '') + '</p><button type="button" class="btn peach" id="more">Try 4 more like these</button></section>'
       : (errorCount
         ? '<section class="watch"><p class="eyebrow warn">What to watch</p><h2>' + errorCount + (errorCount === 1 ? ' error was' : ' errors were') + ' marked.</h2><p>No step was chosen, so there is no pattern to show yet.</p></section>'
-        : '<section class="watch"><p class="eyebrow warn">What to watch</p><h2>Every question was right.</h2><p>Nothing to go over from this round.</p></section>');
+        : '');
 
     const nextHtml = suggestNext
       ? '<h2>Try Level ' + next.id + ' tomorrow.</h2><p>You scored 7 or more twice in a row. Level ' + next.id + ', ' + next.name.toLowerCase() + ', is suggested next.</p>'
@@ -189,7 +197,7 @@ const Summary = (function () {
     const extLine = ext ? '<p class="ext-line">Extensions: ' + ext.score + ' of ' + ext.of + '</p>' : '';
     document.getElementById('app').innerHTML =
       '<div class="shell summary"><p class="eyebrow">' + topic.name + ' · Level ' + session.level + ' · ' + session.levelName +
-      '</p><h1>' + score + ' out of ' + total + '. Nice work.</h1>' +
+      '</p><h1>' + scoreHeading(score, total) + '</h1>' +
       hwCard(session, score, total, [topic.name + ' ' + score + '/' + total]) +
       extLine + '<ol class="q-row">' + tiles + '</ol>' +
       '<div class="summary-grid">' + watch + '<section class="next-card"><p class="eyebrow light">Next time</p>' +

@@ -3,6 +3,7 @@ const Player = (function () {
   let step = -1;
   let col = -1;
   let revealAll = false;
+  let walking = false;
   let choice = null;
   let tag = null;
 
@@ -18,6 +19,7 @@ const Player = (function () {
     step = -1;
     col = -1;
     revealAll = false;
+    walking = false;
     choice = null;
     tag = null;
   }
@@ -65,43 +67,59 @@ const Player = (function () {
         : 'The answer is ' + shown + '. The estimate was ' + est.answer + '.') + '</p>';
     }
 
+    function stepBody(s) {
+      if (!s) return '';
+      if (s.kind === 'trade' || s.kind === 'lineup' || s.kind === 'teach') {
+        return '<p class="step-title">' + (s.title || '') + '</p><p>' + (s.text || '') + '</p>';
+      }
+      return '<p>' + (s.text || s.title || s.label || '') + '</p>';
+    }
     function doneLine(label) {
       return '<li class="step done"><span class="n">✓</span><div><p>' + label + '</p></div></li>';
     }
     function fullLine(s, extra) {
-      const body = s.kind === 'trade' || s.kind === 'lineup' || s.kind === 'teach'
-        ? '<p class="step-title">' + s.title + '</p><p>' + s.text + '</p>'
-        : '<p>' + s.text + '</p>';
-      return '<li class="step current"><span class="n">•</span><div>' + body + (extra || '') + '</div></li>';
+      return '<li class="step current"><span class="n">•</span><div>' + stepBody(s) + (extra || '') + '</div></li>';
+    }
+    function fold(inner, forceOpen) {
+      const wide = window.matchMedia('(min-width: 601px)').matches;
+      return '<details class="step-fold"' + (forceOpen || wide ? ' open' : '') +
+        '><summary>Show the steps</summary>' + inner + '</details>';
     }
     let stepHtml = '';
     if (plain && revealed) {
-      stepHtml = (question.revealLines || []).map(function (text) {
+      const lines = (question.revealLines || []).map(function (text) {
         return '<p class="reveal-line">' + text + '</p>';
       }).join('');
-    } else if (phase === 'steps') {
-      const lines = [];
-      steps.forEach(function (s, i) {
-        if (i > step) return;
-        const name = s.label || s.title || 'Step';
-        if (i < step || revealAll) {
-          lines.push(doneLine(name));
-          return;
-        }
-        if (inCols) {
-          s.columns.forEach(function (c, ci) {
-            if (ci < col) lines.push(doneLine(c.label || 'Column'));
-          });
-          lines.push(fullLine(s.columns[col]));
-          return;
-        }
-        const link = s.columns && s.columns.length
-          ? '<button type="button" class="col-link" id="eachCol">Show me each column</button>'
-          : '';
-        lines.push(fullLine(s, link));
-      });
-      if (revealAll) lines.push(fullLine({ text: 'The whole answer is shown.' }));
-      stepHtml = lines.join('');
+      stepHtml = fold('<div class="reveal-lines">' + lines + '</div>', false);
+    } else if (revealed && steps && steps.length) {
+      if (walking) {
+        const lines = [];
+        steps.forEach(function (s, i) {
+          if (i > step) return;
+          const name = s.label || s.title || 'Step';
+          if (i < step) {
+            lines.push(doneLine(name));
+            return;
+          }
+          if (inCols) {
+            s.columns.forEach(function (c, ci) {
+              if (ci < col) lines.push(doneLine(c.label || 'Column'));
+            });
+            lines.push(fullLine(s.columns[col]));
+            return;
+          }
+          const link = s.columns && s.columns.length
+            ? '<button type="button" class="col-link" id="eachCol">Show me each column</button>'
+            : '';
+          lines.push(fullLine(s, link));
+        });
+        stepHtml = fold('<ol class="steps">' + lines.join('') + '</ol>', true);
+      } else {
+        const lines = steps.map(function (s) {
+          return '<li class="step"><span class="n">•</span><div>' + stepBody(s) + '</div></li>';
+        }).join('');
+        stepHtml = fold('<ol class="steps">' + lines + '</ol>', false);
+      }
     }
 
     let check = '';
@@ -128,13 +146,11 @@ const Player = (function () {
 
     const actions = !revealed
       ? '<button type="button" class="btn primary" id="showSolution">Show solution ' + EM.icons.arrow + '</button>'
-      : (plain
-        ? '<button type="button" class="btn ghost" id="prevStep">Back</button>'
-        : (whole
-          ? '<button type="button" class="btn ghost" id="prevStep">Back</button>' +
-            '<button type="button" class="btn primary" id="eachStep">Show me each step ' + EM.icons.arrow + '</button>'
-          : '<button type="button" class="btn ghost" id="prevStep">Back</button>' +
-            '<button type="button" class="btn primary" id="nextStep">Next step ' + EM.icons.arrow + '</button>'));
+      : (walking
+        ? '<button type="button" class="btn ghost" id="prevStep">Back</button>' +
+          '<button type="button" class="btn ghost" id="nextStep">Next step ' + EM.icons.arrow + '</button>'
+        : '<button type="button" class="btn ghost" id="prevStep">Back</button>' +
+          (plain ? '' : '<button type="button" class="btn ghost" id="eachStep">Show me each step ' + EM.icons.arrow + '</button>'));
 
     document.getElementById('app').innerHTML =
       '<div class="shell play"><header class="play-top"><button type="button" class="btn ghost" id="stop">' +
@@ -147,11 +163,8 @@ const Player = (function () {
       '<div class="work"><section class="paper"><p class="equation">' +
       ((revealed && question.solvedEquation) ? question.solvedEquation : (question.equation || (question.textA + ' − ' + question.textB))) + '</p>' +
       estimateHtml + '<div id="algo"></div>' + foot + '</section><section class="steps-col">' +
-      (plain ? '' : '<p class="eyebrow">The steps</p>') +
-      (plain && revealed
-        ? '<div class="reveal-lines">' + stepHtml + '</div>'
-        : (phase === 'steps' ? '<ol class="steps">' + stepHtml + '</ol>' : '<p class="wait-note">The working stays hidden until you are ready.</p>')) +
-      strategy + check + '</section></div><div class="action-row">' + actions + '</div></div>';
+      (revealed ? stepHtml : '<p class="wait-note">The working stays hidden until you are ready.</p>') +
+      strategy + '</section></div><div class="dock">' + check + '<div class="action-row">' + actions + '</div></div></div>';
 
     question.view = { col: col, reveal: revealAll };
     if (phase === 'steps') topic().render(question, revealAll ? steps.length - 1 : step, document.getElementById('algo'));
@@ -161,12 +174,14 @@ const Player = (function () {
     if (show) show.onclick = function () {
       phase = 'steps';
       revealAll = true;
+      walking = false;
       col = -1;
       step = steps.length - 1;
       paint(false);
     };
     const eachStep = document.getElementById('eachStep');
     if (eachStep) eachStep.onclick = function () {
+      walking = true;
       revealAll = false;
       col = -1;
       step = 0;
@@ -181,6 +196,7 @@ const Player = (function () {
         if (col < current.columns.length - 1) col += 1;
         else col = -1;
       } else if (step >= steps.length - 1) {
+        walking = false;
         revealAll = true;
         col = -1;
         step = steps.length - 1;
@@ -192,11 +208,20 @@ const Player = (function () {
     };
     const prev = document.getElementById('prevStep');
     if (prev) prev.onclick = function () {
-      if (revealAll) {
+      if (walking && step <= 0 && col <= 0) {
+        walking = false;
+        revealAll = true;
+        col = -1;
+        step = steps.length - 1;
+        paint(false);
+        return;
+      }
+      if (revealAll || !walking) {
         phase = EM.session.est ? 'estimate' : 'ready';
         step = -1;
         col = -1;
         revealAll = false;
+        walking = false;
         paint(false);
         return;
       }
@@ -228,6 +253,11 @@ const Player = (function () {
     });
     const nextQ = document.getElementById('nextQ');
     if (nextQ) nextQ.onclick = commit;
+    const dock = document.querySelector('.dock');
+    const shell = document.querySelector('.shell.play');
+    if (dock && shell && window.matchMedia('(max-width: 600px)').matches) {
+      shell.style.paddingBottom = (dock.offsetHeight + 16) + 'px';
+    }
     if (scrollTop !== false) window.scrollTo(0, 0);
   }
 

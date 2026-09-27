@@ -804,7 +804,12 @@
     buildSteps: function (q) { return q.steps || buildSteps(q); },
     render: function (q, stepIndex, el) {
       const steps = q.steps || [];
-      const step = stepIndex >= 0 ? steps[stepIndex] : null;
+      let step = stepIndex >= 0 ? steps[stepIndex] : null;
+      if (q.view && q.view.reveal) {
+        for (let i = steps.length - 1; i >= 0; i--) {
+          if (steps[i].algo) { step = steps[i]; break; }
+        }
+      }
       el.innerHTML = renderAlgo(q, step);
     },
     strategy: function (q) { return mentalStrategy(q.a, q.b, 'subtraction', q.dp); },

@@ -41,6 +41,7 @@ const EM = (function () {
     const go = params.get('go') === '1';
     const ttl = cleanText(params.get('ttl'), 50);
     const msg = cleanText(params.get('msg'), 80);
+    const fin = cleanText(params.get('fin'), 80);
     const due = parseDue(params.get('due'));
     const order = params.get('order') === 'm' ? 'm' : 'g';
     let seed = params.get('seed') || '';
@@ -50,7 +51,7 @@ const EM = (function () {
     return {
       t: t, lvl: lvl, q: rows.length ? rowsTotal(rows) : q,
       est: est, strat: strat, tricky: tricky, go: go,
-      ttl: ttl, msg: msg, due: due, order: order, seed: seed, rows: rows, hasLink: hasLink
+      ttl: ttl, msg: msg, fin: fin, due: due, order: order, seed: seed, rows: rows, hasLink: hasLink
     };
   }
 
@@ -126,7 +127,18 @@ const EM = (function () {
     return (rows || []).reduce(function (n, row) { return n + row.count; }, 0);
   }
 
+  function qPhrase(n) {
+    return n + (n === 1 ? ' question' : ' questions');
+  }
+
+  function studentLine(rows) {
+    return rows.map(function (row) {
+      return (SHORT[row.topic] || row.topic) + ' \u00b7 ' + qPhrase(row.count);
+    }).join(' \u00b7 ');
+  }
+
   function setLine(rows, style) {
+    if (style === 'student') return studentLine(rows);
     const bits = rows.map(function (row) {
       return (SHORT[row.topic] || row.topic) + ' L' + row.level + ' \u00d7' + row.count;
     });
@@ -150,33 +162,33 @@ const EM = (function () {
     const due = parseDue(info.due);
     const shared = { msg: info.msg || '', due: due, dueText: due ? formatDue(due) : '', dueLate: duePassed(due) };
     if (info.rows && info.rows.length) {
+      const friendly = studentLine(info.rows);
       return {
         title: info.ttl || 'A set',
-        detail: setLine(info.rows, 'dot'),
-        teams: setLine(info.rows, 'paren'),
+        detail: friendly,
+        teams: friendly,
+        cardLine: friendly,
         msg: shared.msg, due: shared.due, dueText: shared.dueText, dueLate: shared.dueLate
       };
     }
     if (info.t === 'mix') {
+      const friendly = 'Daily mix \u00b7 ' + qPhrase(info.q);
       return {
         title: info.ttl || 'Daily mix',
-        detail: info.q + ' ' + qWord + ' across the topics' + trickyBit,
-        teams: 'Daily mix (' + info.q + ' ' + qWord + ')',
+        detail: friendly + trickyBit,
+        teams: friendly,
+        cardLine: friendly,
         msg: shared.msg, due: shared.due, dueText: shared.dueText, dueLate: shared.dueLate
       };
     }
     const topic = topics[info.t];
-    const meta = topic ? levelMeta(topic, info.lvl) : null;
     const fallback = (topic ? topic.name : 'This practice') + ' · Level ' + info.lvl;
-    const detail = meta
-      ? meta.name + ', like ' + meta.example + ' · ' + info.q + ' ' + qWord + trickyBit
-      : 'Level ' + info.lvl + ' · ' + info.q + ' ' + qWord;
-    const one = (SHORT[info.t] || (topic ? topic.name : 'Practice')) + ' L' + info.lvl + ' \u00d7' + info.q;
+    const friendly = (topic ? topic.name : 'Practice') + ' \u00b7 ' + qPhrase(info.q);
     return {
       title: info.ttl || fallback,
-      detail: detail,
-      teams: one + ' (' + info.q + ' ' + qWord + ')',
-      cardLine: one + ' \u00b7 ' + info.q + ' ' + qWord,
+      detail: friendly + trickyBit,
+      teams: friendly,
+      cardLine: friendly,
       msg: shared.msg, due: shared.due, dueText: shared.dueText, dueLate: shared.dueLate
     };
   }
@@ -342,6 +354,7 @@ const EM = (function () {
       msg: opts.msg || '',
       title: opts.title || '',
       due: opts.due || '',
+      fin: opts.fin || '',
       seed: opts.seed || '',
       focus: focus,
       questions: questions,
@@ -445,6 +458,7 @@ const EM = (function () {
       est: info.est,
       strat: info.strat,
       msg: info.msg,
+      fin: info.fin,
       title: info.ttl,
       due: info.due,
       seed: info.seed,
@@ -480,6 +494,7 @@ const EM = (function () {
       rows: rows,
       title: opts.title || '',
       due: opts.due || '',
+      fin: opts.fin || '',
       msg: opts.msg || '',
       seed: opts.seed || '',
       order: opts.order === 'm' ? 'm' : 'g',
@@ -511,6 +526,7 @@ const EM = (function () {
       msg: opts.msg || '',
       title: opts.title || '',
       due: opts.due || '',
+      fin: opts.fin || '',
       seed: opts.seed || '',
       focus: null,
       questions: questions,

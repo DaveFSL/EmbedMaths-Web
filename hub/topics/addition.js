@@ -428,7 +428,12 @@
     buildSteps: function (q) { return q.steps || buildSteps(q); },
     render: function (q, stepIndex, el) {
       const steps = q.steps || [];
-      const shown = stepIndex >= 0 ? steps[stepIndex] : null;
+      let shown = stepIndex >= 0 ? steps[stepIndex] : null;
+      if (q.view && q.view.reveal) {
+        for (let i = steps.length - 1; i >= 0; i--) {
+          if (steps[i].algo) { shown = steps[i]; break; }
+        }
+      }
       el.innerHTML = renderAlgo(q, shown);
     },
     strategy: strategy,

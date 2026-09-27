@@ -14,6 +14,7 @@ const LinkBuilder = (function () {
     title: '',
     due: '',
     msg: '',
+    fin: '',
     topic: 'sub',
     level: 6,
     q: 8,
@@ -63,6 +64,7 @@ const LinkBuilder = (function () {
         ttl: state.title.trim(),
         due: state.due,
         msg: state.msg.trim(),
+        fin: state.fin.trim(),
         tricky: 0
       };
     }
@@ -73,7 +75,8 @@ const LinkBuilder = (function () {
       tricky: state.tricky,
       ttl: state.title.trim(),
       due: state.due,
-      msg: state.msg.trim()
+      msg: state.msg.trim(),
+      fin: state.fin.trim()
     };
   }
 
@@ -99,6 +102,7 @@ const LinkBuilder = (function () {
     if (state.title.trim()) params.set('ttl', state.title.trim());
     if (state.due) params.set('due', state.due);
     if (state.msg.trim()) params.set('msg', state.msg.trim());
+    if (state.fin.trim()) params.set('fin', state.fin.trim());
     if (state.same && state.seed) params.set('seed', state.seed);
     return pageBase() + '?' + params.toString();
   }
@@ -149,17 +153,18 @@ const LinkBuilder = (function () {
     ctx.font = '700 30px "Bricolage Grotesque", Lexend, sans-serif';
     ctx.fillText('EmbedMaths', w / 2, 50);
     ctx.fillStyle = '#16302F';
-    ctx.font = '760 44px "Bricolage Grotesque", Lexend, sans-serif';
-    let y = wrapFill(ctx, described.title || 'Practice', w / 2, 132, 580, 52) + 12;
+    ctx.font = '760 40px "Bricolage Grotesque", Lexend, sans-serif';
+    let y = wrapFill(ctx, described.title || 'Practice', w / 2, 128, 560, 48);
+    y += 36;
     if (described.dueText) {
       ctx.fillStyle = '#4F6B6D';
-      ctx.font = '650 26px Lexend, sans-serif';
-      ctx.fillText('Due: ' + described.dueText, w / 2, y + 8);
-      y += 40;
+      ctx.font = '650 22px Lexend, sans-serif';
+      ctx.fillText('Due: ' + described.dueText, w / 2, y);
+      y += 32;
     }
     const qr = makeQr(url);
     const n = qr.getModuleCount();
-    const size = 340;
+    const size = 400;
     const cell = size / n;
     const left = (w - size) / 2;
     const top = y + 16;
@@ -180,11 +185,11 @@ const LinkBuilder = (function () {
     ctx.font = '650 24px Lexend, sans-serif';
     y = wrapFill(ctx, summary, w / 2, y, 580, 32) + 28;
     ctx.fillStyle = '#4F6B6D';
-    ctx.font = '500 18px Lexend, sans-serif';
-    const chunks = String(url).match(/.{1,42}/g) || [];
+    ctx.font = '500 12px Lexend, sans-serif';
+    const chunks = String(url).match(/.{1,64}/g) || [];
     chunks.forEach(function (chunk) {
       ctx.fillText(chunk, w / 2, y);
-      y += 26;
+      y += 16;
     });
     const used = Math.min(h * 2, Math.ceil((y + 36) * 2));
     canvas.width = w * 2;
@@ -207,7 +212,7 @@ const LinkBuilder = (function () {
     const topic = EM.topics[topicId];
     if (!topic) return '';
     return topic.levels.map(function (level) {
-      const label = 'Level ' + level.id + ' · ' + level.name + ' — ' + level.example;
+      const label = 'L' + level.id + ' · ' + level.name;
       return '<option value="' + level.id + '"' + (level.id === selected ? ' selected' : '') + '>' +
         EM.escapeHtml(label) + '</option>';
     }).join('');
@@ -252,14 +257,17 @@ const LinkBuilder = (function () {
       '<span class="builder-for">For teachers and parents</span></div>' +
       '<h1>Make a class link</h1><p class="lede">Choose the practice, then share the link. Students land straight on it.</p>' +
       '<div class="link-layout"><section class="panel builder-form">' +
-      '<div class="field"><label class="field-label" for="classTitle">Title</label>' +
+      '<div class="field-row title-due"><div class="field"><label class="field-label" for="classTitle">Title</label>' +
       '<input id="classTitle" class="msg-input" maxlength="50" placeholder="Week 3 homework – Extension" value="' +
       EM.escapeHtml(state.title) + '"><p class="msg-count"><span id="titleCount">' + state.title.length + '</span>/50</p></div>' +
       '<div class="field"><label class="field-label" for="duePick">Due date</label>' +
-      '<input id="duePick" class="msg-input" type="date" value="' + EM.escapeHtml(state.due) + '"></div>' +
+      '<input id="duePick" class="msg-input" type="date" value="' + EM.escapeHtml(state.due) + '"></div></div>' +
       '<div class="field"><label class="field-label" for="classMsg">Message to students</label>' +
       '<input id="classMsg" class="msg-input" maxlength="80" placeholder="Show your working in your book." value="' +
       EM.escapeHtml(state.msg) + '"><p class="msg-count"><span id="msgCount">' + state.msg.length + '</span>/80</p></div>' +
+      '<div class="field"><label class="field-label" for="classFin">When they finish</label>' +
+      '<input id="classFin" class="msg-input" maxlength="80" placeholder="Take a screenshot of this card and share it with your teacher." value="' +
+      EM.escapeHtml(state.fin) + '"><p class="msg-count"><span id="finCount">' + state.fin.length + '</span>/80</p></div>' +
       '<div class="field"><span class="field-label">Mode</span>' +
       seg('mode', state.mode, [{ value: 'one', label: 'One topic' }, { value: 'set', label: 'Build a set' }], 'Mode') +
       '</div>' +
@@ -288,7 +296,8 @@ const LinkBuilder = (function () {
       '</div>' +
       '<label class="check-line"><input type="checkbox" id="sameOn"' + (state.same ? ' checked' : '') +
       '> Same questions for everyone</label>' +
-      '<div class="field"><span class="field-label">How students see it</span><div id="stripPreview"></div></div>' +
+      '<div class="field"><button type="button" class="btn ghost preview-toggle" id="previewToggle">Preview</button>' +
+      '<div id="stripPreview" hidden></div></div>' +
       '</section><aside class="link-card"><p class="eyebrow light">Your link</p><p class="link-url" id="classUrl"></p>' +
       '<button type="button" class="btn light" id="copyLink">Copy link</button>' +
       '<button type="button" class="btn light" id="copyTeams">Copy for Teams</button>' +
@@ -299,7 +308,98 @@ const LinkBuilder = (function () {
     document.getElementById('backHome').onclick = function () { EM.home(); };
     bindFields();
     refresh();
-    window.scrollTo(0, 0);
+  }
+
+  function markSeg(name, value) {
+    document.querySelectorAll('input[name="' + name + '"]').forEach(function (input) {
+      const on = String(input.value) === String(value);
+      input.checked = on;
+      input.parentNode.classList.toggle('on', on);
+    });
+  }
+
+  function rowsMarkup() {
+    return state.rows.map(function (row, i) {
+      return '<div class="set-row"><select class="level-select row-topic" data-row="' + i + '">' +
+        topicOptions(row.topic, false) + '</select><select class="level-select row-level" data-row="' + i + '">' +
+        levelOptions(row.topic, row.level) + '</select>' + stepper(row.count, 'data-row="' + i + '"') +
+        '<button type="button" class="text-link row-remove" data-row="' + i + '"' +
+        (state.rows.length < 2 ? ' disabled' : '') + '>Remove</button></div>';
+    }).join('');
+  }
+
+  function syncChrome() {
+    const one = document.getElementById('oneMode');
+    const set = document.getElementById('setMode');
+    if (one) one.hidden = state.mode !== 'one';
+    if (set) set.hidden = state.mode !== 'set';
+    const levelField = document.getElementById('levelField');
+    if (levelField) levelField.hidden = state.topic === 'mix';
+    const written = document.getElementById('writtenToggles');
+    if (written) written.hidden = !writtenOn();
+    markSeg('mode', state.mode);
+    markSeg('order', state.order);
+    markSeg('q', [5, 8, 10].indexOf(state.q) >= 0 ? String(state.q) : '');
+    markSeg('tricky', String(state.tricky));
+    const qn = document.querySelector('#oneMode .step-n');
+    if (qn) qn.textContent = String(state.q);
+    document.querySelectorAll('.set-row').forEach(function (rowEl, i) {
+      const n = rowEl.querySelector('.step-n');
+      if (n && state.rows[i]) n.textContent = String(state.rows[i].count);
+    });
+    const add = document.getElementById('addRow');
+    if (add) add.disabled = state.rows.length >= 6 || EM.rowsTotal(state.rows) >= 30;
+    const total = document.getElementById('runningTotal');
+    if (total) total.textContent = EM.rowsTotal(state.rows) + ' of 30 questions';
+  }
+
+  function renderRows() {
+    const box = document.querySelector('.set-rows');
+    if (!box) return;
+    box.innerHTML = rowsMarkup();
+    bindRows();
+    syncChrome();
+    refresh();
+  }
+
+  function bindRows() {
+    document.querySelectorAll('.row-topic').forEach(function (select) {
+      select.onchange = function () {
+        const row = state.rows[parseInt(select.getAttribute('data-row'), 10)];
+        row.topic = select.value;
+        const topic = EM.topics[row.topic];
+        if (row.level > topic.levels.length) row.level = topic.levels.length;
+        const levelSel = select.parentNode.querySelector('.row-level');
+        if (levelSel) levelSel.innerHTML = levelOptions(row.topic, row.level);
+        syncChrome();
+        refresh();
+      };
+    });
+    document.querySelectorAll('.row-level').forEach(function (select) {
+      select.onchange = function () {
+        state.rows[parseInt(select.getAttribute('data-row'), 10)].level = parseInt(select.value, 10);
+        refresh();
+      };
+    });
+    document.querySelectorAll('.stepper [data-row]').forEach(function (btn) {
+      btn.onclick = function () {
+        const row = state.rows[parseInt(btn.getAttribute('data-row'), 10)];
+        const next = row.count + parseInt(btn.getAttribute('data-dir'), 10);
+        const others = EM.rowsTotal(state.rows) - row.count;
+        if (next < 1 || next > 20) return;
+        if (others + next > 30) return;
+        row.count = next;
+        syncChrome();
+        refresh();
+      };
+    });
+    document.querySelectorAll('.row-remove').forEach(function (btn) {
+      btn.onclick = function () {
+        if (state.rows.length < 2) return;
+        state.rows.splice(parseInt(btn.getAttribute('data-row'), 10), 1);
+        renderRows();
+      };
+    });
   }
 
   function bindFields() {
@@ -321,15 +421,29 @@ const LinkBuilder = (function () {
       document.getElementById('msgCount').textContent = String(state.msg.length);
       refresh();
     };
+    const fin = document.getElementById('classFin');
+    fin.oninput = function () {
+      state.fin = clean(fin.value, 80);
+      if (fin.value !== state.fin) fin.value = state.fin;
+      document.getElementById('finCount').textContent = String(state.fin.length);
+      refresh();
+    };
     document.querySelectorAll('input[name="mode"]').forEach(function (input) {
-      input.onchange = function () { state.mode = input.value; paint(); };
+      input.onchange = function () {
+        state.mode = input.value;
+        syncChrome();
+        refresh();
+      };
     });
     const topicPick = document.getElementById('topicPick');
     if (topicPick) topicPick.onchange = function () {
       state.topic = topicPick.value;
       const topic = EM.topics[state.topic];
       if (topic && state.level > topic.levels.length) state.level = topic.levels.length;
-      paint();
+      const levelPick = document.getElementById('levelPick');
+      if (levelPick && topic) levelPick.innerHTML = levelOptions(state.topic, state.level);
+      syncChrome();
+      refresh();
     };
     const levelPick = document.getElementById('levelPick');
     if (levelPick) levelPick.onchange = function () {
@@ -337,53 +451,34 @@ const LinkBuilder = (function () {
       refresh();
     };
     document.querySelectorAll('input[name="q"]').forEach(function (input) {
-      input.onchange = function () { state.q = parseInt(input.value, 10); paint(); };
+      input.onchange = function () {
+        state.q = parseInt(input.value, 10);
+        syncChrome();
+        refresh();
+      };
     });
     document.querySelectorAll('input[name="tricky"]').forEach(function (input) {
-      input.onchange = function () { state.tricky = parseInt(input.value, 10); refresh(); };
+      input.onchange = function () {
+        state.tricky = parseInt(input.value, 10);
+        syncChrome();
+        refresh();
+      };
     });
     document.querySelectorAll('[data-q]').forEach(function (btn) {
       btn.onclick = function () {
         state.q = Math.max(1, Math.min(20, state.q + parseInt(btn.getAttribute('data-dir'), 10)));
-        paint();
-      };
-    });
-    document.querySelectorAll('input[name="order"]').forEach(function (input) {
-      input.onchange = function () { state.order = input.value; refresh(); };
-    });
-    document.querySelectorAll('.row-topic').forEach(function (select) {
-      select.onchange = function () {
-        const row = state.rows[parseInt(select.getAttribute('data-row'), 10)];
-        row.topic = select.value;
-        const topic = EM.topics[row.topic];
-        if (row.level > topic.levels.length) row.level = topic.levels.length;
-        paint();
-      };
-    });
-    document.querySelectorAll('.row-level').forEach(function (select) {
-      select.onchange = function () {
-        state.rows[parseInt(select.getAttribute('data-row'), 10)].level = parseInt(select.value, 10);
+        syncChrome();
         refresh();
       };
     });
-    document.querySelectorAll('.stepper [data-row]').forEach(function (btn) {
-      btn.onclick = function () {
-        const row = state.rows[parseInt(btn.getAttribute('data-row'), 10)];
-        const next = row.count + parseInt(btn.getAttribute('data-dir'), 10);
-        const others = EM.rowsTotal(state.rows) - row.count;
-        if (next < 1 || next > 20) return;
-        if (others + next > 30) return;
-        row.count = next;
-        paint();
+    document.querySelectorAll('input[name="order"]').forEach(function (input) {
+      input.onchange = function () {
+        state.order = input.value;
+        syncChrome();
+        refresh();
       };
     });
-    document.querySelectorAll('.row-remove').forEach(function (btn) {
-      btn.onclick = function () {
-        if (state.rows.length < 2) return;
-        state.rows.splice(parseInt(btn.getAttribute('data-row'), 10), 1);
-        paint();
-      };
-    });
+    bindRows();
     const addRow = document.getElementById('addRow');
     if (addRow) addRow.onclick = function () {
       if (state.rows.length >= 6 || EM.rowsTotal(state.rows) >= 30) return;
@@ -392,7 +487,7 @@ const LinkBuilder = (function () {
       const next = ROW_TOPICS.filter(function (topic) { return !used[topic.id]; })[0] || ROW_TOPICS[0];
       const room = Math.min(3, 30 - EM.rowsTotal(state.rows));
       state.rows.push({ topic: next.id, level: next.id === 'conv' ? 2 : 3, count: Math.max(1, room) });
-      paint();
+      renderRows();
     };
     const estOn = document.getElementById('estOn');
     if (estOn) estOn.onchange = function () { state.est = estOn.checked; refresh(); };
@@ -402,6 +497,12 @@ const LinkBuilder = (function () {
       state.same = this.checked;
       if (state.same && !state.seed) state.seed = newSeed();
       refresh();
+    };
+    document.getElementById('previewToggle').onclick = function () {
+      const box = document.getElementById('stripPreview');
+      box.hidden = !box.hidden;
+      this.classList.toggle('on', !box.hidden);
+      if (!box.hidden) refresh();
     };
     document.getElementById('copyLink').onclick = function () { copyText(currentLink(), this, 'Copy link'); };
     document.getElementById('copyTeams').onclick = function () { copyText(teamsText(currentLink()), this, 'Copy for Teams'); };
@@ -467,5 +568,8 @@ const LinkBuilder = (function () {
     document.getElementById('boardClose').onclick = function () { board.remove(); };
   }
 
-  return { open: paint, teamsText: function () { return teamsText(currentLink()); } };
+  return {
+    open: function () { window.scrollTo(0, 0); paint(); },
+    teamsText: function () { return teamsText(currentLink()); }
+  };
 })();

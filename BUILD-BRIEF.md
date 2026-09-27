@@ -134,6 +134,7 @@ The hub reads these on load. A link with `t=` and `lvl=` fills the "Set by your 
 | `set` | topic, level and count rows | `sub6x3,conv4x4,mul5x3` |
 | `order` | set order | `g` grouped, `m` mixed |
 | `seed` | same questions on every device | `k4np2w` |
+| `fin` | note shown when they finish (max 80) | `Screenshot this card` |
 
 Example: `…/?t=sub&lvl=6&q=8&est=1&strat=1&tricky=2`
 
