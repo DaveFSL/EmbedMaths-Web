@@ -139,8 +139,8 @@ const Player = (function () {
     document.getElementById('app').innerHTML =
       '<div class="shell play"><header class="play-top"><button type="button" class="btn ghost" id="stop">' +
       EM.icons.close + ' Stop</button><div class="progress-wrap"><p>' +
-      (session.mix ? 'Daily mix' : ('Level ' + session.level)) + ' · Question ' +
-      (session.index + 1) + ' of ' + session.count + '</p>' +
+      EM.escapeHtml(session.title || (session.set ? 'Set' : (session.mix ? 'Daily mix' : ('Level ' + session.level)))) +
+      ' · Question ' + (session.index + 1) + ' of ' + session.count + '</p>' +
       (session.msg ? '<p class="session-msg">' + EM.escapeHtml(session.msg) + '</p>' : '') +
       '<div class="progress" aria-hidden="true">' + segments +
       '</div></div>' + (question.tricky ? '<span class="tricky-tag">Tricky one</span>' : '<span></span>') + '</header>' +

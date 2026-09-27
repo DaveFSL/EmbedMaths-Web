@@ -29,7 +29,7 @@ const EM = (function () {
     const lvlRaw = params.get('lvl');
     const lvl = lvlRaw ? parseInt(lvlRaw, 10) : null;
     const qRaw = parseInt(params.get('q') || '', 10);
-    const q = qRaw === 5 || qRaw === 8 || qRaw === 10 ? qRaw : 8;
+    const q = qRaw >= 1 && qRaw <= 30 ? qRaw : 8;
     const est = params.get('est') === '0' ? false : true;
     const strat = params.get('strat') === '0' ? false : true;
     const trickyRaw = params.get('tricky');
@@ -39,10 +39,101 @@ const EM = (function () {
     if (!isFinite(tricky) || tricky < 0) tricky = 0;
     if (tricky > 3) tricky = 3;
     const go = params.get('go') === '1';
-    let msg = params.get('msg') || '';
-    msg = msg.replace(/[\u0000-\u001F\u007F]/g, '').trim().slice(0, 40);
-    const hasLink = t === 'mix' || !!(t && lvl && !isNaN(lvl));
-    return { t: t, lvl: lvl, q: q, est: est, strat: strat, tricky: tricky, go: go, msg: msg, hasLink: hasLink };
+    const ttl = cleanText(params.get('ttl'), 50);
+    const msg = cleanText(params.get('msg'), 80);
+    const due = parseDue(params.get('due'));
+    const order = params.get('order') === 'm' ? 'm' : 'g';
+    let seed = params.get('seed') || '';
+    if (!/^[a-z0-9]{4,12}$/i.test(seed)) seed = '';
+    const rows = parseSet(params.get('set'));
+    const hasLink = t === 'mix' || rows.length > 0 || !!(t && topics[t] && lvl && !isNaN(lvl));
+    return {
+      t: t, lvl: lvl, q: rows.length ? rowsTotal(rows) : q,
+      est: est, strat: strat, tricky: tricky, go: go,
+      ttl: ttl, msg: msg, due: due, order: order, seed: seed, rows: rows, hasLink: hasLink
+    };
+  }
+
+  function cleanText(raw, max) {
+    return String(raw || '').replace(/[\u0000-\u001F\u007F]/g, '').trim().slice(0, max);
+  }
+
+  function parseDue(raw) {
+    if (!raw || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return '';
+    const y = parseInt(raw.slice(0, 4), 10);
+    const m = parseInt(raw.slice(5, 7), 10);
+    const d = parseInt(raw.slice(8, 10), 10);
+    const date = new Date(y, m - 1, d);
+    if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) return '';
+    return raw;
+  }
+
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const SHORT = { add: 'Addition', sub: 'Subtraction', mul: 'Multiplication', pv: 'Place value', conv: 'Converting units' };
+
+  function formatDue(iso) {
+    if (!iso) return '';
+    const y = parseInt(iso.slice(0, 4), 10);
+    const m = parseInt(iso.slice(5, 7), 10);
+    const d = parseInt(iso.slice(8, 10), 10);
+    const date = new Date(y, m - 1, d);
+    return WEEKDAYS[date.getDay()] + ' ' + d + ' ' + MONTHS[m - 1];
+  }
+
+  function duePassed(iso) {
+    if (!iso) return false;
+    const y = parseInt(iso.slice(0, 4), 10);
+    const m = parseInt(iso.slice(5, 7), 10);
+    const d = parseInt(iso.slice(8, 10), 10);
+    const due = new Date(y, m - 1, d);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return due < today;
+  }
+
+  function parseSet(raw) {
+    if (!raw) return [];
+    const found = [];
+    String(raw).split(',').forEach(function (part) {
+      const match = String(part).trim().match(/^(add|sub|mul|pv|conv)(\d+)x(\d+)$/i);
+      if (!match) return;
+      const id = match[1].toLowerCase();
+      const topic = topics[id];
+      if (!topic) return;
+      let level = parseInt(match[2], 10);
+      let count = parseInt(match[3], 10);
+      if (!isFinite(level) || level < 1) level = 1;
+      if (level > topic.levels.length) level = topic.levels.length;
+      if (!isFinite(count) || count < 1) count = 1;
+      if (count > 20) count = 20;
+      found.push({ topic: id, level: level, count: count });
+    });
+    const kept = [];
+    let total = 0;
+    found.slice(0, 6).forEach(function (row) {
+      if (total >= 30) return;
+      const room = 30 - total;
+      const count = row.count > room ? room : row.count;
+      if (count < 1) return;
+      kept.push({ topic: row.topic, level: row.level, count: count });
+      total += count;
+    });
+    return kept;
+  }
+
+  function rowsTotal(rows) {
+    return (rows || []).reduce(function (n, row) { return n + row.count; }, 0);
+  }
+
+  function setLine(rows, style) {
+    const bits = rows.map(function (row) {
+      return (SHORT[row.topic] || row.topic) + ' L' + row.level + ' \u00d7' + row.count;
+    });
+    const total = rowsTotal(rows);
+    const qWord = total === 1 ? 'question' : 'questions';
+    if (style === 'paren') return bits.join(' \u00b7 ') + ' (' + total + ' ' + qWord + ')';
+    return bits.join(' \u00b7 ') + ' \u00b7 ' + total + ' ' + qWord;
   }
 
   function escapeHtml(text) {
@@ -56,28 +147,49 @@ const EM = (function () {
   function describeLink(info) {
     const qWord = info.q === 1 ? 'question' : 'questions';
     const trickyBit = info.tricky ? ', including ' + info.tricky + ' tricky' : '';
+    const due = parseDue(info.due);
+    const shared = { msg: info.msg || '', due: due, dueText: due ? formatDue(due) : '', dueLate: duePassed(due) };
+    if (info.rows && info.rows.length) {
+      return {
+        title: info.ttl || 'A set',
+        detail: setLine(info.rows, 'dot'),
+        teams: setLine(info.rows, 'paren'),
+        msg: shared.msg, due: shared.due, dueText: shared.dueText, dueLate: shared.dueLate
+      };
+    }
     if (info.t === 'mix') {
       return {
-        title: 'Daily mix',
+        title: info.ttl || 'Daily mix',
         detail: info.q + ' ' + qWord + ' across the topics' + trickyBit,
-        msg: info.msg || ''
+        teams: 'Daily mix (' + info.q + ' ' + qWord + ')',
+        msg: shared.msg, due: shared.due, dueText: shared.dueText, dueLate: shared.dueLate
       };
     }
     const topic = topics[info.t];
     const meta = topic ? levelMeta(topic, info.lvl) : null;
-    const title = (topic ? topic.name : 'This practice') + ' · Level ' + info.lvl;
+    const fallback = (topic ? topic.name : 'This practice') + ' · Level ' + info.lvl;
     const detail = meta
       ? meta.name + ', like ' + meta.example + ' · ' + info.q + ' ' + qWord + trickyBit
       : 'Level ' + info.lvl + ' · ' + info.q + ' ' + qWord;
-    return { title: title, detail: detail, msg: info.msg || '' };
+    const one = (SHORT[info.t] || (topic ? topic.name : 'Practice')) + ' L' + info.lvl + ' \u00d7' + info.q;
+    return {
+      title: info.ttl || fallback,
+      detail: detail,
+      teams: one + ' (' + info.q + ' ' + qWord + ')',
+      cardLine: one + ' \u00b7 ' + info.q + ' ' + qWord,
+      msg: shared.msg, due: shared.due, dueText: shared.dueText, dueLate: shared.dueLate
+    };
   }
 
   function teacherStrip(info, actions) {
     const described = describeLink(info);
+    const due = described.dueText
+      ? '<p class="teacher-due' + (described.dueLate ? ' late' : '') + '">Due ' + escapeHtml(described.dueText) + '</p>'
+      : '';
     const msg = described.msg ? '<p class="teacher-msg">' + escapeHtml(described.msg) + '</p>' : '';
     return '<section class="teacher"><div><p class="eyebrow light">Set by your teacher</p><h2>' +
-      escapeHtml(described.title) + '</h2>' + msg + '<p>' + escapeHtml(described.detail) + '</p></div>' +
-      (actions || '') + '</section>';
+      escapeHtml(described.title) + '</h2>' + due + '<p>' + escapeHtml(described.detail) + '</p>' + msg +
+      '</div>' + (actions || '') + '</section>';
   }
 
   function levelMeta(topic, level) {
@@ -164,23 +276,19 @@ const EM = (function () {
     const start = document.getElementById('teacherStart');
     if (start) {
       start.onclick = function () {
+        if (link.rows && link.rows.length) {
+          startSet(fromLink(link));
+          return;
+        }
         if (link.t === 'mix') {
-          startMix({ count: link.q, tricky: link.tricky, est: link.est, strat: link.strat, msg: link.msg });
+          startMix(fromLink(link));
           return;
         }
         if (!topics[link.t]) {
           showNote('That topic is not ready yet.');
           return;
         }
-        startSession({
-          topicId: link.t,
-          level: link.lvl,
-          count: link.q,
-          tricky: link.tricky,
-          est: link.est,
-          strat: link.strat,
-          msg: link.msg
-        });
+        startSession(fromLink(link));
       };
     }
     const mix = document.getElementById('dailyMix');
@@ -206,26 +314,23 @@ const EM = (function () {
     let level = opts.level;
     if (level < 1) level = 1;
     if (level > topic.levels.length) level = topic.levels.length;
-    const questions = [];
     const focus = opts.focus || null;
     const count = opts.count;
     const trickyN = focus ? 0 : Math.min(opts.tricky || 0, count);
-    for (let i = 0; i < count - trickyN; i++) {
-      const made = topic.makeQuestion(level, { tricky: false, focus: focus });
-      made.topicId = opts.topicId;
-      questions.push(made);
-    }
-    for (let i = 0; i < trickyN; i++) {
-      const made = topic.makeQuestion(level, { tricky: true });
-      made.topicId = opts.topicId;
-      questions.push(made);
-    }
-    for (let i = questions.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      const tmp = questions[i];
-      questions[i] = questions[j];
-      questions[j] = tmp;
-    }
+    const questions = withSeed(opts.seed, function () {
+      const list = [];
+      for (let i = 0; i < count - trickyN; i++) {
+        const made = topic.makeQuestion(level, { tricky: false, focus: focus });
+        made.topicId = opts.topicId;
+        list.push(made);
+      }
+      for (let i = 0; i < trickyN; i++) {
+        const made = topic.makeQuestion(level, { tricky: true });
+        made.topicId = opts.topicId;
+        list.push(made);
+      }
+      return shuffle(list);
+    });
     const meta = levelMeta(topic, level);
     EM.session = {
       topicId: opts.topicId,
@@ -235,6 +340,9 @@ const EM = (function () {
       est: opts.est !== false,
       strat: opts.strat !== false,
       msg: opts.msg || '',
+      title: opts.title || '',
+      due: opts.due || '',
+      seed: opts.seed || '',
       focus: focus,
       questions: questions,
       index: 0,
@@ -266,7 +374,8 @@ const EM = (function () {
 
   function buildMixQuestions(opts) {
     const ids = ['add', 'sub', 'mul', 'pv', 'conv'];
-    const count = opts.count === 5 || opts.count === 10 ? opts.count : 8;
+    let count = parseInt(opts.count, 10);
+    if (!isFinite(count) || count < 1 || count > 30) count = 8;
     let trickyN = opts.tricky == null ? 1 : opts.tricky;
     if (!isFinite(trickyN) || trickyN < 0) trickyN = 0;
     if (trickyN > count) trickyN = count;
@@ -302,9 +411,95 @@ const EM = (function () {
     });
   }
 
+  function hashSeed(text) {
+    let h = 2166136261;
+    const s = String(text);
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function withSeed(seed, fn) {
+    if (!seed) return fn();
+    const prev = Math.random;
+    let a = hashSeed(seed) || 1;
+    Math.random = function () {
+      a |= 0;
+      a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+    try { return fn(); }
+    finally { Math.random = prev; }
+  }
+
+  function fromLink(info) {
+    return {
+      topicId: info.t,
+      level: info.lvl,
+      count: info.q,
+      tricky: info.tricky,
+      est: info.est,
+      strat: info.strat,
+      msg: info.msg,
+      title: info.ttl,
+      due: info.due,
+      seed: info.seed,
+      order: info.order,
+      rows: info.rows
+    };
+  }
+
+  function startSet(opts) {
+    opts = opts || {};
+    const rows = opts.rows || [];
+    if (!rows.length) return;
+    const questions = withSeed(opts.seed, function () {
+      const list = [];
+      rows.forEach(function (row) {
+        const topic = topics[row.topic];
+        if (!topic) return;
+        let level = row.level;
+        if (level < 1) level = 1;
+        if (level > topic.levels.length) level = topic.levels.length;
+        for (let i = 0; i < row.count; i++) {
+          const made = topic.makeQuestion(level, { tricky: false });
+          made.topicId = row.topic;
+          made.mixLevel = level;
+          list.push(made);
+        }
+      });
+      return opts.order === 'm' ? shuffle(list) : list;
+    });
+    EM.session = {
+      topicId: 'set',
+      set: true,
+      rows: rows,
+      title: opts.title || '',
+      due: opts.due || '',
+      msg: opts.msg || '',
+      seed: opts.seed || '',
+      order: opts.order === 'm' ? 'm' : 'g',
+      level: 0,
+      levelName: opts.title || 'Set',
+      count: questions.length,
+      est: opts.est !== false,
+      strat: opts.strat !== false,
+      focus: null,
+      questions: questions,
+      index: 0,
+      results: []
+    };
+    screen = 'player';
+    Player.open();
+  }
+
   function startMix(opts) {
     opts = opts || {};
-    const questions = buildMixQuestions(opts);
+    const questions = withSeed(opts.seed, function () { return buildMixQuestions(opts); });
     EM.session = {
       topicId: 'mix',
       mix: true,
@@ -314,6 +509,9 @@ const EM = (function () {
       est: opts.est !== false,
       strat: opts.strat !== false,
       msg: opts.msg || '',
+      title: opts.title || '',
+      due: opts.due || '',
+      seed: opts.seed || '',
       focus: null,
       questions: questions,
       index: 0,
@@ -325,24 +523,20 @@ const EM = (function () {
 
   function boot() {
     link = readLink();
-    prefs.q = link.q;
+    if (link.q === 5 || link.q === 8 || link.q === 10) prefs.q = link.q;
     prefs.est = link.est;
     prefs.strat = link.strat;
     prefs.tricky = link.tricky;
+    if (link.go && link.rows && link.rows.length) {
+      startSet(fromLink(link));
+      return;
+    }
     if (link.go && link.t === 'mix') {
-      startMix({ count: link.q, tricky: link.tricky, est: link.est, strat: link.strat, msg: link.msg });
+      startMix(fromLink(link));
       return;
     }
     if (link.go && link.hasLink && topics[link.t]) {
-      startSession({
-        topicId: link.t,
-        level: link.lvl,
-        count: link.q,
-        tricky: link.tricky,
-        est: link.est,
-        strat: link.strat,
-        msg: link.msg
-      });
+      startSession(fromLink(link));
       return;
     }
     renderHome();
@@ -358,7 +552,12 @@ const EM = (function () {
     openLevels: openLevels,
     startSession: startSession,
     startMix: startMix,
+    startSet: startSet,
     buildMixQuestions: buildMixQuestions,
+    formatDue: formatDue,
+    setLine: setLine,
+    rowsTotal: rowsTotal,
+    shortName: function (id) { return SHORT[id] || id; },
     showNote: showNote,
     levelMeta: levelMeta,
     escapeHtml: escapeHtml,

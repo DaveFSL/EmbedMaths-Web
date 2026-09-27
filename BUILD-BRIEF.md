@@ -128,8 +128,16 @@ The hub reads these on load. A link with `t=` and `lvl=` fills the "Set by your 
 | `strat` | show mental strategy | `1` / `0` |
 | `tricky` | tricky questions included in `q` | `0`–`3` |
 | `go` | skip home, start straight away | `1` |
+| `msg` | message to students (max 80) | `Show your working` |
+| `ttl` | homework title (max 50) | `Week 3 homework` |
+| `due` | due date | `2026-10-03` |
+| `set` | topic, level and count rows | `sub6x3,conv4x4,mul5x3` |
+| `order` | set order | `g` grouped, `m` mixed |
+| `seed` | same questions on every device | `k4np2w` |
 
 Example: `…/?t=sub&lvl=6&q=8&est=1&strat=1&tricky=2`
+
+A set link uses `t=set` plus `set=`. `q` may be any count from 1 to 30. Invalid values are ignored or clamped.
 
 `tricky` is part of `q`, not added on top. `q=8` and `tricky=2` is 8 questions: 6 at the level and 2 tricky.
 
