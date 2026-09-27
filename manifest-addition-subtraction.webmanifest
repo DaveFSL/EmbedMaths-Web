@@ -1,8 +1,8 @@
 {
   "name": "EmbedMaths Addition & Subtraction",
   "short_name": "Add & Subtract",
-  "start_url": "./embedmaths-addition-subtraction.html",
-  "scope": "./",
+  "start_url": "hub/?t=sub",
+  "scope": "hub/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#f5fafa",

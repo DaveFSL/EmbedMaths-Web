@@ -3,6 +3,7 @@
 One page where students, teachers and parents choose what to practise. It replaces the separate add/sub and multiplication pages and the old Daily-Add-Sub-Algorithm repo.
 
 - Repo: `DaveFSL/EmbedMaths-Web` (GitHub Pages). Future domain: embedmaths.com.au.
+- **Live (steps 1–6 done):** https://davefsl.github.io/EmbedMaths-Web/hub/ — the hub stays in `/hub/` so existing links and QR codes keep working.
 - Audience: Years 4–6 students on 1:1 iPads (main target), plus teachers on a board and parents on phones.
 - Routine stays the same: **estimate → work it out on paper or whiteboard → check step by step**. Students never type answers into columns.
 - Plain HTML, CSS and JS. No framework and no build step. It must not depend on a CDN; put small libraries in `core/vendor/`.
@@ -16,10 +17,8 @@ One page where students, teachers and parents choose what to practise. It replac
 3. **Place value: × ÷ by 10, 100, 1000.** New topic with the place value slide.
 4. **Converting units.** New topic that reuses the place value slide.
 5. **Class link builder + QR code**, and Daily mix across the topics that are ready.
-6. **Redirects.** Hub becomes `index.html`. Old pages forward to the matching topic. Daily-Add-Sub-Algorithm forwards, then gets archived.
-7. Later: Division, Time, area units.
-
-Build steps 1–5 in `/hub/` until they're tested with a class, then do step 6.
+6. **Redirects (done).** Root `index.html` forwards to `/hub/` and keeps the query string. The old add/sub and multiplication pages forward to `/hub/?t=sub` and `/hub/?t=mul`; the originals are in `/archive/`. The hub was not moved.
+7. Later: Division, Time, area units. These still show “Coming soon” on the home screen.
 
 ---
 
@@ -27,27 +26,30 @@ Build steps 1–5 in `/hub/` until they're tested with a class, then do step 6.
 
 ```
 EmbedMaths-Web/
-  index.html                 hub (after step 6; build in /hub/ until then)
-  core/
-    app.js                   router, screens, reads/writes link settings
-    levels.js                level picker, "you are here", level suggestions
-    player.js                question → estimate → reveal steps → self-check
-    summary.js               end-of-session summary + history
-    store.js                 localStorage (wrapped in try/catch)
-    linkbuilder.js           teacher/parent link + QR code
-    placevalue-chart.js      shared place value chart + digit slide renderer
-    styles.css
-    vendor/qrcode.js         small MIT QR library, stored in the repo
-  topics/
-    addition.js
-    subtraction.js
-    multiplication.js
-    place-value.js
-    conversions.js
-    division.js              later
-  icons/  manifest.webmanifest   keep existing
-  embedmaths-addition-subtraction.html   → later becomes a redirect
-  embedmaths-multiplication.html         → later becomes a redirect
+  index.html                 forwards to /hub/, keeping the query string
+  hub/                       the app (do not move; links and QR codes point here)
+    core/
+      app.js                 router, screens, reads/writes link settings
+      levels.js              level picker, "you are here", level suggestions
+      player.js              question → estimate → reveal steps → self-check
+      summary.js             end-of-session summary + history
+      store.js               localStorage (wrapped in try/catch)
+      linkbuilder.js         teacher/parent link + QR code
+      placevalue-chart.js    shared place value chart + digit slide renderer
+      styles.css
+      vendor/qrcode.js       small MIT QR library, stored in the repo
+    topics/
+      addition.js
+      subtraction.js
+      multiplication.js
+      place-value.js
+      conversions.js
+      division.js            later
+    index.html               links the manifest and apple-touch-icon
+  archive/                   original add/sub and multiplication pages
+  icons/  manifest.webmanifest   icons stay here; start_url and scope point at hub/
+  embedmaths-addition-subtraction.html   forwards to /hub/?t=sub
+  embedmaths-multiplication.html         forwards to /hub/?t=mul
 ```
 
 ### Topic file contract
@@ -274,13 +276,15 @@ Port these instead of rewriting:
 
 ---
 
-## 11. Done when (steps 1–5)
+## 11. Done when (steps 1–6)
 
-- [ ] A link like `?t=sub&lvl=6&q=8` opens with the "Set by your teacher" strip filled in, and Start runs that session.
-- [ ] Subtraction levels 1–9 each make the right kind of question (check 50 generated per level).
-- [ ] Self-check and summary work, and the summary names the most common error step.
-- [ ] Progress and history survive closing and reopening Safari on an iPad.
-- [ ] × ÷ 10/100/1000 and conversions show the place value slide with placeholder zeros.
-- [ ] The QR code from the link builder opens the right session when scanned on an iPad.
-- [ ] It loads nothing from outside the repo (no CDN or Google Fonts requests). Full offline use would need a service worker, which is optional.
-- [ ] The old page URLs still work (redirects in place, step 6).
+Live: https://davefsl.github.io/EmbedMaths-Web/hub/
+
+- [x] A link like `?t=sub&lvl=6&q=8` opens with the "Set by your teacher" strip filled in, and Start runs that session.
+- [x] Subtraction levels 1–9 each make the right kind of question (check 50 generated per level).
+- [x] Self-check and summary work, and the summary names the most common error step.
+- [x] Progress and history survive closing and reopening Safari on an iPad.
+- [x] × ÷ 10/100/1000 and conversions show the place value slide with placeholder zeros.
+- [x] The QR code from the link builder opens the right session when scanned on an iPad.
+- [x] It loads nothing from outside the repo (no CDN or Google Fonts requests). Full offline use would need a service worker, which is optional.
+- [x] The old page URLs still work. `/`, `/?t=sub&lvl=6`, `/embedmaths-addition-subtraction.html` and `/embedmaths-multiplication.html` forward to the hub.

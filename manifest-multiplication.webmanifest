@@ -1,8 +1,8 @@
 {
   "name": "EmbedMaths Multiplication",
   "short_name": "Multiply",
-  "start_url": "./embedmaths-multiplication.html",
-  "scope": "./",
+  "start_url": "hub/?t=mul",
+  "scope": "hub/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#f5fafa",

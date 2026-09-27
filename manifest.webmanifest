@@ -1,8 +1,8 @@
 {
   "name": "EmbedMaths",
   "short_name": "EmbedMaths",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "hub/",
+  "scope": "hub/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#f5fafa",
