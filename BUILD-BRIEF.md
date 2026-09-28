@@ -2,8 +2,8 @@
 
 One page where students, teachers and parents choose what to practise. It replaces the separate add/sub and multiplication pages and the old Daily-Add-Sub-Algorithm repo.
 
-- Repo: `DaveFSL/EmbedMaths-Web` (GitHub Pages). Future domain: embedmaths.com.au.
-- **Live (steps 1–6 done):** https://davefsl.github.io/EmbedMaths-Web/hub/ — the hub stays in `/hub/` so existing links and QR codes keep working.
+- Repo: `DaveFSL/EmbedMaths-Web` (GitHub Pages). Live domain: https://embedmaths.com.au
+- **Live (steps 1–6 done):** https://embedmaths.com.au/hub/ — the hub stays in `/hub/` so existing links and QR codes keep working. The link builder, QR card and Copy message use the current address (`location.origin` + path), not a fixed domain.
 - Audience: Years 4–6 students on 1:1 iPads (main target), plus teachers on a board and parents on phones.
 - Routine stays the same: **estimate → work it out on paper or whiteboard → check step by step**. Students never type answers into columns.
 - Plain HTML, CSS and JS. No framework and no build step. It must not depend on a CDN; put small libraries in `core/vendor/`.
@@ -47,7 +47,7 @@ EmbedMaths-Web/
       division.js            later
     index.html               links the manifest and apple-touch-icon
   archive/                   original add/sub and multiplication pages
-  icons/  manifest.webmanifest   icons stay here; start_url and scope point at hub/
+  icons/  manifest.webmanifest   icons stay here; start_url and scope are https://embedmaths.com.au/hub/
   embedmaths-addition-subtraction.html   forwards to /hub/?t=sub
   embedmaths-multiplication.html         forwards to /hub/?t=mul
 ```
@@ -113,7 +113,7 @@ The mockup canvas has nine screens. Build these:
 
 ### Class link builder (teachers and parents)
 - Pick topic, level, number of questions, and tick boxes for Estimate first, Mental strategy and Add 2 tricky ones.
-- Shows the link, a **Copy link** button and a **QR code** so students can scan from the board.
+- Shows the link, a **Copy link** button, a **Copy message** button and a **QR code** so students can scan from the board. The link, the message and the address printed on the QR card are built from the current address. On the live site that is `https://embedmaths.com.au/hub/`.
 - Extension challenges use commit-before-reveal: the student writes an answer (or taps True / False) before **Show answer** is available. A hint shows the first step only.
 
 ---
@@ -279,7 +279,7 @@ Port these instead of rewriting:
 
 ## 11. Done when (steps 1–6)
 
-Live: https://davefsl.github.io/EmbedMaths-Web/hub/
+Live: https://embedmaths.com.au/hub/
 
 - [x] A link like `?t=sub&lvl=6&q=8` opens with the "Your practice" strip filled in, and Start runs that session.
 - [x] Subtraction levels 1–9 each make the right kind of question (check 50 generated per level).

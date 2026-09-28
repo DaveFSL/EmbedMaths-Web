@@ -1,8 +1,8 @@
 {
   "name": "EmbedMaths Addition & Subtraction",
   "short_name": "Add & Subtract",
-  "start_url": "hub/?t=sub",
-  "scope": "hub/",
+  "start_url": "https://embedmaths.com.au/hub/?t=sub",
+  "scope": "https://embedmaths.com.au/hub/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#f5fafa",

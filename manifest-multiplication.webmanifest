@@ -1,8 +1,8 @@
 {
   "name": "EmbedMaths Multiplication",
   "short_name": "Multiply",
-  "start_url": "hub/?t=mul",
-  "scope": "hub/",
+  "start_url": "https://embedmaths.com.au/hub/?t=mul",
+  "scope": "https://embedmaths.com.au/hub/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#f5fafa",
