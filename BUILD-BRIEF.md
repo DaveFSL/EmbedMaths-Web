@@ -80,21 +80,22 @@ EM.registerTopic({
 The mockup canvas has nine screens. Build these:
 
 ### Home (grouped by area)
-- Top strip: **Set by your teacher**. Shows the practice from the link (topic, level, number of questions), a Start button and "Daily mix instead". Hide it if there's no link.
+- Top strip: **Your practice**. Shows the practice from the link (topic, level, number of questions), a Start button and "Daily mix instead". Hide it if there's no link. The title is the heading.
 - Sections:
   - **Written methods**: Addition, Subtraction, Multiplication, Division (coming soon)
   - **Place value**: × and ÷ by 10, 100, 1000
   - **Measurement**: Converting units, Time (coming soon)
   - **Number facts**: Times tables → opens `https://davefsl.github.io/FlashFlips-Web/`
 - Each tile shows "Level X of Y" from saved progress.
-- Top right: **Make a class link**.
+- Top right: **For teachers & parents**.
 - Footer: "Progress is saved on this device only."
 - On a phone: one column with the same order.
 
 ### Level picker (one per topic)
 - A grid of level cards: level number, name and an example sum. Done levels get a tick; the current level is filled teal with "YOU ARE HERE".
 - Bottom bar: questions **5 / 8 / 10** (segmented control), an **Add 2 tricky ones** tick box, and **Start Level N**.
-- A **Custom settings (teachers)** link opens the full options (the old setup panels) for teachers who want them.
+- Under the grid: **Finished your level? Try the extension challenges →**, an orange card in the same style as the level cards.
+- Estimate first, mental strategy and tricky count (0–3) are set in **Set practice**. A link can still set `est`, `strat` and `tricky`.
 - Use real radio-style segmented controls, not checkbox-looking buttons that only allow one choice.
 
 ### Question + self-check
@@ -119,7 +120,7 @@ The mockup canvas has nine screens. Build these:
 
 ## 4. Link settings
 
-The hub reads these on load. A link with `t=` and `lvl=` fills the "Set by your teacher" strip.
+The hub reads these on load. A link with `t=` and `lvl=` fills the "Your practice" strip.
 
 | Param | Meaning | Example |
 |---|---|---|
@@ -280,7 +281,7 @@ Port these instead of rewriting:
 
 Live: https://davefsl.github.io/EmbedMaths-Web/hub/
 
-- [x] A link like `?t=sub&lvl=6&q=8` opens with the "Set by your teacher" strip filled in, and Start runs that session.
+- [x] A link like `?t=sub&lvl=6&q=8` opens with the "Your practice" strip filled in, and Start runs that session.
 - [x] Subtraction levels 1–9 each make the right kind of question (check 50 generated per level).
 - [x] Self-check and summary work, and the summary names the most common error step.
 - [x] Progress and history survive closing and reopening Safari on an iPad.

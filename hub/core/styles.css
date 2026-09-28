@@ -169,6 +169,14 @@ h2 { font-size: 22px; margin: 0; }
 .level-ex { color: var(--muted); }
 .level-card.on { background: var(--teal); color: #fff; border-color: var(--teal); }
 .level-card.on .kicker, .level-card.on .level-ex { color: rgba(255, 255, 255, 0.82); }
+.ext-card {
+  grid-column: 1 / -1;
+  background: var(--tint);
+  border-color: var(--orange);
+  color: var(--orange);
+  justify-content: center;
+}
+.ext-card .level-name { color: var(--orange); }
 .tick { position: absolute; top: 14px; right: 14px; color: var(--teal); }
 .tick svg { width: 22px; height: 22px; }
 .here-note { color: var(--teal); font-size: 13px; font-weight: 700; }
@@ -374,10 +382,8 @@ h2 { font-size: 22px; margin: 0; }
 
 .modal { position: fixed; inset: 0; background: rgba(22, 48, 47, 0.35); display: grid; place-items: center; padding: 16px; z-index: 5; }
 .modal-card { background: #fff; border-radius: 20px; padding: 20px; width: min(420px, 100%); display: grid; gap: 12px; }
-.modal-card.wide { width: min(520px, 100%); }
 .setting { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .note { margin: 0; color: var(--muted); }
-.picker-links { display: flex; gap: 16px; flex-wrap: wrap; }
 .ext-q { font-size: 22px; font-weight: 650; line-height: 1.45; }
 .ext-ans { font-size: 18px; line-height: 1.5; }
 .ext-line { margin: -8px 0 16px; font-weight: 700; color: var(--teal); }
@@ -399,6 +405,9 @@ h2 { font-size: 22px; margin: 0; }
 }
 
 .builder-for { color: var(--muted); font-weight: 650; }
+.builder-links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 22px 4px 0; }
+.builder-links a { color: var(--teal); font-weight: 650; }
+.copy-note { margin: 0; color: #fff; font-weight: 650; line-height: 1.4; }
 .link-layout { display: grid; gap: 16px; align-items: start; }
 .topic-pills { display: flex; flex-wrap: wrap; gap: 8px; }
 .topic-pill {

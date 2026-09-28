@@ -134,7 +134,7 @@ const Summary = (function () {
       ? ''
       : '<section class="watch"><p class="eyebrow warn">What to watch</p><h2>' + grouped.weakest.name + ' was the weakest.</h2><p>' + grouped.parts.join(' · ') + '</p></section>';
     document.getElementById('app').innerHTML =
-      '<div class="shell summary"><p class="eyebrow">Set by your teacher</p>' +
+      '<div class="shell summary"><p class="eyebrow">Your practice</p>' +
       hwCard(session, score, total, grouped.parts) +
       '<h1>' + scoreHeading(score, total) + '</h1><ol class="q-row">' + tiles + '</ol>' +
       (watch ? '<div class="summary-grid">' + watch + '</div>' : '') +

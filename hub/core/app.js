@@ -199,7 +199,7 @@ const EM = (function () {
       ? '<p class="teacher-due' + (described.dueLate ? ' late' : '') + '">Due ' + escapeHtml(described.dueText) + '</p>'
       : '';
     const msg = described.msg ? '<p class="teacher-msg">' + escapeHtml(described.msg) + '</p>' : '';
-    return '<section class="teacher"><div><p class="eyebrow light">Set by your teacher</p><h2>' +
+    return '<section class="teacher"><div><p class="eyebrow light">Your practice</p><h2>' +
       escapeHtml(described.title) + '</h2>' + due + '<p>' + escapeHtml(described.detail) + '</p>' + msg +
       '</div>' + (actions || '') + '</section>';
   }
@@ -252,7 +252,7 @@ const EM = (function () {
     const app = document.getElementById('app');
     app.innerHTML =
       '<div class="shell"><header class="top"><div class="brand"><span class="logo">' + ICONS.wave + '</span><span>EmbedMaths</span></div>' +
-      '<button type="button" class="btn ghost" id="classLink">' + ICONS.link + ' Make a class link</button></header>' +
+      '<button type="button" class="btn ghost" id="classLink">' + ICONS.link + ' For teachers &amp; parents</button></header>' +
       strip +
       '<div class="home-grid"><section class="panel wide"><div class="panel-head"><h2>Written methods</h2><p>Work it out, then check each step</p></div>' +
       '<div class="tile-grid">' +

@@ -255,7 +255,7 @@ const LinkBuilder = (function () {
       '<div class="shell builder"><div class="picker-top"><button type="button" class="btn ghost" id="backHome">' +
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Home</button>' +
       '<span class="builder-for">For teachers and parents</span></div>' +
-      '<h1>Make a class link</h1><p class="lede">Choose the practice, then share the link. Students land straight on it.</p>' +
+      '<h1>Set practice</h1><p class="lede">Choose what to practise, then share a link or QR code — for a class or your own child.</p>' +
       '<div class="link-layout"><section class="panel builder-form">' +
       '<div class="field-row title-due"><div class="field"><label class="field-label" for="classTitle">Title</label>' +
       '<input id="classTitle" class="msg-input" maxlength="50" placeholder="Week 3 homework – Extension" value="' +
@@ -281,7 +281,7 @@ const LinkBuilder = (function () {
       seg('q', [5, 8, 10].indexOf(state.q) >= 0 ? state.q : '', [{ value: 5, label: '5' }, { value: 8, label: '8' }, { value: 10, label: '10' }], 'Questions') +
       stepper(state.q, 'data-q="1"') + '</div></div>' +
       '<div class="field"><span class="field-label">Add tricky ones</span>' +
-      seg('tricky', state.tricky, [{ value: 0, label: '0' }, { value: 1, label: '1' }, { value: 2, label: '2' }], 'Tricky questions') +
+      seg('tricky', state.tricky, [{ value: 0, label: '0' }, { value: 1, label: '1' }, { value: 2, label: '2' }, { value: 3, label: '3' }], 'Tricky questions') +
       '</div></div>' +
       '<div id="setMode"' + (state.mode === 'set' ? '' : ' hidden') + '>' +
       '<div class="field"><span class="field-label">Set</span><div class="set-rows">' + rowsHtml + '</div>' +
@@ -293,6 +293,7 @@ const LinkBuilder = (function () {
       '<div class="field" id="writtenToggles"' + (written ? '' : ' hidden') + '>' +
       '<label class="check-line"><input type="checkbox" id="estOn"' + (state.est ? ' checked' : '') + '> Estimate first</label>' +
       '<label class="check-line"><input type="checkbox" id="stratOn"' + (state.strat ? ' checked' : '') + '> Show a mental strategy after the solution</label>' +
+      '<p class="note">In class we say trading. The Australian Curriculum (ACARA v9) calls this regrouping.</p>' +
       '</div>' +
       '<label class="check-line"><input type="checkbox" id="sameOn"' + (state.same ? ' checked' : '') +
       '> Same questions for everyone</label>' +
@@ -300,10 +301,13 @@ const LinkBuilder = (function () {
       '<div id="stripPreview" hidden></div></div>' +
       '</section><aside class="link-card"><p class="eyebrow light">Your link</p><p class="link-url" id="classUrl"></p>' +
       '<button type="button" class="btn light" id="copyLink">Copy link</button>' +
-      '<button type="button" class="btn light" id="copyTeams">Copy for Teams</button>' +
+      '<button type="button" class="btn light" id="copyTeams">Copy message</button>' +
+      '<p class="copy-note" id="copyNote" hidden>Message copied — paste it into Teams, email or your class page.</p>' +
       '<p class="card-label">QR card</p><canvas id="qrCard" class="qr-card"></canvas>' +
       '<button type="button" class="btn light" id="downloadCard">Download card</button>' +
-      '<button type="button" class="btn light" id="showBoard">Show on the board</button></aside></div></div>';
+      '<button type="button" class="btn light" id="showBoard">Show on the board</button></aside></div>' +
+      '<p class="builder-links"><a href="https://flowstatelearning.com.au/about" target="_blank" rel="noopener noreferrer">About</a>' +
+      '<a href="mailto:dave@flowstatelearning.com.au">Feedback</a></p></div>';
 
     document.getElementById('backHome').onclick = function () { EM.home(); };
     bindFields();
@@ -504,8 +508,16 @@ const LinkBuilder = (function () {
       this.classList.toggle('on', !box.hidden);
       if (!box.hidden) refresh();
     };
-    document.getElementById('copyLink').onclick = function () { copyText(currentLink(), this, 'Copy link'); };
-    document.getElementById('copyTeams').onclick = function () { copyText(teamsText(currentLink()), this, 'Copy for Teams'); };
+    document.getElementById('copyLink').onclick = function () {
+      const note = document.getElementById('copyNote');
+      if (note) note.hidden = true;
+      copyText(currentLink(), this, 'Copy link');
+    };
+    document.getElementById('copyTeams').onclick = function () {
+      copyText(teamsText(currentLink()), this, 'Copy message', true);
+      const note = document.getElementById('copyNote');
+      if (note) note.hidden = false;
+    };
     document.getElementById('downloadCard').onclick = downloadCard;
     document.getElementById('showBoard').onclick = openBoard;
   }
@@ -526,7 +538,7 @@ const LinkBuilder = (function () {
     if (canvas) drawCard(canvas, url);
   }
 
-  function copyText(text, btn, label) {
+  function copyText(text, btn, label, keepLabel) {
     const area = document.createElement('textarea');
     area.value = text;
     area.setAttribute('readonly', '');
@@ -539,6 +551,7 @@ const LinkBuilder = (function () {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).catch(function () {});
     }
+    if (keepLabel) return;
     btn.textContent = 'Copied!';
     window.setTimeout(function () { btn.textContent = label; }, 1600);
   }
