@@ -5,7 +5,6 @@ const EM = (function () {
   let screen = 'home';
 
   const ICONS = {
-    wave: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 20c2.2-3.2 3.6-3.2 5.4 0s3.4 3.2 5.2 0 3.2-3.2 5.4 0 3.4 3.2 5.6 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
     link: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2a5 5 0 0 0 7.1 7.1l1.1-1.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
     plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
     minus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
@@ -251,7 +250,7 @@ const EM = (function () {
     }
     const app = document.getElementById('app');
     app.innerHTML =
-      '<div class="shell"><header class="top"><div class="brand"><span class="logo">' + ICONS.wave + '</span><span>EmbedMaths</span></div>' +
+      '<div class="shell"><header class="top"><div class="brand">' + waveMark() + '<span>EmbedMaths</span></div>' +
       '<button type="button" class="btn ghost" id="classLink">' + ICONS.link + ' For teachers &amp; parents</button></header>' +
       strip +
       '<div class="home-grid"><section class="panel wide"><div class="panel-head"><h2>Written methods</h2><p>Work it out, then check each step</p></div>' +
@@ -537,6 +536,35 @@ const EM = (function () {
     Player.open();
   }
 
+  let waveCount = 0;
+
+  function waveMark() {
+    waveCount += 1;
+    const id = 'emWave' + waveCount;
+    return '<svg class="waves" width="40" height="26" viewBox="4 3 40 26" fill="none" aria-hidden="true">' +
+      '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="1" y2="0">' +
+      '<stop offset="0" stop-color="#5CC6D0"/><stop offset="1" stop-color="#3A98A4"/>' +
+      '</linearGradient></defs>' +
+      '<path d="M12 8.5C16.5 6 20.5 7 24.5 11.5S33.5 17.5 39 11.5" stroke="url(#' + id + ')" stroke-width="3.3" stroke-linecap="round"/>' +
+      '<path d="M9 19.5C13 13 17.5 12.5 21.5 16.5S31 23.5 38 18.5" stroke="#226E78" stroke-width="3.3" stroke-linecap="round"/>' +
+      '</svg>';
+  }
+
+  const FEEDBACK_MAIL = (function () {
+    const body = [
+      'Hi Dave,',
+      '',
+      "I'm a: (teacher / parent / other)",
+      'Year level:',
+      'My idea or feedback:',
+      '',
+      '',
+      'Thanks!'
+    ].join('\r\n');
+    return 'mailto:dave@flowstatelearning.com.au?subject=' +
+      encodeURIComponent('EmbedMaths idea') + '&body=' + encodeURIComponent(body);
+  })();
+
   function boot() {
     link = readLink();
     if (link.q === 5 || link.q === 8 || link.q === 10) prefs.q = link.q;
@@ -578,6 +606,8 @@ const EM = (function () {
     levelMeta: levelMeta,
     escapeHtml: escapeHtml,
     describeLink: describeLink,
-    teacherStrip: teacherStrip
+    teacherStrip: teacherStrip,
+    waveMark: waveMark,
+    feedbackMail: FEEDBACK_MAIL
   };
 })();

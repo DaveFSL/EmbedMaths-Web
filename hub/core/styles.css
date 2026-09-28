@@ -79,11 +79,8 @@ h2 { font-size: 22px; margin: 0; }
   gap: 12px;
 }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--teal); font-size: 28px; font-weight: 760; }
-.logo {
-  width: 42px; height: 42px; border-radius: 12px; background: #fff;
-  display: grid; place-items: center; color: var(--teal); box-shadow: var(--shadow);
-}
-.logo svg { width: 28px; height: 28px; }
+.waves { width: 40px; height: 26px; flex: none; display: block; }
+.board-brand .waves { width: 32px; height: 21px; }
 
 .btn {
   min-height: 48px;
@@ -469,7 +466,11 @@ h2 { font-size: 22px; margin: 0; }
   width: min(560px, 100%); display: flex; flex-direction: column; align-items: center; gap: 8px;
   box-shadow: var(--shadow);
 }
-.board-brand { margin: 0; color: var(--teal); font-weight: 760; font-size: 22px; font-family: var(--display); }
+.board-brand {
+  margin: 0; color: var(--teal); font-weight: 760; font-size: 22px; font-family: var(--display);
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.builder .brand { margin-bottom: 8px; }
 .board-due { margin: 0; color: var(--muted); font-weight: 650; }
 .board-url { margin: 0; color: var(--muted); font-size: 13px; word-break: break-all; max-width: 100%; }
 .hw-card {

@@ -134,6 +134,26 @@ const LinkBuilder = (function () {
     return yy;
   }
 
+  function drawCardWaves(ctx, x, y) {
+    ctx.save();
+    ctx.translate(x - 4, y - 3);
+    ctx.lineWidth = 3.3;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(12, 8.5);
+    ctx.bezierCurveTo(16.5, 6, 20.5, 7, 24.5, 11.5);
+    ctx.bezierCurveTo(28.5, 16, 33.5, 17.5, 39, 11.5);
+    ctx.stroke();
+    ctx.strokeStyle = '#9FDCE2';
+    ctx.beginPath();
+    ctx.moveTo(9, 19.5);
+    ctx.bezierCurveTo(13, 13, 17.5, 12.5, 21.5, 16.5);
+    ctx.bezierCurveTo(25.5, 20.5, 31, 23.5, 38, 18.5);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function drawCard(canvas, url) {
     const described = EM.describeLink(linkInfo());
     const summary = described.cardLine || described.detail;
@@ -148,11 +168,21 @@ const LinkBuilder = (function () {
     ctx.fillRect(0, 0, w, h);
     ctx.fillStyle = '#0E5D66';
     ctx.fillRect(0, 0, w, 78);
-    ctx.fillStyle = '#ffffff';
-    ctx.textAlign = 'center';
+    ctx.save();
     ctx.font = '700 30px "Bricolage Grotesque", Lexend, sans-serif';
-    ctx.fillText('EmbedMaths', w / 2, 50);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    const brand = 'EmbedMaths';
+    const brandW = ctx.measureText(brand).width;
+    const iconW = 40;
+    const gap = 12;
+    const brandX = (w - (iconW + gap + brandW)) / 2;
+    drawCardWaves(ctx, brandX, (78 - 26) / 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(brand, brandX + iconW + gap, 39);
+    ctx.restore();
     ctx.fillStyle = '#16302F';
+    ctx.textAlign = 'center';
     ctx.font = '760 40px "Bricolage Grotesque", Lexend, sans-serif';
     let y = wrapFill(ctx, described.title || 'Practice', w / 2, 128, 560, 48);
     y += 36;
@@ -252,7 +282,8 @@ const LinkBuilder = (function () {
         (state.rows.length < 2 ? ' disabled' : '') + '>Remove</button></div>';
     }).join('');
     document.getElementById('app').innerHTML =
-      '<div class="shell builder"><div class="picker-top"><button type="button" class="btn ghost" id="backHome">' +
+      '<div class="shell builder"><div class="brand">' + EM.waveMark() + '<span>EmbedMaths</span></div>' +
+      '<div class="picker-top"><button type="button" class="btn ghost" id="backHome">' +
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Home</button>' +
       '<span class="builder-for">For teachers and parents</span></div>' +
       '<h1>Set practice</h1><p class="lede">Choose what to practise, then share a link or QR code — for a class or your own child.</p>' +
@@ -306,7 +337,7 @@ const LinkBuilder = (function () {
       '<button type="button" class="btn light" id="downloadCard">Download card</button>' +
       '<button type="button" class="btn light" id="showBoard">Show on the board</button></aside></div>' +
       '<p class="builder-links"><a href="https://flowstatelearning.com.au/about" target="_blank" rel="noopener noreferrer">About</a>' +
-      '<a href="mailto:dave@flowstatelearning.com.au">Feedback</a></p></div>';
+      '<a href="' + EM.feedbackMail + '">Feedback</a></p></div>';
 
     document.getElementById('backHome').onclick = function () { EM.home(); };
     bindFields();
@@ -571,7 +602,7 @@ const LinkBuilder = (function () {
     const board = document.createElement('div');
     board.className = 'board';
     board.innerHTML = '<button type="button" class="btn ghost board-close" id="boardClose">' + EM.icons.close +
-      ' Close</button><div class="board-card"><p class="board-brand">EmbedMaths</p><h1>' +
+      ' Close</button><div class="board-card"><p class="board-brand">' + EM.waveMark() + '<span>EmbedMaths</span></p><h1>' +
       EM.escapeHtml(described.title) + '</h1>' +
       (described.dueText ? '<p class="board-due">Due: ' + EM.escapeHtml(described.dueText) + '</p>' : '') +
       '<div class="qr-box board-qr">' + qrSvg(url) + '</div><p class="board-detail">' + EM.escapeHtml(summary) +
