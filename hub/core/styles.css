@@ -402,8 +402,14 @@ h2 { font-size: 22px; margin: 0; }
 }
 
 .builder-for { color: var(--muted); font-weight: 650; }
-.builder-links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 22px 4px 0; }
-.builder-links a { color: var(--teal); font-weight: 650; }
+.builder-foot { display: grid; gap: 6px; margin: 28px 4px 0; color: var(--muted); font-size: 14px; }
+.builder-foot a { color: var(--teal); font-weight: 650; }
+.about-page { width: min(720px, calc(100% - 32px)); }
+.about-page h2 { margin: 26px 0 8px; }
+.about-page p { margin: 0; line-height: 1.55; }
+.about-page .about-idea { margin-top: 22px; }
+.about-page a:not(.btn) { color: var(--teal); font-weight: 650; }
+.about-page .about-back { margin-top: 22px; }
 .copy-note { margin: 0; color: #fff; font-weight: 650; line-height: 1.4; }
 .link-layout { display: grid; gap: 16px; align-items: start; }
 .topic-pills { display: flex; flex-wrap: wrap; gap: 8px; }

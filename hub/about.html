@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>About &amp; privacy — EmbedMaths</title>
+<meta name="theme-color" content="#0E5D66">
+<link rel="icon" type="image/png" href="../icons/icon-embedmaths-512.png">
+<script>
+  var VERSION = '04e9ff1';
+  document.write('<link rel="stylesheet" href="core/styles.css?v=' + VERSION + '">');
+</script>
+</head>
+<body>
+<div class="shell about-page">
+  <header class="top">
+    <div class="brand">
+      <svg class="waves" width="40" height="26" viewBox="4 3 40 26" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="emWaveAbout" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#5CC6D0"/>
+            <stop offset="1" stop-color="#3A98A4"/>
+          </linearGradient>
+        </defs>
+        <path d="M12 8.5C16.5 6 20.5 7 24.5 11.5S33.5 17.5 39 11.5" stroke="url(#emWaveAbout)" stroke-width="3.3" stroke-linecap="round"/>
+        <path d="M9 19.5C13 13 17.5 12.5 21.5 16.5S31 23.5 38 18.5" stroke="#226E78" stroke-width="3.3" stroke-linecap="round"/>
+      </svg>
+      <span>EmbedMaths</span>
+    </div>
+  </header>
+  <h1>About &amp; privacy</h1>
+  <h2>What EmbedMaths is</h2>
+  <p>Daily practice for written methods, place value and measurement. Work it out on paper, then check each step.</p>
+  <h2>Who made it</h2>
+  <p>Made by Dave Cox, a Year 6 teacher in Brisbane (FlowState Learning).</p>
+  <h2>Privacy</h2>
+  <p>No accounts, no names, no tracking. Progress is saved only on the device being used, and clearing the browser clears it. Nothing is sent anywhere.</p>
+  <p class="about-idea"><a id="ideaLink">Got an idea for EmbedMaths? Tell me</a></p>
+  <a class="btn ghost about-back" href="./?teachers=1">Back to Set practice</a>
+</div>
+<script>
+  document.write('<script src="core/app.js?v=' + VERSION + '"><\/script>');
+</script>
+<script>
+  document.getElementById('ideaLink').href = EM.feedbackMail;
+</script>
+</body>
+</html>

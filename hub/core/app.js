@@ -583,6 +583,12 @@ const EM = (function () {
       startSession(fromLink(link));
       return;
     }
+    try {
+      if (new URLSearchParams(window.location.search).get('teachers') === '1') {
+        LinkBuilder.open();
+        return;
+      }
+    } catch (err) {}
     renderHome();
   }
 

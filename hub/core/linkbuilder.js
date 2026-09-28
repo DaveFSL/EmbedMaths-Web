@@ -336,8 +336,10 @@ const LinkBuilder = (function () {
       '<p class="card-label">QR card</p><canvas id="qrCard" class="qr-card"></canvas>' +
       '<button type="button" class="btn light" id="downloadCard">Download card</button>' +
       '<button type="button" class="btn light" id="showBoard">Show on the board</button></aside></div>' +
-      '<p class="builder-links"><a href="https://flowstatelearning.com.au/about" target="_blank" rel="noopener noreferrer">About</a>' +
-      '<a href="' + EM.feedbackMail + '">Feedback</a></p></div>';
+      '<footer class="builder-foot">' +
+      '<a href="https://flowstatelearning.com.au" target="_blank" rel="noopener noreferrer">Made by a Brisbane teacher · FlowState Learning</a>' +
+      '<a href="' + EM.feedbackMail + '">Got an idea for EmbedMaths? Tell me</a>' +
+      '<a href="about.html">About &amp; privacy</a></footer></div>';
 
     document.getElementById('backHome').onclick = function () { EM.home(); };
     bindFields();
