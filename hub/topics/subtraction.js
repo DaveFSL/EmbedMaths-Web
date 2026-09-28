@@ -302,7 +302,7 @@
   }
 
   function trickyQ(level, focus) {
-    if (level === 6 || focus === 'Trading') {
+    if (level === 6 || focus === 'Regrouping') {
       if (level === 6) { const p = gen6(); return makeQ(p[0], p[1], 0, 0, 0, true); }
     }
     if (level === 7) { const p = [ri(1000, 9999), ri(10, 99)]; return makeQ(p[0], p[1], 0, 0, 0, true); }
@@ -425,9 +425,9 @@
         if (zeroIdx.length) {
           const zeroNames = zeroIdx.map(function (idx) { return colName(idx, dp); });
           let intro = hereBefore + ' is not enough to take ' + b2 + '. ';
-          if (zeroNames.length === 1) intro += 'The ' + zeroNames[0] + ' is 0, so we go to the ' + tradeInfo.donorName + '.';
-          else intro += 'The ' + joinAnd(zeroNames) + ' are 0, so we go to the ' + tradeInfo.donorName + '.';
-          steps.push(snap({ readyText: intro, isTrade: true, chip: 'Trading', hiCols: [i] }));
+          if (zeroNames.length === 1) intro += 'The ' + zeroNames[0] + ' are 0, so regroup from the ' + tradeInfo.donorName + '.';
+          else intro += 'The ' + joinAnd(zeroNames) + ' are 0, so regroup from the ' + tradeInfo.donorName + '.';
+          steps.push(snap({ readyText: intro, isTrade: true, chip: 'Regrouping', hiCols: [i] }));
           hops.forEach(function (hop) {
             tradedFrom[hop.fromCol] = true;
             newVals[hop.fromCol] = hop.fromAfter;
@@ -443,7 +443,7 @@
             steps.push(snap({
               readyText: hopPhrase(hop) + '.',
               isTrade: true,
-              chip: 'Trading',
+              chip: 'Regrouping',
               hiCols: [hop.fromCol, hop.toCol]
             }));
           });
@@ -454,7 +454,7 @@
             readyText: ad + ' − ' + b2 + ' = ' + results[i] + '. Write ' + results[i] + '.',
             isTrade: true,
             tradeInfo: tradeInfo,
-            chip: 'Trading',
+            chip: 'Regrouping',
             calc: ad + ' − ' + b2 + ' = ' + results[i],
             hiCols: [i]
           }));
@@ -472,7 +472,7 @@
         });
         ad = wTop[i];
         tradeInfo.nowHere = ad;
-        text = 'Trade for the ' + cn;
+        text = 'Regroup for the ' + cn;
         calc = ad + ' − ' + b2 + ' = ' + (ad - b2);
       } else {
         text = 'Subtract the ' + cn + ': ' + ad + ' − ' + b2;
@@ -491,8 +491,8 @@
   }
 
   function hopPhrase(hop) {
-    return hop.fromBefore + ' ' + singular(hop.fromName, hop.fromBefore) + ' becomes ' + hop.fromAfter + ', ' +
-      hop.toBefore + ' ' + singular(hop.toName, hop.toBefore) + ' becomes ' + hop.toAfter;
+    return hop.toBefore + ' ' + singular(hop.toName, hop.toBefore) + ' becomes ' + hop.toAfter + ', ' +
+      hop.fromBefore + ' ' + singular(hop.fromName, hop.fromBefore) + ' becomes ' + hop.fromAfter;
   }
 
   function bottomEmpty(q, col) {
@@ -505,8 +505,10 @@
     const digit = s.results[s.col];
     if (s.tradeInfo) {
       const info = s.tradeInfo;
-      return titleCase(place) + ': ' + info.origHere + ' is not enough to take ' + info.sub + '. Trade from the ' +
-        info.donorName + ': ' + hopPhrase(info.hops[0]) + '. ' + info.nowHere + ' − ' + info.sub + ' = ' + digit + '. Write ' + digit + '.';
+      const hop = info.hops[0];
+      return titleCase(place) + ': ' + info.origHere + ' is not enough to take ' + info.sub +
+        '. Regroup 1 ' + singular(hop.fromName, 1) + ' from the ' + hop.fromName + ': ' + hopPhrase(hop) +
+        '. ' + info.nowHere + ' − ' + info.sub + ' = ' + digit + '. Write ' + digit + '.';
     }
     if (bottomEmpty(q, s.col)) return titleCase(place) + ': Nothing to take away, so write ' + digit + '.';
     return titleCase(place) + ': ' + s.wTop[s.col] + ' − ' + s.bd[s.col] + ' = ' + digit + '. Write ' + digit + '.';
@@ -551,7 +553,7 @@
   }
 
   /* Ported from embedmaths-addition-subtraction.html and fixed for
-     different lengths, placeholder zeros, and orange trading digits. */
+     different lengths, placeholder zeros, and orange regrouped digits. */
   function renderAlgo(q, step) {
     const dp = q.dp;
     const ai = q.aInt;
@@ -751,10 +753,10 @@
   }
 
   const TIPS = {
-    'Trading': 'When the next column is 0, keep going left until you find a digit to trade from. Every 0 you pass over becomes a 9.',
-    'Ones': 'Start at the ones. If the top digit is smaller, trade before you subtract.',
-    'Tens': 'After a trade, use the new tens digit above the crossed-out one.',
-    'Hundreds / thousands': 'Check the column you traded from. Subtract with the new digit, not the one you crossed out.',
+    'Regrouping': 'When the next column is 0, keep going left until you find a digit to regroup from. Every 0 you pass over becomes a 9.',
+    'Ones': 'Start at the ones. If the top digit is smaller, regroup before you subtract.',
+    'Tens': 'After you regroup, use the new tens digit above the crossed-out one.',
+    'Hundreds / thousands': 'Check the column you regrouped from. Subtract with the new digit, not the one you crossed out.',
     'Tenths': 'Keep the decimal points in a line, then subtract the tenths in that column.',
     'Hundredths': 'If one number has fewer decimal places, write a placeholder 0 so the hundredths line up.'
   };
@@ -764,23 +766,23 @@
     name: 'Subtraction',
     section: 'written',
     levels: [
-      { id: 1, name: '2-digit, no trading', example: '87 − 34' },
-      { id: 2, name: '2-digit with trading', example: '82 − 47' },
-      { id: 3, name: '3-digit, no trading', example: '586 − 243' },
-      { id: 4, name: '3-digit with trading', example: '624 − 258' },
-      { id: 5, name: '4-digit with trading', example: '7257 − 1455' },
-      { id: 6, name: 'Trading across zeros', example: '4003 − 1257' },
+      { id: 1, name: '2-digit, no regrouping', example: '87 − 34' },
+      { id: 2, name: '2-digit with regrouping', example: '82 − 47' },
+      { id: 3, name: '3-digit, no regrouping', example: '586 − 243' },
+      { id: 4, name: '3-digit with regrouping', example: '624 − 258' },
+      { id: 5, name: '4-digit with regrouping', example: '7257 − 1455' },
+      { id: 6, name: 'Regrouping across zeros', example: '4003 − 1257' },
       { id: 7, name: 'Different lengths', example: '3456 − 87' },
       { id: 8, name: 'Decimals, same places', example: '34.6 − 12.9' },
       { id: 9, name: 'Decimals, different places', example: '12.5 − 3.47' }
     ],
     tricky: [
-      { id: 'across-zeros', tags: ['Trading'], levels: [6] },
+      { id: 'across-zeros', tags: ['Regrouping'], levels: [6] },
       { id: 'different-lengths', tags: ['Tens', 'Hundreds / thousands'], levels: [7] },
       { id: 'placeholder', tags: ['Hundredths', 'Tenths'], levels: [9] },
-      { id: 'must-trade', tags: ['Trading', 'Ones'], levels: [2, 4, 5, 8] }
+      { id: 'must-trade', tags: ['Regrouping', 'Ones'], levels: [2, 4, 5, 8] }
     ],
-    errorTags: ['Trading', 'Ones', 'Tens', 'Hundreds / thousands', 'Tenths', 'Hundredths'],
+    errorTags: ['Regrouping', 'Ones', 'Tens', 'Hundreds / thousands', 'Tenths', 'Hundredths'],
     tips: TIPS,
     makeQuestion: function (level, opts) {
       opts = opts || {};
@@ -788,7 +790,7 @@
       for (let i = 0; i < 30; i++) {
         const q = (opts.tricky || focus) ? trickyQ(level, focus) : normal(level);
         if (!fits(level, q)) continue;
-        if (level === 6 && focus === 'Trading' && !crossesZero(q.aInt, q.bInt)) continue;
+        if (level === 6 && focus === 'Regrouping' && !crossesZero(q.aInt, q.bInt)) continue;
         q.level = level;
         q.tricky = !!(opts.tricky || focus);
         q.steps = buildSteps(q);
@@ -816,7 +818,7 @@
     chipsFor: function (q) {
       const used = {};
       (q.steps || []).forEach(function (s) { if (s.stepTag) used[s.stepTag] = true; });
-      used.Trading = true;
+      used.Regrouping = true;
       return this.errorTags.filter(function (tag) { return used[tag]; });
     },
     extensions: function (level) { return buildExtBank(level); }

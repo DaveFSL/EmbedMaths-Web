@@ -6,8 +6,13 @@ const Summary = (function () {
     return d.getFullYear() + '-' + m + '-' + day;
   }
 
+  function shownTag(tag) {
+    if (tag === 'Trading' || tag === 'Carrying') return 'Regrouping';
+    return tag;
+  }
+
   function watchLine(tag, count, all) {
-    const name = tag === 'Trading' ? 'trading step' : tag.toLowerCase() + ' step';
+    const name = shownTag(tag).toLowerCase() + ' step';
     if (all && count === 1) return 'The error was in the ' + name + '.';
     if (all && count === 2) return 'Both errors were in the ' + name + '.';
     return count + (count === 1 ? ' error was' : ' errors were') + ' in the ' + name + '.';
@@ -98,7 +103,7 @@ const Summary = (function () {
     const tiles = session.results.map(function (r, i) {
       if (r.correct) return '<li class="q-tile good"><span>Q' + (i + 1) + '</span>' + EM.icons.check + '</li>';
       const name = EM.topics[r.topicId] ? EM.topics[r.topicId].name : 'Error';
-      return '<li class="q-tile bad"><span>Q' + (i + 1) + '</span><b>' + (r.tag || name) + '</b></li>';
+      return '<li class="q-tile bad"><span>Q' + (i + 1) + '</span><b>' + (shownTag(r.tag) || name) + '</b></li>';
     }).join('');
     const allRight = score === total;
     const watch = allRight
@@ -127,7 +132,7 @@ const Summary = (function () {
     Store.appendHistory({ t: 'set', lvl: 0, date: today(), score: score, of: total, errors: {} });
     const tiles = session.results.map(function (r, i) {
       if (r.correct) return '<li class="q-tile good"><span>Q' + (i + 1) + '</span>' + EM.icons.check + '</li>';
-      return '<li class="q-tile bad"><span>Q' + (i + 1) + '</span><b>' + (r.tag || 'Error') + '</b></li>';
+      return '<li class="q-tile bad"><span>Q' + (i + 1) + '</span><b>' + (shownTag(r.tag) || 'Error') + '</b></li>';
     }).join('');
     const allRight = score === total;
     const watch = allRight
@@ -176,12 +181,12 @@ const Summary = (function () {
       if (r.correct) {
         return '<li class="q-tile good"><span>Q' + (i + 1) + '</span>' + EM.icons.check + '</li>';
       }
-      return '<li class="q-tile bad"><span>Q' + (i + 1) + '</span><b>' + (r.tag || 'Error') + '</b></li>';
+      return '<li class="q-tile bad"><span>Q' + (i + 1) + '</span><b>' + (shownTag(r.tag) || 'Error') + '</b></li>';
     }).join('');
 
     const watch = top
       ? '<section class="watch"><p class="eyebrow warn">What to watch</p><h2>' + watchLine(top.tag, top.n, top.n === errorCount) +
-        '</h2><p>' + (topic.tips[top.tag] || '') + '</p><button type="button" class="btn peach" id="more">Try 4 more like these</button></section>'
+        '</h2><p>' + (topic.tips[shownTag(top.tag)] || topic.tips[top.tag] || '') + '</p><button type="button" class="btn peach" id="more">Try 4 more like these</button></section>'
       : (errorCount
         ? '<section class="watch"><p class="eyebrow warn">What to watch</p><h2>' + errorCount + (errorCount === 1 ? ' error was' : ' errors were') + ' marked.</h2><p>No step was chosen, so there is no pattern to show yet.</p></section>'
         : '');

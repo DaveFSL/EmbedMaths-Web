@@ -61,14 +61,14 @@ EM.registerTopic({
   id: 'sub',                       // used in links: ?t=sub
   name: 'Subtraction',
   section: 'written',              // written | placevalue | measurement | facts
-  levels: [ { id: 1, name: '2-digit, no trading', example: '87 − 34' }, … ],
+  levels: [ { id: 1, name: '2-digit, no regrouping', example: '87 − 34' }, … ],
   tricky: [ … ],                   // generators for the "tricky ones" option
   makeQuestion(level, opts) {},    // → question object
   estimate(q) {},                  // → { prompt, answer } or null
   buildSteps(q) {},                // → [{ title, text, highlight?, stepTag }]
   render(q, stepIndex, el) {},     // draws the written layout / chart at that step
   strategy(q) {},                  // optional mental strategy text
-  errorTags: ['Trading', 'Ones', 'Tens', 'Hundreds / thousands'],  // self-check chips
+  errorTags: ['Regrouping', 'Ones', 'Tens', 'Hundreds / thousands'],  // self-check chips
   extensions(level) {}             // optional extension challenges (existing feature)
 });
 ```
@@ -150,21 +150,21 @@ A set link uses `t=set` plus `set=`. `q` may be any count from 1 to 30. Invalid 
 ## 5. Levels
 
 ### Subtraction
-1. 2-digit, no trading (87 − 34)
-2. 2-digit with trading (82 − 47)
-3. 3-digit, no trading (586 − 243)
-4. 3-digit with trading (624 − 258)
-5. 4-digit with trading (7257 − 1455)
-6. **Trading across zeros** (4003 − 1257): generate these on purpose
+1. 2-digit, no regrouping (87 − 34)
+2. 2-digit with regrouping (82 − 47)
+3. 3-digit, no regrouping (586 − 243)
+4. 3-digit with regrouping (624 − 258)
+5. 4-digit with regrouping (7257 − 1455)
+6. **Regrouping across zeros** (4003 − 1257): generate these on purpose
 7. **Different lengths** (3456 − 87)
 8. Decimals, same places (34.6 − 12.9)
 9. **Decimals, different places** (12.5 − 3.47): show the placeholder zero
 
 ### Addition
-1. 2-digit, no carrying
-2. 2-digit with carrying
-3. 3-digit with carrying
-4. **Carrying into a new column** (986 + 47)
+1. 2-digit, no regrouping
+2. 2-digit with regrouping
+3. 3-digit with regrouping
+4. **Regrouping into a new column** (986 + 47)
 5. 4-digit, different lengths (3456 + 87)
 6. Three numbers (234 + 156 + 78)
 7. Decimals, different places (12.5 + 3.47)
@@ -224,9 +224,9 @@ A set link uses `t=set` plus `set=`. `q` may be any count from 1 to 30. Invalid 
 - Level 7 uses the chart's "one measurement, five ways" idea: pick the unit that gives a number you can hold in your head.
 
 ### Written methods
-- Keep "trading" as the classroom word (ACARA v9 says "regrouping"; mention it once in the teacher settings).
-- Keep the crossed-out digit with the new value above it. For trading across zeros, show every 0 becoming 9.
-- For multiplication, keep the carry digits visible (greyed) on the final step instead of hiding them.
+- Use regrouping, the Australian Curriculum (ACARA v9) word, in every step, level name and self-check chip.
+- Keep the crossed-out digit with the new value above it. For regrouping across zeros, show every 0 becoming 9.
+- For multiplication, keep the regrouped digits visible (greyed) on the final step instead of hiding them.
 
 ---
 
@@ -237,7 +237,7 @@ A set link uses `t=set` plus `set=`. `q` may be any count from 1 to 30. Invalid 
 ```js
 {
   progress: { sub: { level: 6, streak: 1 }, mul: { level: 4, streak: 0 }, … },
-  history: [ { t:'sub', lvl:6, date:'2026-09-24', score:6, of:8, errors:{ Trading:2 } }, … ],  // keep last 30
+  history: [ { t:'sub', lvl:6, date:'2026-09-24', score:6, of:8, errors:{ Regrouping:2 } }, … ],  // keep last 30
   extensions: { sub: { score: 5, of: 8 } }
 }
 ```
@@ -257,7 +257,7 @@ Port these instead of rewriting:
 
 ## 9. Bugs and fixes to carry over
 
-- **The generators never make the hardest cases.** Both numbers are always the same length and decimals always have the same number of places. Generate them on purpose for the levels above: different lengths, trading across zeros, different decimal places.
+- **The generators never make the hardest cases.** Both numbers are always the same length and decimals always have the same number of places. Generate them on purpose for the levels above: different lengths, regrouping across zeros, different decimal places.
 - **Extension answers stay hidden until the student commits.** Each challenge has a My answer box (True / False buttons on those questions). Show answer stays unavailable until something is entered, and says "Write your answer first" if it is tapped early. The reveal puts their answer beside the correct one. A hint shows the first step only, not the answer. There is no teacher PIN.
 - The session badge text reads "mixeddp decimals" and "4d"; replace these with the level name.
 - Choosing "1dp × 1dp" with 2-digit × 1-digit quietly becomes 1dp × whole. Level-based generation removes this.
@@ -270,7 +270,7 @@ Port these instead of rewriting:
 
 ## 10. Look and feel
 
-- Colours: teal `#0E5D66` (main), ground `#F4F8F7`, ink `#16302F`, muted text `#4F6B6D`, orange `#B85A1E` (errors, trading, placeholders; tint `#FFF6EF`). Length blue `#1D5A9E`. Mass purple and capacity green to match the laminated chart.
+- Colours: teal `#0E5D66` (main), ground `#F4F8F7`, ink `#16302F`, muted text `#4F6B6D`, orange `#B85A1E` (errors, regrouping, placeholders; tint `#FFF6EF`). Length blue `#1D5A9E`. Mass purple and capacity green to match the laminated chart.
 - Fonts: **Bricolage Grotesque** for headings, **Lexend** for body text and numbers, with `font-variant-numeric: tabular-nums` so columns line up. Save the font files in the repo; don't load them from Google at runtime.
 - Tap targets at least 44 px. Tested at iPad landscape (1180 × 820) and phone (390 wide).
 - Icons: simple inline SVG line icons, no emoji.

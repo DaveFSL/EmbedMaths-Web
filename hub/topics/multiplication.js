@@ -16,6 +16,18 @@
     return name.charAt(0).toUpperCase() + name.slice(1);
   }
 
+  function singular(name, n) {
+    const map = {
+      ones: 'one', tens: 'ten', hundreds: 'hundred', thousands: 'thousand',
+      'ten-thousands': 'ten-thousand', 'hundred-thousands': 'hundred-thousand'
+    };
+    return n === 1 ? (map[name] || name) : name;
+  }
+
+  function regroupInto(n, place) {
+    return 'regroup ' + n + ' ' + singular(place, n) + ' into the ' + place;
+  }
+
   function digitsOf(n) {
     return String(n).split('').reverse().map(Number);
   }
@@ -175,7 +187,7 @@
       let calc = named
         ? 'The ' + digs[i] + ' in the ' + place + ' place × ' + digit + ' = ' + prod
         : titleCase(place) + ': ' + digs[i] + ' × ' + digit + ' = ' + prod;
-      if (incoming > 0) calc += ', plus the ' + incoming + ' carried = ' + sum;
+      if (incoming > 0) calc += ', plus the ' + incoming + ' regrouped = ' + sum;
       calc += '.';
       row[at] = write;
       carry = nc;
@@ -183,10 +195,10 @@
       const last = i === digs.length - 1;
       if (nc > 0 && !last) {
         state.carries[at + 1] = nc;
-        tags.push('Carrying');
+        tags.push('Regrouping');
         calc += shift > 0 && i === 0
-          ? ' Write ' + write + ' in the ' + colName(shift) + ' column, carry ' + nc + '.'
-          : ' Write ' + write + ', carry ' + nc + '.';
+          ? ' Write ' + write + ' in the ' + colName(shift) + ' column, ' + regroupInto(nc, colName(at + 1)) + '.'
+          : ' Write ' + write + ', ' + regroupInto(nc, colName(at + 1)) + '.';
       } else if (nc > 0 && last) {
         row[at + 1] = nc;
         calc += ' Write ' + sum + '.';
@@ -248,7 +260,7 @@
         continue;
       }
       let calc = titleCase(place) + ': ' + bits.join(' + ');
-      if (incoming > 0) calc += ' + the ' + incoming + ' carried';
+      if (incoming > 0) calc += ' + the ' + incoming + ' regrouped';
       calc += ' = ' + sum + '.';
       if (incoming > 0) state.addUsed[i] = true;
       state.total[i] = write;
@@ -257,8 +269,8 @@
       const last = i === L - 1;
       if (nc > 0 && !last) {
         state.addCarries[i + 1] = nc;
-        tags.push('Carrying');
-        calc += ' Write ' + write + ', carry ' + nc + '.';
+        tags.push('Regrouping');
+        calc += ' Write ' + write + ', ' + regroupInto(nc, colName(i + 1)) + '.';
       } else if (nc > 0 && last) {
         state.total[i + 1] = nc;
         calc += ' Write ' + sum + '.';
@@ -544,8 +556,8 @@
   }
 
   const TIPS = {
-    'Times fact': 'Multiply the digits in this column, then add any carry.',
-    'Carrying': 'Write the ones digit of the product and carry the rest to the next column.',
+    'Times fact': 'Multiply the digits in this column, then add anything regrouped.',
+    'Regrouping': 'Write the ones digit of the product and regroup the rest into the next column.',
     'Placeholder zero': 'Multiplying by the tens digit shifts the row one place left, so the ones column is a 0.',
     'Adding the rows': 'Add the partial rows the same way as a column addition.',
     'Decimal point': 'Count the decimal places in both factors. The answer has that many decimal places.'
@@ -565,11 +577,11 @@
       { id: 7, name: 'Decimal × decimal', example: '3.4 × 0.6' }
     ],
     tricky: [
-      { id: 'carry', tags: ['Carrying', 'Times fact'], levels: [1, 2, 3, 6] },
+      { id: 'carry', tags: ['Regrouping', 'Times fact'], levels: [1, 2, 3, 6] },
       { id: 'long', tags: ['Placeholder zero', 'Adding the rows'], levels: [4, 5] },
       { id: 'decimal', tags: ['Decimal point'], levels: [7] }
     ],
-    errorTags: ['Times fact', 'Carrying', 'Placeholder zero', 'Adding the rows', 'Decimal point'],
+    errorTags: ['Times fact', 'Regrouping', 'Placeholder zero', 'Adding the rows', 'Decimal point'],
     tips: TIPS,
     makeQuestion: function (level, opts) {
       opts = opts || {};

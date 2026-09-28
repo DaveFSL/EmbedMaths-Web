@@ -293,7 +293,6 @@ const LinkBuilder = (function () {
       '<div class="field" id="writtenToggles"' + (written ? '' : ' hidden') + '>' +
       '<label class="check-line"><input type="checkbox" id="estOn"' + (state.est ? ' checked' : '') + '> Estimate first</label>' +
       '<label class="check-line"><input type="checkbox" id="stratOn"' + (state.strat ? ' checked' : '') + '> Show a mental strategy after the solution</label>' +
-      '<p class="note">In class we say trading. The Australian Curriculum (ACARA v9) calls this regrouping.</p>' +
       '</div>' +
       '<label class="check-line"><input type="checkbox" id="sameOn"' + (state.same ? ' checked' : '') +
       '> Same questions for everyone</label>' +

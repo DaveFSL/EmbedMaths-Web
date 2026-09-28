@@ -18,6 +18,19 @@
     return name.charAt(0).toUpperCase() + name.slice(1);
   }
 
+  function singular(name, n) {
+    const map = {
+      ones: 'one', tens: 'ten', hundreds: 'hundred', thousands: 'thousand',
+      'ten-thousands': 'ten-thousand', 'hundred-thousands': 'hundred-thousand',
+      tenths: 'tenth', hundredths: 'hundredth', thousandths: 'thousandth'
+    };
+    return n === 1 ? (map[name] || name) : name;
+  }
+
+  function regroupInto(n, place) {
+    return 'regroup ' + n + ' ' + singular(place, n) + ' into the ' + place;
+  }
+
   function placeTag(place) {
     if (place === 'hundreds' || place === 'thousands' || place === 'ten-thousands' || place === 'hundred-thousands') {
       return 'Hundreds / thousands';
@@ -216,7 +229,7 @@
         continue;
       }
       let calc = titleCase(place) + ': ' + vals.join(' + ');
-      if (incoming > 0) calc += ' + the ' + incoming + ' carried';
+      if (incoming > 0) calc += ' + the ' + incoming + ' regrouped';
       calc += ' = ' + sum + '.';
       if (incoming > 0) used[i] = true;
       results[i] = write;
@@ -224,13 +237,13 @@
       const tags = [];
       if (nc > 0) {
         carries[i + 1] = nc;
-        tags.push('Carrying');
+        tags.push('Regrouping');
         if (i === L - 1) {
           results[i + 1] = nc;
           used[i + 1] = true;
           calc += ' Write ' + sum + '.';
         } else {
-          calc += ' Write ' + write + ', carry ' + nc + '.';
+          calc += ' Write ' + write + ', ' + regroupInto(nc, colName(i + 1, dp)) + '.';
         }
       } else {
         calc += ' Write ' + write + '.';
@@ -379,10 +392,10 @@
   }
 
   const TIPS = {
-    'Carrying': 'When a column makes 10 or more, write the ones digit and carry the tens digit to the next column.',
-    'Ones': 'Start at the ones. Finish writing that digit, and the carry, before you move left.',
-    'Tens': 'Add the carry from the ones as well as the tens digits.',
-    'Hundreds / thousands': 'A final carry becomes a new digit on the left. Do not leave it off the answer.',
+    'Regrouping': 'When a column makes 10 or more, write the ones digit and regroup the rest into the next column.',
+    'Ones': 'Start at the ones. Finish writing that digit, and the regrouped amount, before you move left.',
+    'Tens': 'Add the regrouped amount from the ones as well as the tens digits.',
+    'Hundreds / thousands': 'A final regroup becomes a new digit on the left. Do not leave it off the answer.',
     'Tenths': 'Keep the decimal points in a line, then add the tenths in that column.',
     'Hundredths': 'If one number has fewer decimal places, write a placeholder 0 so the hundredths line up.'
   };
@@ -392,21 +405,21 @@
     name: 'Addition',
     section: 'written',
     levels: [
-      { id: 1, name: '2-digit, no carrying', example: '34 + 21' },
-      { id: 2, name: '2-digit with carrying', example: '48 + 36' },
-      { id: 3, name: '3-digit with carrying', example: '276 + 148' },
-      { id: 4, name: 'Carrying into a new column', example: '986 + 47' },
+      { id: 1, name: '2-digit, no regrouping', example: '34 + 21' },
+      { id: 2, name: '2-digit with regrouping', example: '48 + 36' },
+      { id: 3, name: '3-digit with regrouping', example: '276 + 148' },
+      { id: 4, name: 'Regrouping into a new column', example: '986 + 47' },
       { id: 5, name: '4-digit, different lengths', example: '3456 + 87' },
       { id: 6, name: 'Three numbers', example: '234 + 156 + 78' },
       { id: 7, name: 'Decimals, different places', example: '12.5 + 3.47' }
     ],
     tricky: [
-      { id: 'carry-both', tags: ['Carrying', 'Ones'], levels: [2, 3] },
+      { id: 'carry-both', tags: ['Regrouping', 'Ones'], levels: [2, 3] },
       { id: 'new-column', tags: ['Hundreds / thousands'], levels: [4, 5] },
-      { id: 'carry-two', tags: ['Carrying'], levels: [6] },
+      { id: 'carry-two', tags: ['Regrouping'], levels: [6] },
       { id: 'placeholder', tags: ['Hundredths'], levels: [7] }
     ],
-    errorTags: ['Carrying', 'Ones', 'Tens', 'Hundreds / thousands', 'Tenths', 'Hundredths'],
+    errorTags: ['Regrouping', 'Ones', 'Tens', 'Hundreds / thousands', 'Tenths', 'Hundredths'],
     tips: TIPS,
     makeQuestion: function (level, opts) {
       opts = opts || {};
