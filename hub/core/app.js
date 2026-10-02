@@ -272,8 +272,8 @@ const EM = (function () {
       '<section class="panel"><h2>Number facts</h2><div class="tile-row">' +
       tile(ICONS.bolt, 'Times tables', 'Open FlashFlips', { href: 'https://davefsl.github.io/FlashFlips-Web/', warm: true }) +
       '</div></section></div></div>' +
-      '<p class="foot">Progress is saved on this device only.</p>' +
-      '<p class="ver">' + VERSION + '</p></div>';
+      '<div class="site-foot in-flow"><p>Progress is saved on this device only.</p>' +
+      '<p>' + VERSION + '</p></div></div>';
 
     const subBtn = app.querySelector('[data-go="sub"]');
     if (subBtn) subBtn.onclick = function () { openLevels('sub'); };
@@ -311,6 +311,16 @@ const EM = (function () {
       startMix({ count: 8, tricky: 1, est: true, strat: true, msg: link.msg });
     };
     window.scrollTo(0, 0);
+    requestAnimationFrame(settleFoot);
+  }
+
+  function settleFoot() {
+    const foot = document.querySelector('.site-foot');
+    if (!foot) return;
+    foot.classList.add('in-flow');
+    const docTop = foot.getBoundingClientRect().top + window.scrollY;
+    const height = foot.offsetHeight;
+    if (docTop + height + 16 < window.innerHeight) foot.classList.remove('in-flow');
   }
 
   function openLevels(topicId) {
@@ -602,6 +612,8 @@ const EM = (function () {
     } catch (err) {}
     renderHome();
   }
+
+  window.addEventListener('resize', settleFoot);
 
   return {
     topics: topics,

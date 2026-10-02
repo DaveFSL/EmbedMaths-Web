@@ -69,8 +69,22 @@ h2 { font-size: 22px; margin: 0; }
 }
 .eyebrow.light { color: rgba(255, 255, 255, 0.78); }
 .eyebrow.warn { color: var(--orange); }
-.foot { color: var(--muted); font-size: 14px; margin: 18px 4px 0; }
-.ver { color: var(--muted); font-size: 12px; margin: 4px 4px 0; }
+.site-foot {
+  position: fixed;
+  left: max(12px, env(safe-area-inset-left));
+  bottom: max(8px, env(safe-area-inset-bottom));
+  z-index: 4;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.site-foot p { margin: 0; }
+.site-foot.in-flow {
+  position: static;
+  margin: 18px 4px 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
 
 .top, .picker-top, .play-top {
   display: flex;

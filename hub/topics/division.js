@@ -250,6 +250,13 @@ const Division = (function () {
     return col.added || DECIMALS.indexOf(col.place) >= 0 && q.decimalAt < q.digits.length && col.pointBefore || col.added;
   }
 
+  function regroupLine(col, next) {
+    return ' Regroup the ' + phrase(col.r, col.place) + ': ' + phrase(next.value, next.place) + '.';
+  }
+  function remainderLine(q) {
+    return ' Write the remainder beside the answer: ' + q.wholeAns + ' r' + q.rem + '.';
+  }
+
   function columnText(col, q, i) {
     const d = q.divisor;
     const next = nextCol(q.cols, i);
@@ -257,29 +264,31 @@ const Division = (function () {
     const heading = phrase(col.value, col.place);
     if (col.q === 0) {
       let line = heading + ' \u00f7 ' + d + " won't go. Write a placeholder 0.";
-      if (next) {
-        if (two || (col.inAnswer && two)) line += ' Regroup: ' + phrase(next.value, next.place) + '.';
-        else if (!col.inAnswer) line += ' Regroup the ' + heading + ': ' + phrase(next.value, next.place) + '.';
-        else line += ' Regroup the ' + heading + ' as a remainder: ' + phrase(next.value, next.place) + '.';
-      } else if (col.r > 0) line += ' Remainder ' + col.r + '.';
+      if (next) line += regroupLine(col, next);
+      else if (q.mode === 'remainder' && col.r > 0) line += remainderLine(q);
+      else if (col.r > 0) line += ' Remainder ' + col.r + '.';
       return line;
     }
     if (two && col.r > 0) {
       const multiple = col.q * d;
       let line = heading + ' \u00f7 ' + d + '. The largest multiple that isn\u2019t bigger than ' + col.value +
         ' is ' + multiple + ' (' + col.q + ' \u00d7 ' + d + '). Write ' + col.q + ', remainder ' + col.r + '.';
-      if (next) line += ' Regroup: ' + phrase(next.value, next.place) + '.';
+      if (next) line += regroupLine(col, next);
+      else if (q.mode === 'remainder') line += remainderLine(q);
       return line;
     }
     let line = heading + ' \u00f7 ' + d + ' = ' + col.q;
     if (col.r > 0) line += ', remainder ' + col.r;
     line += '. Write ' + col.q + '.';
-    if (next && col.r > 0 && !next.added) line += ' Regroup: ' + phrase(next.value, next.place) + '.';
     if (next && next.added && col.r > 0 && q.mode === 'decimal' && !col.added) {
-      return line.replace(/ Regroup:.*$/, '.');
+      /* The regroup is told in the "keep going" step. */
+    } else if (col.added && next && next.added && col.r > 0) {
+      line += ' Add another 0.' + regroupLine(col, next);
+    } else if (next && col.r > 0) {
+      line += regroupLine(col, next);
     }
-    if (col.added && next && next.added) line += ' Add another 0. Regroup: ' + phrase(next.value, next.place) + '.';
     if (!next && col.r === 0 && (col.added || q.mode === 'decimal')) line += ' No remainder, so stop.';
+    if (!next && q.mode === 'remainder' && q.rem > 0) line += remainderLine(q);
     return line;
   }
 
@@ -301,10 +310,14 @@ const Division = (function () {
     cols.forEach(function (col, i) {
       if (q.mode === 'decimal' && col.added && !jumped) {
         steps.push(teach('Keep going past the remainder',
-          'Write the decimal point and a placeholder 0. Regroup the ' + q.cols[i - 1].r + ': ' +
-          phrase(col.value, col.place) + '.',
+          'Write the decimal point and a placeholder 0.' + regroupLine(q.cols[i - 1], col),
           ['Decimal point', 'Placeholder zero', 'Regrouping']));
         jumped = true;
+      }
+      if (col.pointBefore && !col.added) {
+        steps.push(teach('Decimal point',
+          'Write the decimal point in the answer, straight above the one in ' + q.dividendText + '.',
+          ['Decimal point']));
       }
       const tags = ['Times fact'];
       if (col.placeholder) tags.push('Placeholder zero');
@@ -402,7 +415,7 @@ const Division = (function () {
     });
     if (showAll && (q.mode === 'remainder' || q.mode === 'fraction') && q.rem > 0) {
       template += ' auto';
-      ans += '<span class="bus-ans bus-r" style="grid-column:' + gi + '">r' + q.rem + '</span>';
+      ans += '<span class="bus-ans bus-r" style="grid-column:' + gi + '">r ' + q.rem + '</span>';
       digs += '<span class="bus-slot" style="grid-column:' + gi + '"></span>';
     }
     return '<div class="bus" aria-hidden="true"><div class="bus-divisor">' + q.divisor + '</div>' +
