@@ -520,6 +520,7 @@ const Conversions = (function () {
   EM.registerTopic({
     id: 'conv',
     name: 'Converting units',
+    homeExample: 'e.g. 2.5 km = ? m',
     section: 'measurement',
     plain: true,
     levels: [

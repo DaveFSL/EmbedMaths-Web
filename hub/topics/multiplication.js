@@ -566,6 +566,7 @@
   EM.registerTopic({
     id: 'mul',
     name: 'Multiplication',
+    homeExample: 'e.g. 347 \u00d7 26',
     section: 'written',
     levels: [
       { id: 1, name: '2-digit × 1-digit', example: '34 × 6' },

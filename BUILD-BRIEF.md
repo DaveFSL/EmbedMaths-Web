@@ -62,6 +62,7 @@ Every topic registers the same shape, so adding an area means adding one file:
 EM.registerTopic({
   id: 'sub',                       // used in links: ?t=sub
   name: 'Subtraction',
+  homeExample: 'e.g. 5 002 − 1 738',  // third line on the home tile
   section: 'written',              // written | placevalue | measurement | facts
   levels: [ { id: 1, name: '2-digit, no regrouping', example: '87 − 34' }, … ],
   tricky: [ … ],                   // generators for the "tricky ones" option
@@ -82,17 +83,15 @@ EM.registerTopic({
 The mockup canvas has nine screens. Build these:
 
 ### Home (grouped by area)
-- Top strip: **Your practice**. Shows the practice from the link (topic, level, number of questions), a Start button and "Daily mix instead". Hide it if there's no link. The title is the heading.
-- Sections:
-  - **Written methods**: Addition, Subtraction, Multiplication, Division
-  - **Place value**: × and ÷ by 10, 100, 1000
-  - **Measurement**: Converting units only
-  - **Number facts**: Times tables → opens `https://davefsl.github.io/FlashFlips-Web/`
-  - **Fractions, decimals & percentages**: Fractions. Percentages, and Fractions, decimals & percentages, are Coming soon tiles.
-- Each tile shows "Level X of Y" from saved progress.
 - Top right: **For teachers & parents**.
+- When a class link is used, the **Your practice** banner (topic, level, questions, Start, and "Daily mix instead") sits under the logo row. Hide it if there's no link.
+- Under that, a teal **How it works** strip: 1 Pick a topic (Start at Level 1) → 2 Work it out on paper (Show your working) → 3 Check each step (Then mark yourself), with **Hide** on the right. It stays open until the student finishes a session or taps Hide. After that, a small **How it works** link shows the strip again. The choice is saved on this device (`guide` in localStorage).
+- Two columns, stretching so they end at the same height:
+  - Left: **Written methods** (Addition, Subtraction, Multiplication, Division, in a 2 × 2 grid), then **Fractions, decimals & percentages**. That group is three tiles in a row, with the icon above the words: Fractions, Percentages (Coming soon), Convert (Coming soon).
+  - Right: **Place value & measurement** (× and ÷ by 10, 100, 1000, then Converting units, stacked), then **Number facts** (Times tables → `https://davefsl.github.io/FlashFlips-Web/`).
+- Each working tile shows "Level X of Y" from saved progress, then a small bold teal example from the topic's `homeExample`. Coming soon examples are grey.
 - Footer, bottom-left: "Progress is saved on this device only." and the version number (the previous shipped commit). It stays pinned there, inside the iPhone/iPad safe area. If the page content would reach the bottom, the footer sits at the end of the page instead, and never covers a tile.
-- On a phone: one column with the same order.
+- On a phone, one column: Written methods, Fractions…, Place value & measurement, Number facts. The How it works steps stack. Long tile names wrap.
 
 ### Level picker (one per topic)
 - A grid of level cards: level number, name and an example sum. Done levels get a tick; the current level is filled teal with "YOU ARE HERE".
@@ -306,7 +305,8 @@ Self-check chips: Common denominator, Top and bottom, Adding / subtracting, Simp
 {
   progress: { sub: { level: 6, streak: 1 }, mul: { level: 4, streak: 0 }, … },
   history: [ { t:'sub', lvl:6, date:'2026-09-24', score:6, of:8, errors:{ Regrouping:2 } }, … ],  // keep last 30
-  extensions: { sub: { score: 5, of: 8 } }
+  extensions: { sub: { score: 5, of: 8 } },
+  guide: 'hide'   // How it works: 'show', 'hide', or absent (open until the first finished session)
 }
 ```
 

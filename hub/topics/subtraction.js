@@ -764,6 +764,7 @@
   EM.registerTopic({
     id: 'sub',
     name: 'Subtraction',
+    homeExample: 'e.g. 5\u00a0002 \u2212 1\u00a0738',
     section: 'written',
     levels: [
       { id: 1, name: '2-digit, no regrouping', example: '87 − 34' },

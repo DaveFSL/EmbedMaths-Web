@@ -403,6 +403,7 @@
   EM.registerTopic({
     id: 'add',
     name: 'Addition',
+    homeExample: 'e.g. 3\u00a0486 + 2\u00a0759',
     section: 'written',
     levels: [
       { id: 1, name: '2-digit, no regrouping', example: '34 + 21' },

@@ -706,6 +706,7 @@ const Division = (function () {
   EM.registerTopic({
     id: 'div',
     name: 'Division',
+    homeExample: 'e.g. 852 \u00f7 4',
     section: 'written',
     showsPrep: true,
     lede: 'Short division. Pick a level. The highlighted one is where you are up to.',

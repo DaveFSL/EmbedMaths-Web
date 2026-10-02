@@ -142,16 +142,58 @@ h2 { font-size: 22px; margin: 0; }
 .session-msg { margin: 2px 0 0; font-size: 14px; font-weight: 650; color: var(--teal); }
 .teacher-actions { display: flex; gap: 10px; flex-shrink: 0; }
 
-.home-grid { display: grid; gap: 16px; margin-top: 16px; }
-.panel { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 16px; box-shadow: var(--shadow); }
-.panel-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-bottom: 12px; }
+.how {
+  margin-top: 16px;
+  background: var(--teal);
+  color: #fff;
+  border-radius: 18px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px 16px;
+}
+.how-kicker {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.15;
+  flex: none;
+}
+.how-steps { display: flex; align-items: center; gap: 10px 12px; flex: 1; min-width: 0; flex-wrap: wrap; }
+.how-step { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.how-n {
+  width: 28px; height: 28px; border-radius: 50%; background: #fff; color: var(--teal);
+  display: grid; place-items: center; font-weight: 760; flex: none;
+}
+.how-copy { display: flex; flex-direction: column; min-width: 0; }
+.how-copy strong { font-size: 15px; line-height: 1.2; }
+.how-copy span { font-size: 12px; color: rgba(255, 255, 255, 0.82); line-height: 1.25; }
+.how-arrow { color: rgba(255, 255, 255, 0.85); flex: none; }
+.how-hide, .how-show {
+  background: none; border: 0; color: #fff; text-decoration: underline;
+  font-weight: 650; min-height: 44px; padding: 0 4px; flex: none;
+}
+.how-hide { margin-left: auto; }
+.how-collapsed { margin: 12px 4px 0; }
+.how-show { color: var(--teal); min-height: 44px; font-size: 15px; }
+.home-grid { display: grid; gap: 16px; margin-top: 16px; align-items: stretch; }
+.home-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.home-col > .panel.grow { flex: 1; display: flex; flex-direction: column; }
+.home-col > .panel.grow .tile-grid,
+.home-col > .panel.grow .tile-stack { flex: 1; }
+.home-col > .panel.grow .tile-grid.three { grid-auto-rows: 1fr; }
+.home-col > .panel.grow .tile-stack { grid-template-rows: 1fr; }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 16px; box-shadow: var(--shadow); min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-bottom: 12px; flex-wrap: wrap; }
 .panel-head p, .panel > h2 { color: var(--ink); }
 .panel > h2 { margin-bottom: 12px; }
 .panel-head p { margin: 0; color: var(--muted); font-size: 14px; }
-.tile-grid, .tile-row { display: grid; gap: 12px; }
+.tile-grid, .tile-row, .tile-stack { display: grid; gap: 12px; }
 .tile-grid { grid-template-columns: 1fr; }
-.home-band { grid-column: 1 / -1; }
-.home-band h2 { margin-bottom: 12px; }
+.tile-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+.tile-stack { grid-template-columns: 1fr; }
 .tile-row.two { grid-template-columns: 1fr; }
 .tile, .level-card {
   text-align: left;
@@ -163,16 +205,35 @@ h2 { font-size: 22px; margin: 0; }
   color: inherit;
   text-decoration: none;
 }
-.tile { display: flex; align-items: center; gap: 12px; width: 100%; }
+.tile { display: flex; align-items: center; gap: 12px; width: 100%; min-width: 0; container-type: inline-size; }
 .tile-icon {
   width: 44px; height: 44px; border-radius: 12px; background: #fff; color: var(--teal);
   display: grid; place-items: center; flex-shrink: 0;
 }
-.tile-copy { display: flex; flex-direction: column; gap: 2px; }
-.tile-name { font-family: var(--display); font-weight: 720; font-size: 18px; }
-.tile-meta { color: var(--muted); font-size: 14px; }
+.tile-icon.pv-icon {
+  width: 54px; height: 54px; display: flex; flex-direction: column; line-height: 1;
+  font-size: 15px; font-weight: 780; letter-spacing: -0.04em;
+}
+.tile-icon.convert-icon {
+  width: auto; min-width: 44px; height: 44px; padding: 0 8px; display: flex; flex-direction: row;
+  gap: 4px; font-size: 13px; font-weight: 760;
+}
+.mini-frac { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; font-weight: 780; font-size: 14px; }
+.mini-frac span:first-child { border-bottom: 1.5px solid currentColor; padding: 0 3px 1px; min-width: 0.9em; text-align: center; }
+.mini-frac span:last-child { padding: 1px 3px 0; min-width: 0.9em; text-align: center; }
+.mini-eq { font-weight: 760; }
+.tile-copy { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tile-name { font-family: var(--display); font-weight: 720; font-size: 18px; line-height: 1.15; }
+@container (max-width: 230px) {
+  .tile-name { font-size: 16px; }
+}
+.tile-meta { color: var(--muted); font-size: 14px; overflow-wrap: break-word; }
+.tile-ex { color: var(--teal); font-size: 13px; font-weight: 760; line-height: 1.25; overflow-wrap: break-word; }
+.tile.stack { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 10px; height: 100%; padding: 14px 12px; }
+.tile.stack .tile-name { font-size: 17px; }
 .tile.soon { border: 1.5px dashed #c5d5d3; background: transparent; color: #8aa0a0; }
 .tile.soon .tile-icon { color: #8aa0a0; background: #f7fbfa; }
+.tile.soon .tile-ex { color: #8aa0a0; }
 .tile.warm { background: var(--tint); }
 .tile.warm .tile-icon, .tile.warm .tile-name, .tile.warm .tile-meta, .tile.warm .tile-go { color: var(--orange); }
 .tile-go { margin-left: auto; }
@@ -607,8 +668,23 @@ h2 { font-size: 22px; margin: 0; }
 .mark-line.bad { color: var(--orange); }
 .need-first { color: var(--orange); font-weight: 700; min-height: 1.2em; }
 
+@media (min-width: 760px) {
+  .home-grid { grid-template-columns: 1.22fr 0.78fr; }
+  .home-col { height: 100%; }
+  .tile-grid { grid-template-columns: 1fr 1fr; }
+  .tile-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .tile-grid.three { grid-template-columns: 1fr; }
+}
+@media (max-width: 759px) {
+  .how { display: grid; grid-template-columns: 1fr auto; align-items: start; }
+  .how-kicker { grid-column: 1; }
+  .how-hide { grid-column: 2; grid-row: 1; margin-left: 0; }
+  .how-steps { grid-column: 1 / -1; flex-direction: column; align-items: flex-start; }
+  .how-arrow { display: none; }
+}
 @media (min-width: 800px) {
-  .home-grid { grid-template-columns: 1.15fr 0.85fr; align-items: start; }
   .tile-grid { grid-template-columns: 1fr 1fr; }
   .tile-grid.three { grid-template-columns: 1fr 1fr 1fr; }
   .tile-row.two { grid-template-columns: 1fr 1fr; }

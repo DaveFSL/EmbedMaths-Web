@@ -401,7 +401,8 @@ const PlaceValue = (function () {
 
   EM.registerTopic({
     id: 'pv',
-    name: '× and ÷ by 10, 100, 1000',
+    name: '\u00d7 and \u00f7 by 10, 100, 1000',
+    homeExample: 'e.g. 0.06 \u00d7 1000',
     section: 'placevalue',
     levels: [
       { id: 1, name: 'Whole numbers × 10, 100, 1000', example: '45 × 100' },

@@ -94,6 +94,19 @@ const Store = (function () {
     save(data);
   }
 
+  function guideOpen() {
+    const data = load();
+    if (data.guide === 'show') return true;
+    if (data.guide === 'hide') return false;
+    return !data.history.length;
+  }
+
+  function setGuide(open) {
+    const data = load();
+    data.guide = open ? 'show' : 'hide';
+    save(data);
+  }
+
   return {
     load: load,
     save: save,
@@ -103,6 +116,8 @@ const Store = (function () {
     doneLevels: doneLevels,
     recentScores: recentScores,
     recordSession: recordSession,
-    appendHistory: appendHistory
+    appendHistory: appendHistory,
+    guideOpen: guideOpen,
+    setGuide: setGuide
   };
 })();

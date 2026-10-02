@@ -225,12 +225,31 @@ const EM = (function () {
     const soon = opts.soon;
     const href = opts.href;
     const action = opts.action;
-    const cls = 'tile' + (soon ? ' soon' : '') + (opts.warm ? ' warm' : '');
-    const body = '<span class="tile-icon">' + icon + '</span><span class="tile-copy"><span class="tile-name">' + name +
-      '</span><span class="tile-meta">' + meta + '</span></span>' + (opts.warm ? '<span class="tile-go">' + ICONS.out + '</span>' : '');
+    const cls = 'tile' + (soon ? ' soon' : '') + (opts.warm ? ' warm' : '') + (opts.stack ? ' stack' : '');
+    const example = opts.example ? '<span class="tile-ex">' + opts.example + '</span>' : '';
+    const body = '<span class="tile-icon' + (opts.iconClass ? ' ' + opts.iconClass : '') + '">' + icon + '</span><span class="tile-copy"><span class="tile-name">' + name +
+      '</span><span class="tile-meta">' + meta + '</span>' + example + '</span>' + (opts.warm ? '<span class="tile-go">' + ICONS.out + '</span>' : '');
     if (href) return '<a class="' + cls + '" href="' + href + '" target="_blank" rel="noopener noreferrer">' + body + '</a>';
     if (soon) return '<div class="' + cls + '">' + body + '</div>';
     return '<button type="button" class="' + cls + '" data-go="' + action + '">' + body + '</button>';
+  }
+
+  function howStep(n, title, detail) {
+    return '<div class="how-step"><span class="how-n">' + n + '</span><span class="how-copy"><strong>' + title +
+      '</strong><span>' + detail + '</span></span></div>';
+  }
+
+  function howStrip() {
+    if (!Store.guideOpen()) {
+      return '<p class="how-collapsed"><button type="button" class="how-show" id="howShow">How it works</button></p>';
+    }
+    return '<section class="how" aria-label="How it works"><p class="how-kicker">How it<br>works</p><div class="how-steps">' +
+      howStep(1, 'Pick a topic', 'Start at Level 1') +
+      '<span class="how-arrow" aria-hidden="true">\u2192</span>' +
+      howStep(2, 'Work it out on paper', 'Show your working') +
+      '<span class="how-arrow" aria-hidden="true">\u2192</span>' +
+      howStep(3, 'Check each step', 'Then mark yourself') +
+      '</div><button type="button" class="how-hide" id="howHide">Hide</button></section>';
   }
 
   function renderHome() {
@@ -248,6 +267,7 @@ const EM = (function () {
     const convMeta = 'Level ' + Store.progressFor('conv').level + ' of ' + conv.levels.length;
     const divMeta = 'Level ' + Store.progressFor('div').level + ' of ' + topics.div.levels.length;
     const fracMeta = 'Level ' + Store.progressFor('frac').level + ' of ' + topics.frac.levels.length;
+    const half = '<span class="mini-frac" aria-hidden="true"><span>1</span><span>2</span></span>';
     let strip = '';
     if (link && link.hasLink) {
       strip = teacherStrip(link, '<div class="teacher-actions"><button type="button" class="btn light" id="teacherStart">Start ' +
@@ -257,28 +277,23 @@ const EM = (function () {
     app.innerHTML =
       '<div class="shell"><header class="top"><div class="brand">' + waveMark() + '<span>EmbedMaths</span></div>' +
       '<button type="button" class="btn ghost" id="classLink">' + ICONS.link + ' For teachers &amp; parents</button></header>' +
-      strip +
-      '<div class="home-grid"><section class="panel wide"><div class="panel-head"><h2>Written methods</h2><p>Work it out, then check each step</p></div>' +
+      strip + howStrip() +
+      '<div class="home-grid"><div class="home-col"><section class="panel"><div class="panel-head"><h2>Written methods</h2><p>Work it out, then check each step</p></div>' +
       '<div class="tile-grid">' +
-      tile(ICONS.plus, 'Addition', addMeta, { action: 'add' }) +
-      tile(ICONS.minus, 'Subtraction', subMeta, { action: 'sub' }) +
-      tile(ICONS.times, 'Multiplication', mulMeta, { action: 'mul' }) +
-      tile(ICONS.divide, 'Division', divMeta, { action: 'div' }) +
-      '</div></section><div class="side-col">' +
-      '<section class="panel"><h2>Place value</h2><div class="tile-row">' +
-      tile(ICONS.place, '× and ÷ by 10, 100, 1000', pvMeta, { action: 'pv' }) +
-      '</div></section>' +
-      '<section class="panel"><h2>Measurement</h2><div class="tile-row">' +
-      tile(ICONS.ruler, 'Converting units', convMeta, { action: 'conv' }) +
-      '</div></section>' +
-      '<section class="panel"><h2>Number facts</h2><div class="tile-row">' +
+      tile(ICONS.plus, 'Addition', addMeta, { action: 'add', example: add.homeExample }) +
+      tile(ICONS.minus, 'Subtraction', subMeta, { action: 'sub', example: sub.homeExample }) +
+      tile(ICONS.times, 'Multiplication', mulMeta, { action: 'mul', example: mul.homeExample }) +
+      tile(ICONS.divide, 'Division', divMeta, { action: 'div', example: topics.div.homeExample }) +
+      '</div></section><section class="panel grow"><h2>Fractions, decimals &amp; percentages</h2><div class="tile-grid three">' +
+      tile(half, 'Fractions', fracMeta, { action: 'frac', stack: true, example: topics.frac.homeExample }) +
+      tile(ICONS.percent, 'Percentages', 'Coming soon', { soon: true, stack: true, example: 'e.g. 48% of 75' }) +
+      tile(half + '<span class="mini-eq">= 0.5</span>', 'Convert', 'Coming soon', { soon: true, stack: true, iconClass: 'convert-icon', example: 'e.g. \u2157 = 0.6 = 60%' }) +
+      '</div></section></div><div class="home-col"><section class="panel"><h2>Place value &amp; measurement</h2><div class="tile-stack">' +
+      tile('<span class="pv-mark"><span>\u00d710</span><span>\u00f710</span></span>', pv.name, pvMeta, { action: 'pv', iconClass: 'pv-icon', example: pv.homeExample }) +
+      tile(ICONS.ruler, 'Converting units', convMeta, { action: 'conv', example: conv.homeExample }) +
+      '</div></section><section class="panel grow"><h2>Number facts</h2><div class="tile-stack">' +
       tile(ICONS.bolt, 'Times tables', 'Open FlashFlips', { href: 'https://davefsl.github.io/FlashFlips-Web/', warm: true }) +
-      '</div></section></div>' +
-      '<section class="panel home-band"><h2>Fractions, decimals &amp; percentages</h2><div class="tile-grid three">' +
-      tile(ICONS.frac, 'Fractions', fracMeta, { action: 'frac' }) +
-      tile(ICONS.percent, 'Percentages', 'Coming soon', { soon: true }) +
-      tile(ICONS.frac, 'Fractions, decimals &amp; percentages', 'Coming soon', { soon: true }) +
-      '</div></section></div>' +
+      '</div></section></div></div>' +
       '<div class="site-foot in-flow"><p>Progress is saved on this device only.</p>' +
       '<p>' + VERSION + '</p></div></div>';
 
@@ -296,6 +311,10 @@ const EM = (function () {
     if (convBtn) convBtn.onclick = function () { openLevels('conv'); };
     const fracBtn = app.querySelector('[data-go="frac"]');
     if (fracBtn) fracBtn.onclick = function () { openLevels('frac'); };
+    const howHide = document.getElementById('howHide');
+    if (howHide) howHide.onclick = function () { Store.setGuide(false); renderHome(); };
+    const howShow = document.getElementById('howShow');
+    if (howShow) howShow.onclick = function () { Store.setGuide(true); renderHome(); };
     document.getElementById('classLink').onclick = function () { LinkBuilder.open(); };
     const start = document.getElementById('teacherStart');
     if (start) {

@@ -737,6 +737,7 @@ const FractionsTopic = (function () {
   EM.registerTopic({
     id: 'frac',
     name: 'Fractions',
+    homeExample: 'e.g. \u00be + \u2154',
     section: 'fractions',
     showsPrep: true,
     hidesCloseness: true,
