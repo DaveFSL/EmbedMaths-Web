@@ -160,7 +160,10 @@
       showP2: state.showP2,
       showTotal: state.showTotal,
       showDecimal: state.showDecimal,
-      phOnes: state.phOnes
+      phOnes: state.phOnes,
+      phCount: state.phCount,
+      p1Struck: state.p1Struck,
+      row2Carries: state.row2Carries.slice()
     };
   }
 
@@ -170,208 +173,9 @@
     steps.push({ text: text, chip: chip, tags: tags || [], algo: algo, hiCols: [col] });
   }
 
-  function multiplyByDigit(state, aInt, digit, shift, chip, named) {
-    const digs = digitsOf(aInt);
-    const row = state.phase === 1 ? state.p1 : state.p2;
-    const columns = [];
-    let carry = 0;
-    for (let i = 0; i < digs.length; i++) {
-      const place = colName(i);
-      const prod = digs[i] * digit;
-      const sum = prod + carry;
-      const write = sum % 10;
-      const nc = Math.floor(sum / 10);
-      const incoming = carry;
-      const at = i + shift;
-      if (incoming > 0) state.used[at] = true;
-      let calc;
-      if (shift > 0) {
-        const unit = colName(shift);
-        const prodUnit = colName(i + shift);
-        calc = 'The ' + digs[i] + ' in the ' + place + ' place × ' + digit + ' ' + singular(unit, digit) +
-          ' = ' + prod + ' ' + singular(prodUnit, prod);
-      } else if (named) {
-        calc = 'The ' + digs[i] + ' in the ' + place + ' place × ' + digit + ' = ' + prod;
-      } else {
-        calc = titleCase(place) + ': ' + digs[i] + ' × ' + digit + ' = ' + prod;
-      }
-      if (incoming > 0) calc += ', plus the ' + incoming + ' regrouped = ' + sum;
-      row[at] = write;
-      carry = nc;
-      const tags = [];
-      const last = i === digs.length - 1;
-      if (nc > 0 && !last) {
-        state.carries[at + 1] = nc;
-        tags.push('Regrouping');
-        calc += shift > 0 && i === 0
-          ? ', then write ' + write + ' in the ' + colName(shift) + ' column, and ' + regroupInto(nc, colName(at + 1))
-          : ', then write ' + write + ', and ' + regroupInto(nc, colName(at + 1));
-      } else if (nc > 0 && last) {
-        row[at + 1] = nc;
-        calc += ', then write ' + sum;
-      } else if (shift > 0 && i === 0) {
-        calc += ', then write ' + write + ' in the ' + colName(shift) + ' column';
-      } else {
-        calc += ', then write ' + write;
-      }
-      const view = state.carries.slice();
-      for (let k = 0; k < view.length; k++) {
-        const keep = (incoming > 0 && k === at) || (nc > 0 && !last && k === at + 1);
-        if (!keep) view[k] = null;
-      }
-      const algo = clone(state);
-      algo.carries = view;
-      columns.push({
-        label: titleCase(place),
-        text: calc,
-        chip: chip,
-        tags: tags,
-        algo: algo,
-        hiCols: [at]
-      });
-    }
-    return columns;
-  }
-
-  function addRows(state, p1, p2) {
-    const L = Math.max(String(p1).length, String(p2).length);
-    const d1 = digitsOf(p1);
-    const d2 = digitsOf(p2);
-    const columns = [];
-    let carry = 0;
-    state.p2Carries = state.carries.slice();
-    state.p2Used = state.carries.map(function (c) { return c ? true : null; });
-    state.phase = 3;
-    state.showTotal = true;
-    for (let i = 0; i < state.used.length; i++) if (state.carries[i]) state.used[i] = true;
-    for (let i = 0; i < L; i++) {
-      const bits = [];
-      if (d1.length > i) bits.push(String(d1[i]));
-      if (d2.length > i) bits.push(i === 0 && state.phOnes ? 'the placeholder 0' : String(d2[i]));
-      const incoming = carry;
-      const sum = (d1[i] || 0) + (d2[i] || 0) + incoming;
-      const write = sum % 10;
-      const nc = Math.floor(sum / 10);
-      const place = colName(i);
-      const missing = d1.length <= i || d2.length <= i;
-      if (bits.length === 1 && incoming === 0 && nc === 0 && missing) {
-        state.total[i] = write;
-        columns.push({
-          label: titleCase(place),
-          text: titleCase(place) + ': Nothing to add, so write ' + write,
-          chip: 'Adding the rows',
-          tags: [],
-          algo: clone(state),
-          hiCols: [i]
-        });
-        continue;
-      }
-      let calc = titleCase(place) + ': ' + bits.join(' + ');
-      if (incoming > 0) calc += ' + the ' + incoming + ' regrouped';
-      calc += ' = ' + sum;
-      if (incoming > 0) state.addUsed[i] = true;
-      state.total[i] = write;
-      carry = nc;
-      const tags = [];
-      const last = i === L - 1;
-      if (nc > 0 && !last) {
-        state.addCarries[i + 1] = nc;
-        tags.push('Regrouping');
-        calc += ', then write ' + write + ', and ' + regroupInto(nc, colName(i + 1));
-      } else if (nc > 0 && last) {
-        state.total[i + 1] = nc;
-        calc += ', then write ' + sum;
-      } else {
-        calc += ', then write ' + write;
-      }
-      const view = state.addCarries.slice();
-      for (let k = 0; k < view.length; k++) {
-        const keep = (incoming > 0 && k === i) || (nc > 0 && !last && k === i + 1);
-        if (!keep) view[k] = null;
-      }
-      const algo = clone(state);
-      algo.addCarries = view;
-      columns.push({
-        label: titleCase(place),
-        text: calc,
-        chip: 'Adding the rows',
-        tags: tags,
-        algo: algo,
-        hiCols: [i]
-      });
-    }
-    return columns;
-  }
-
-  function blankState(width) {
-    return {
-      phase: 1,
-      p1: fresh(width),
-      p2: fresh(width),
-      total: fresh(width),
-      carries: fresh(width),
-      used: fresh(width),
-      p1Carries: fresh(width),
-      p1Used: fresh(width),
-      addCarries: fresh(width),
-      addUsed: fresh(width),
-      showP2: false,
-      showTotal: false,
-      showDecimal: false,
-      phOnes: false,
-      col: -1
-    };
-  }
-
-  function rowStep(label, text, columns, algo, stepTag, tags) {
-    const bag = {};
-    (tags || []).forEach(function (t) { bag[t] = true; });
-    (columns || []).forEach(function (c) {
-      if (c.chip) bag[c.chip] = true;
-      (c.tags || []).forEach(function (t) { bag[t] = true; });
-    });
-    return {
-      kind: 'row',
-      label: label,
-      title: label,
-      text: text,
-      columns: columns || [],
-      algo: algo,
-      stepTag: stepTag,
-      tags: Object.keys(bag)
-    };
-  }
-
-  function sigFig1(n) {
-    if (!n) return 0;
-    const sign = n < 0 ? -1 : 1;
-    const abs = Math.abs(n);
-    const mag = Math.pow(10, Math.floor(Math.log10(abs)));
-    return sign * Math.round(abs / mag) * mag;
-  }
-
   function cleanNum(n) {
     if (Math.abs(n - Math.round(n)) < 1e-9) return String(Math.round(n));
     return String(Math.round(n * 1000) / 1000);
-  }
-
-  function closerEstimate(a, b) {
-    const exact = a * b;
-    const opts = [];
-    const ra = sigFig1(a);
-    const rb = sigFig1(b);
-    if (Math.abs(ra - a) > 1e-9) opts.push({ left: ra, right: b });
-    if (Math.abs(rb - b) > 1e-9) opts.push({ left: a, right: rb });
-    if (!opts.length) opts.push({ left: a, right: b });
-    opts.sort(function (x, y) {
-      return Math.abs(x.left * x.right - exact) - Math.abs(y.left * y.right - exact);
-    });
-    const pick = opts[0];
-    return {
-      left: cleanNum(pick.left),
-      right: cleanNum(pick.right),
-      product: Math.round(pick.left * pick.right * 1000) / 1000
-    };
   }
 
   function nonZeroPlaces(n) {
@@ -380,14 +184,6 @@
       if (digit) out.push({ digit: digit, shift: shift });
     });
     return out;
-  }
-
-  function placeProduct(top, digit, shift) {
-    const unit = colName(shift);
-    const mid = top * digit;
-    const written = mid * Math.pow(10, shift);
-    if (!shift) return top + ' × ' + digit + ' = ' + written;
-    return top + ' × ' + digit + ' ' + singular(unit, digit) + ' = ' + mid + ' ' + singular(unit, mid) + '. Write ' + written;
   }
 
   function orderFactors(q) {
@@ -414,7 +210,159 @@
   function decimalSentence(bits, dpTotal, intProduct, answerShown) {
     function place(n) { return n === 1 ? '1 decimal place' : n + ' decimal places'; }
     const who = bits.map(function (bit) { return bit.text + ' has ' + place(bit.dp); }).join(' and ');
-    return who + ', so the answer has ' + place(dpTotal) + ': ' + intProduct + ' → ' + answerShown;
+    return who + ', so the answer has ' + place(dpTotal) + ': ' + intProduct + ' \u2192 ' + answerShown;
+  }
+
+  function roundPlace(n) {
+    const sign = n < 0 ? -1 : 1;
+    const abs = Math.abs(n);
+    let unit = 1;
+    if (abs >= 1000) unit = 1000;
+    else if (abs >= 100) unit = 100;
+    else if (abs >= 10) unit = 10;
+    else if (abs >= 1) unit = 1;
+    else unit = 0.1;
+    return sign * Math.round(abs / unit) * unit;
+  }
+
+  function easyChoices(n) {
+    const sign = n < 0 ? -1 : 1;
+    const abs = Math.abs(n);
+    const bag = {};
+    function add(v) {
+      const r = Math.round(Math.abs(v) * 1000) / 1000;
+      if (r) bag[sign * r] = true;
+    }
+    add(n);
+    add(roundPlace(n));
+    if (abs >= 1000) {
+      add(Math.round(abs / 100) * 100);
+      add(Math.round(abs / 1000) * 1000);
+    } else if (abs >= 100) {
+      add(Math.round(abs / 10) * 10);
+      add(Math.round(abs / 50) * 50);
+      add(Math.round(abs / 100) * 100);
+    } else if (abs >= 10) {
+      add(Math.round(abs / 5) * 5);
+      add(Math.round(abs / 10) * 10);
+    } else if (abs >= 1) {
+      add(Math.round(abs));
+      add(Math.round(abs * 2) / 2);
+    } else {
+      add(Math.round(abs * 10) / 10);
+      add(0.5);
+      add(1);
+    }
+    return Object.keys(bag).map(Number);
+  }
+
+    function easyPair(a, b) {
+    function round10(n) {
+      const v = Math.abs(n);
+      return v < 10 || (v >= 10 && v % 10 === 0);
+    }
+    function small(n) { return Math.abs(n) < 100; }
+    if (round10(a) && round10(b)) return true;
+    if (round10(a) && small(b)) return true;
+    if (round10(b) && small(a)) return true;
+    return false;
+  }
+
+  function roundness(n) {
+    const v = Math.abs(n);
+    if (v >= 10 && v % 10 === 0) return 0;
+    if (v < 10) return 0;
+    return 0.05;
+  }
+
+  function closerEstimate(a, b) {
+    const exact = a * b;
+    const stdA = roundPlace(a);
+    const stdB = roundPlace(b);
+    const std = stdA * stdB;
+    if (Math.abs(std - exact) <= Math.abs(exact) * 0.2 + 1e-6) {
+      return { left: cleanNum(stdA), right: cleanNum(stdB), product: Math.round(std * 1000) / 1000 };
+    }
+    let best = null;
+    easyChoices(a).forEach(function (x) {
+      easyChoices(b).forEach(function (y) {
+        if (!easyPair(x, y)) return;
+        if (Math.abs(x - a) < 1e-9 && Math.abs(y - b) < 1e-9) return;
+        const prod = x * y;
+        const score = Math.abs(prod - exact) / Math.max(1, Math.abs(exact)) + roundness(x) + roundness(y);
+        if (!best || score < best.score) best = { x: x, y: y, prod: prod, score: score };
+      });
+    });
+    if (!best) return { left: cleanNum(stdA), right: cleanNum(stdB), product: Math.round(std * 1000) / 1000 };
+    return { left: cleanNum(best.x), right: cleanNum(best.y), product: Math.round(best.prod * 1000) / 1000 };
+  }
+
+  function rowHeading(which, digit, shift) {
+    const place = colName(shift);
+    return 'Row ' + which + ' \u00b7 times by the ' + digit + ' ' + singular(place, digit);
+  }
+
+  function crossSentence(carries) {
+    const vals = [];
+    (carries || []).forEach(function (c) { if (c) vals.push(c); });
+    if (!vals.length) return '';
+    if (vals.length > 1) return ' Cross out the old regrouped digits.';
+    return ' Cross out the old ' + vals[0] + '.';
+  }
+
+  function addSentence(p1, p2) {
+    const d1 = digitsOf(p1);
+    const d2 = digitsOf(p2);
+    const L = Math.max(String(p1).length, String(p2).length);
+    const parts = [];
+    let carry = 0;
+    for (let i = 0; i < L; i++) {
+      const present = [];
+      if (d1.length > i) present.push(d1[i]);
+      if (d2.length > i) present.push(d2[i]);
+      if (carry) present.push(carry);
+      const sum = (d1[i] || 0) + (d2[i] || 0) + carry;
+      const write = sum % 10;
+      const nc = Math.floor(sum / 10);
+      const place = titleCase(colName(i));
+      const lively = present.filter(function (n) { return n; }).length;
+      let bit;
+      if (nc > 0) {
+        bit = place + ': ' + present.join(' + ') + ' = ' + sum + ', write ' + write + ', regroup ' +
+          nc + ' ' + singular(colName(i + 1), nc);
+      } else if (lively <= 1) {
+        bit = place + ': ' + sum;
+      } else {
+        bit = place + ': ' + present.join(' + ') + ' = ' + sum;
+      }
+      parts.push(bit);
+      carry = nc;
+    }
+    if (carry) parts.push(titleCase(colName(L)) + ': ' + carry);
+    return p1 + ' + ' + p2 + '. ' + parts.join('. ') + '. Answer ' + (p1 + p2);
+  }
+
+  function blankState(width) {
+    return {
+      phase: 1,
+      p1: fresh(width),
+      p2: fresh(width),
+      total: fresh(width),
+      carries: fresh(width),
+      used: fresh(width),
+      p1Carries: fresh(width),
+      p1Used: fresh(width),
+      addCarries: fresh(width),
+      addUsed: fresh(width),
+      showP2: false,
+      showTotal: false,
+      showDecimal: false,
+      phOnes: false,
+      phCount: 0,
+      p1Struck: false,
+      row2Carries: fresh(width),
+      col: -1
+    };
   }
 
   function buildSteps(q) {
@@ -422,15 +370,37 @@
     orderFactors(q);
     const places = nonZeroPlaces(q.bInt);
     q.long = places.length > 1;
+    const headings = !(places.length === 1 && places[0].shift === 0);
     const width = String(q.aInt * q.bInt).length + 2;
     const state = blankState(width);
     const steps = [];
+    const topDigs = digitsOf(q.aInt);
+    let sawRow1 = false;
+    let sawRow2 = false;
+    let sawAdd = false;
+
+    function snapStep(group, text, tags, shadeA, shadeB, fresh, freshRow) {
+      steps.push({
+        kind: 'digit',
+        group: group,
+        label: text,
+        title: text,
+        text: text,
+        stepTag: tags[0] || null,
+        tags: tags,
+        algo: clone(state),
+        shadeA: shadeA,
+        shadeB: shadeB,
+        fresh: fresh || [],
+        freshRow: freshRow || ''
+      });
+    }
 
     if (q.dpTotal > 0) {
       steps.push({
         label: 'Whole numbers',
         title: 'Whole numbers',
-        text: 'Ignore the decimal points for now. Work out ' + q.aInt + ' × ' + q.bInt,
+        text: 'Ignore the decimal points for now. Work out ' + q.aInt + ' \u00d7 ' + q.bInt,
         stepTag: null,
         kind: 'lineup',
         columns: [],
@@ -439,25 +409,71 @@
       });
     }
 
-    function partial(part, which) {
+    function multiplyRow(part, which) {
       const row = which === 1 ? state.p1 : state.p2;
-      const cols = multiplyByDigit(state, q.aInt, part.digit, part.shift, 'Times fact', part.shift > 0);
-      for (let z = 0; z < part.shift; z++) row[z] = 0;
+      const group = headings ? rowHeading(which, part.digit, part.shift) : null;
+      let toldCross = false;
       if (part.shift > 0) {
+        for (let z = 0; z < part.shift; z++) row[z] = 0;
         state.phOnes = true;
         state.phCount = part.shift;
+        if (which === 2) state.p1Struck = true;
+        snapStep(group, 'Write the placeholder 0 in the ' + colName(0) + '.', ['Placeholder zero'], -1, -1, [0], which === 1 ? 'p1' : 'p2');
       }
-      return cols;
+      let carry = 0;
+      topDigs.forEach(function (dig, i) {
+        const place = colName(i);
+        const prodPlace = colName(i + part.shift);
+        const prod = dig * part.digit;
+        const incoming = carry;
+        const sum = prod + incoming;
+        const write = sum % 10;
+        const nc = Math.floor(sum / 10);
+        const at = i + part.shift;
+        const last = i === topDigs.length - 1;
+        const botBit = part.shift ? part.digit + ' ' + singular(colName(part.shift), part.digit) : String(part.digit);
+        let text = dig + ' ' + singular(place, dig) + ' \u00d7 ' + botBit + ' = ' + prod + ' ' + singular(prodPlace, prod);
+        if (incoming) text += ', + ' + incoming + ' = ' + sum + ' ' + singular(prodPlace, sum);
+        const fresh = [];
+        row[at] = write;
+        fresh.push(at);
+        const tags = ['Times fact'];
+        let cross = '';
+        if (which === 2 && !toldCross) {
+          cross = crossSentence(state.p1Carries);
+          toldCross = true;
+        }
+        if (last && sum >= 10) {
+          row[at + 1] = nc;
+          fresh.push(at + 1);
+          text += '. Write ' + sum + '.';
+          if (cross) text += cross;
+          carry = 0;
+        } else {
+          text += '. Write ' + write + '.';
+          if (cross) text += cross;
+          if (nc > 0) {
+            const next = colName(at + 1);
+            text += ' Regroup ' + nc + ' ' + singular(next, nc) + '.';
+            tags.push('Regrouping');
+            if (which === 1) {
+              state.carries[at + 1] = nc;
+              sawRow1 = true;
+            } else {
+              state.row2Carries[at + 1] = nc;
+              sawRow2 = true;
+            }
+            carry = nc;
+          } else {
+            carry = 0;
+          }
+        }
+        if (cross && tags.indexOf('Regrouping') < 0) tags.push('Regrouping');
+        snapStep(group, text, tags, i, part.shift, fresh, which === 1 ? 'p1' : 'p2');
+      });
     }
 
-    const first = places[0];
-    const row1cols = partial(first, 1);
-    const row1written = q.aInt * first.digit * Math.pow(10, first.shift);
-    const row1text = places.length === 1 && first.shift > 0
-      ? placeProduct(q.aInt, first.digit, first.shift)
-      : 'Row 1: ' + placeProduct(q.aInt, first.digit, first.shift);
-    steps.push(rowStep('Row 1', row1text, row1cols, clone(state), 'Times fact', first.shift > 0 ? ['Placeholder zero'] : []));
-
+    multiplyRow(places[0], 1);
     if (places.length > 1) {
       state.p1Carries = state.carries.slice();
       state.p1Used = state.carries.map(function (c) { return c ? true : null; });
@@ -465,23 +481,41 @@
       state.showP2 = true;
       state.carries = fresh(width);
       state.used = fresh(width);
-      const second = places[1];
-      const row2cols = partial(second, 2);
-      const p1 = q.aInt * first.digit * Math.pow(10, first.shift);
-      const p2 = q.aInt * second.digit * Math.pow(10, second.shift);
-      const row2text = 'Row 2: write the placeholder 0, then ' + placeProduct(q.aInt, second.digit, second.shift);
-      steps.push(rowStep('Row 2', row2text, row2cols, clone(state), 'Times fact', ['Placeholder zero']));
-      for (let i = 0; i < state.used.length; i++) if (state.carries[i]) state.used[i] = true;
-      const addCols = addRows(state, p1, p2);
-      steps.push(rowStep(
-        'Add the rows',
-        'Add the rows: ' + p1 + ' + ' + p2 + ' = ' + (p1 + p2),
-        addCols,
-        clone(state),
-        'Adding the rows'
-      ));
+      state.row2Carries = fresh(width);
+      multiplyRow(places[1], 2);
+      const p1 = q.aInt * places[0].digit * Math.pow(10, places[0].shift);
+      const p2 = q.aInt * places[1].digit * Math.pow(10, places[1].shift);
+      state.p2Carries = state.row2Carries.slice();
+      state.phase = 3;
+      state.showTotal = true;
+      const d1 = digitsOf(p1);
+      const d2 = digitsOf(p2);
+      const L = Math.max(String(p1).length, String(p2).length);
+      let carry = 0;
+      const freshTotal = [];
+      for (let i = 0; i < L; i++) {
+        const sum = (d1[i] || 0) + (d2[i] || 0) + carry;
+        const write = sum % 10;
+        const nc = Math.floor(sum / 10);
+        state.total[i] = write;
+        freshTotal.push(i);
+        if (nc > 0 && i < L - 1) {
+          state.addCarries[i + 1] = nc;
+          sawAdd = true;
+        } else if (nc > 0) {
+          state.total[i + 1] = nc;
+          freshTotal.push(i + 1);
+        }
+        carry = i < L - 1 ? nc : 0;
+      }
+      if (carry) {
+        state.total[L] = carry;
+        freshTotal.push(L);
+      }
+      snapStep('Add the rows', addSentence(p1, p2), ['Adding the rows'], -1, -1, freshTotal, 'total');
     }
 
+    q.key = { row1: sawRow1, row2: sawRow2, add: sawAdd, long: q.long };
     const intProduct = q.aInt * q.bInt;
     if (q.dpTotal > 0) {
       state.showDecimal = true;
@@ -501,7 +535,7 @@
       steps.push({
         label: 'Check',
         title: 'Check',
-        text: 'Check: ' + q.textA + ' × ' + q.textB + ' is about ' + est.left + ' × ' + est.right + ' = ' + cleanNum(est.product) + ', and ' + answerShown + ' is close to that, so it makes sense.',
+        text: 'Check: ' + q.textA + ' \u00d7 ' + q.textB + ' is about ' + est.left + ' \u00d7 ' + est.right + ' = ' + cleanNum(est.product) + ', and ' + cleanNum(q.a * q.b) + ' is close to that, so it makes sense.',
         stepTag: 'Decimal point',
         kind: 'calc',
         columns: [],
@@ -528,84 +562,106 @@
     const productLen = String(q.aInt * q.bInt).length;
     const showDp = !!(snap && snap.showDecimal && q.dpTotal > 0);
     const cols = Math.max(aDigs.length, bDigs.length, productLen, showDp ? q.dpTotal + 1 : 0);
-    const hi = {};
-    ((step && step.hiCols) || []).forEach(function (c) { hi[c] = true; });
+    const fresh = {};
+    ((step && step.fresh) || []).forEach(function (c) { fresh[c] = true; });
 
-    function digitCell(fromRight, value, cls, answerRow) {
-      const active = hi[fromRight] ? ' on' : '';
+    function digitCell(fromRight, value, cls, answerRow, shaded) {
       const counted = answerRow && showDp && value !== '' && value != null && fromRight < q.dpTotal ? ' counted' : '';
+      const shade = shaded ? ' shade' : '';
       if (answerRow && showDp && fromRight === q.dpTotal && (value === '' || value == null)) {
         return '<div class="dc dot dp-arrow">.</div>';
       }
-      return '<div class="dc' + active + counted + '"><span class="d' + (cls || '') + '">' + (value === '' || value == null ? '' : value) + '</span></div>';
+      return '<div class="dc' + counted + shade + '"><span class="d' + (cls || '') + '">' + (value === '' || value == null ? '' : value) + '</span></div>';
     }
 
-    function carryRow(arr, used) {
-      if (!arr || !arr.some(function (c) { return c; })) return '';
+    function topCarryRow() {
+      if (!snap) return '';
+      let any = false;
       let html = '<div class="algo-row carry-row"><div class="dc spacer"></div>';
       for (let ci = 0; ci < cols; ci++) {
         const fromRight = cols - 1 - ci;
-        const c = arr[fromRight];
-        html += '<div class="dc">' + (c ? '<span class="carry' + (used && used[fromRight] ? ' used' : '') + '">' + c + '</span>' : '') + '</div>';
+        let inner = '';
+        if (snap.phase === 1) {
+          const c = snap.carries && snap.carries[fromRight];
+          if (c) inner += '<span class="carry">' + c + '</span>';
+        } else {
+          const oldC = snap.p1Carries && snap.p1Carries[fromRight];
+          const neu = snap.row2Carries && snap.row2Carries[fromRight];
+          if (oldC) inner += '<span class="carry' + (snap.p1Struck ? ' struck' : '') + '">' + oldC + '</span>';
+          if (neu) inner += '<span class="carry">' + neu + '</span>';
+        }
+        if (inner) any = true;
+        html += '<div class="dc">' + inner + '</div>';
+      }
+      html += '</div>';
+      return any ? html : '';
+    }
+
+    function addCarryRow() {
+      if (!snap || !snap.showTotal || !snap.addCarries) return '';
+      if (!snap.addCarries.some(function (c) { return c; })) return '';
+      let html = '<div class="algo-row carry-row add-carry"><div class="dc spacer"></div>';
+      for (let ci = 0; ci < cols; ci++) {
+        const fromRight = cols - 1 - ci;
+        const c = snap.addCarries[fromRight];
+        html += '<div class="dc">' + (c ? '<span class="carry quiet">' + c + '</span>' : '') + '</div>';
       }
       html += '</div>';
       return html;
     }
 
-    let html = '<div class="algo-grid-wrap' + (showDp ? ' has-dp' : '') + '">';
-    if (snap && snap.phase === 1) html += carryRow(snap.carries, snap.used);
-    else if (snap && snap.p1Carries) html += carryRow(snap.p1Carries, snap.p1Used);
+    function answerDigits(arr, placeholder, rowName) {
+      return rowHtml('', cols, function (fromRight) {
+        const rv = arr ? arr[fromRight] : null;
+        const shown = rv !== null && rv !== undefined;
+        let extra = '';
+        if (showDp && fromRight === q.dpTotal && shown) extra = '<div class="dc dot dp-arrow">.</div>';
+        const phN = placeholder && snap && snap.phOnes ? (snap.phCount || 1) : 0;
+        const ph = phN && fromRight < phN && shown && rv === 0;
+        const just = answerRowFresh(rowName, fromRight);
+        return digitCell(fromRight, shown ? rv : '', (ph ? ' ph' : (shown ? ' res' : '')) + (just ? ' fresh' : ''), true) + extra;
+      });
+    }
+    function answerRowFresh(rowName, fromRight) {
+      return !!(step && step.freshRow === rowName && fresh[fromRight]);
+    }
+
+    let html = '<div class="algo-grid-wrap mul-grid' + (showDp ? ' has-dp' : '') + '">';
+    html += topCarryRow();
     html += rowHtml('', cols, function (fromRight) {
-      return digitCell(fromRight, fromRight < aDigs.length ? aDigs[fromRight] : '');
+      const shaded = step && step.shadeA === fromRight;
+      return digitCell(fromRight, fromRight < aDigs.length ? aDigs[fromRight] : '', '', false, shaded);
     });
     html += rowHtml('×', cols, function (fromRight) {
-      return digitCell(fromRight, fromRight < bDigs.length ? bDigs[fromRight] : '');
+      const shaded = step && step.shadeB === fromRight;
+      return digitCell(fromRight, fromRight < bDigs.length ? bDigs[fromRight] : '', '', false, shaded);
     });
     html += '<div class="algo-row sep-row"><div class="dc spacer"></div>';
     for (let ci = 0; ci < cols; ci++) html += '<div class="dc"></div>';
     html += '</div>';
 
     if (!q.long) {
-      html += rowHtml('', cols, function (fromRight) {
-        const rv = snap && snap.p1 ? snap.p1[fromRight] : null;
-        const shown = rv !== null && rv !== undefined;
-        let extra = '';
-        if (showDp && fromRight === q.dpTotal && shown) extra = '<div class="dc dot dp-arrow">.</div>';
-        const phN = snap && snap.phOnes ? (snap.phCount || 1) : 0;
-        const ph = phN && fromRight < phN && shown && rv === 0;
-        return digitCell(fromRight, shown ? rv : '', ph ? ' ph' : (shown ? ' res' : ''), true) + extra;
-      });
+      html += answerDigits(snap && snap.p1, true, 'p1');
     } else if (snap) {
-      html += rowHtml('', cols, function (fromRight) {
-        const rv = snap.p1[fromRight];
-        const shown = rv !== null && rv !== undefined;
-        return digitCell(fromRight, shown ? rv : '', shown ? ' res' : '');
-      });
-      if (snap.showP2) {
-        html += carryRow(snap.phase === 2 ? snap.carries : snap.p2Carries, snap.phase === 2 ? snap.used : snap.p2Used);
-        html += rowHtml('', cols, function (fromRight) {
-          const rv = snap.p2[fromRight];
-          const shown = rv !== null && rv !== undefined;
-          const phN = snap.phOnes ? (snap.phCount || 1) : 0;
-          const ph = phN && fromRight < phN && shown && rv === 0;
-          return digitCell(fromRight, shown ? rv : '', ph ? ' ph' : (shown ? ' res' : ''));
-        });
-      }
+      html += answerDigits(snap.p1, false, 'p1');
+      if (snap.showP2) html += answerDigits(snap.p2, true, 'p2');
       if (snap.showTotal) {
-        html += carryRow(snap.addCarries, snap.addUsed);
+        html += addCarryRow();
         html += '<div class="algo-row sep-row"><div class="dc spacer"></div>';
         for (let ci = 0; ci < cols; ci++) html += '<div class="dc"></div>';
         html += '</div>';
-        html += rowHtml('', cols, function (fromRight) {
-          const rv = snap.total[fromRight];
-          const shown = rv !== null && rv !== undefined;
-          let extra = '';
-          if (showDp && fromRight === q.dpTotal && shown) extra = '<div class="dc dot dp-arrow">.</div>';
-          return digitCell(fromRight, shown ? rv : '', shown ? ' res' : '', true) + extra;
-        });
+        html += answerDigits(snap.total, false, 'total');
       }
     }
     html += '</div>';
+    if (q.key && (q.key.row1 || q.key.row2 || q.key.add)) {
+      html += '<ul class="mul-key">';
+      if (q.key.long && q.key.row1) html += '<li><span class="k struck">2</span> regrouped in row 1, crossed out when row 2 starts</li>';
+      if (q.key.long && q.key.row2) html += '<li><span class="k">2</span> regrouped in row 2</li>';
+      if (q.key.long && q.key.add) html += '<li><span class="k quiet">1</span> regrouped when adding the rows</li>';
+      if (!q.key.long && q.key.row1) html += '<li><span class="k">2</span> regrouped into the next column</li>';
+      html += '</ul>';
+    }
     if (showDp && q.decimalLine) html += '<p class="algo-dp-note">' + q.decimalLine + '</p>';
     return html;
   }
@@ -615,17 +671,31 @@
     return { prompt: est.left + ' × ' + est.right, answer: est.product };
   }
 
+  function scaleStory(factor, other) {
+    let unit = 10;
+    if (factor % 1000 === 0) unit = 1000;
+    else if (factor % 100 === 0) unit = 100;
+    else if (factor % 10 === 0) unit = 10;
+    else return '';
+    const small = factor / unit;
+    const mid = small * other;
+    return small + ' \u00d7 ' + cleanNum(other) + ' = ' + cleanNum(mid) + ', so ' +
+      cleanNum(factor) + ' \u00d7 ' + cleanNum(other) + ' = ' + cleanNum(factor * other);
+  }
+
   function strategy(q) {
     if (q.dpTotal > 0) {
-      return '<strong>Ignore the decimal points.</strong> ' + q.aInt + ' × ' + q.bInt + ' = ' + (q.aInt * q.bInt) +
-        '<br>Then count ' + q.dpTotal + ' decimal place' + (q.dpTotal === 1 ? '' : 's') + ': <strong>' + fmtDp(q.answer, q.dpTotal) + '</strong>';
+      const places = q.dpTotal === 1 ? '1 decimal place' : q.dpTotal + ' decimal places';
+      return '<strong>Ignore the decimal points.</strong> ' + q.aInt + ' \u00d7 ' + q.bInt + ' = ' + (q.aInt * q.bInt) +
+        '<br>Then count ' + places + ': <strong>' + fmtDp(q.answer, q.dpTotal) + '</strong>';
     }
+    if (q.a % 10 === 0) return '<strong>Use place value.</strong> ' + scaleStory(q.a, q.b);
+    if (q.b % 10 === 0) return '<strong>Use place value.</strong> ' + scaleStory(q.b, q.a);
     const tens = Math.floor(q.a / 10) * 10;
     const ones = q.a - tens;
-    if (!ones) return '<strong>Use place value.</strong> ' + q.equation + ' = <strong>' + (q.a * q.b) + '</strong>';
-    return '<strong>Split the first number.</strong> ' + tens + ' × ' + q.b + ' = ' + (tens * q.b) +
-      ', and ' + ones + ' × ' + q.b + ' = ' + (ones * q.b) +
-      '<br>Add: <strong>' + (q.a * q.b) + '</strong>';
+    return '<strong>Split the first number.</strong> ' + scaleStory(tens, q.b) +
+      '<br>' + ones + ' \u00d7 ' + cleanNum(q.b) + ' = ' + cleanNum(ones * q.b) +
+      '<br>Add: <strong>' + cleanNum(q.a * q.b) + '</strong>';
   }
 
   function extBank(level) {

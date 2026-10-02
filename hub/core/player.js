@@ -70,9 +70,9 @@ const Player = (function () {
       const answer = Math.round(question.answer * Math.pow(10, question.dp)) / Math.pow(10, question.dp);
       const shown = question.dp ? answer.toFixed(question.dp) : String(Math.round(answer));
       const gap = Math.abs(answer - est.answer);
-      const close = gap <= Math.max(1, Math.abs(est.answer) * 0.15);
+      const close = gap <= Math.max(1, Math.abs(est.answer) * 0.2);
       foot = '<p class="closeness">' + (close
-        ? shown + ' is close to the estimate of ' + est.answer
+        ? shown + ' is close to the estimate of ' + est.answer + '\u00a0\u2713'
         : 'The answer is ' + shown + ', and the estimate was ' + est.answer) + '</p>';
     }
 
@@ -100,6 +100,22 @@ const Player = (function () {
         return '<p class="reveal-line">' + text + '</p>';
       }).join('');
       stepHtml = fold('<div class="reveal-lines">' + lines + '</div>', false);
+    } else if (revealed && steps && steps.length && steps.some(function (s) { return s.kind === 'digit' || s.group; })) {
+      let n = 0;
+      let lastGroup = '';
+      const lines = [];
+      steps.forEach(function (s, i) {
+        if (s.group && s.group !== lastGroup) {
+          lines.push('<li class="step-head">' + s.group + '</li>');
+          lastGroup = s.group;
+        }
+        n += 1;
+        let cls = 'step';
+        if (walking && i === step) cls += ' current';
+        else if (walking && i > step) cls += ' later';
+        lines.push('<li class="' + cls + '"><span class="n">' + n + '</span><div>' + stepBody(s) + '</div></li>');
+      });
+      stepHtml = fold('<ol class="steps digit-steps">' + lines.join('') + '</ol>', true);
     } else if (revealed && steps && steps.length) {
       if (walking) {
         const lines = [];

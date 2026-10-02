@@ -88,11 +88,8 @@
   function linePhrase(pct, q) {
     const value = shown(q, partValue(pct, q.amount));
     const line = pct + '% of ' + amt(q) + ' = ' + value;
-    if (pct === 10) return '10%: divide by 10, then ' + line;
-    if (pct === 5) return '5%: half of 10%, so ' + line;
-    if (pct === 1) return '1%: divide by 100, then ' + line;
-    if (pct === 50) return '50%: halve it. ' + line;
-    if (pct === 25) return '25%: halve it, then halve it again. ' + line;
+    const rule = ruleFor(pct);
+    if (rule) return rule + '<br>' + line;
     return line;
   }
 
@@ -121,25 +118,49 @@
     return 'Check: ' + q.pct + '% is ' + pctWord + ', and ' + text + ' is ' + ansWord + ' of ' + q.amount + '\u00a0\u2713';
   }
 
+  function friendlyCheck(n) {
+    const r = Math.round(n * 2) / 2;
+    return Math.abs(n - r) < 0.001;
+  }
+
   function estimateCheck(q) {
     const pct = q.pct;
     const amount = q.amount;
-    const benches = [
-      { at: 10, name: 'a tenth', label: 'A tenth', value: amount / 10 },
-      { at: 25, name: 'a quarter', label: 'A quarter', value: amount / 4 },
-      { at: 50, name: 'half', label: 'Half', value: amount / 2 },
-      { at: 75, name: 'three quarters', label: 'Three quarters', value: amount * 3 / 4 },
-      { at: 100, name: 'the whole amount', label: 'The whole amount', value: amount }
-    ];
-    benches.sort(function (a, b) { return Math.abs(pct - a.at) - Math.abs(pct - b.at); });
-    const pick = benches[0];
-    const exact = pct === pick.at;
-    const about = exact ? pick.name : (pick.at === 100 ? 'about the whole amount' : 'about ' + pick.name);
-    const value = Math.round(pick.value * 100) / 100;
     const ofAmount = q.money ? cash(amount) : String(amount);
-    const valueText = q.money ? cash(value) : num(value);
     const answerText = q.money ? cash(q.answer) : num(q.answer);
-    return 'Check: ' + pct + '% is ' + about + '. ' + pick.label + ' of ' + ofAmount + ' is ' + valueText + ', so ' + answerText + ' makes sense.';
+    const specials = [
+      { at: 25, name: 'a quarter', label: 'A quarter', frac: 0.25 },
+      { at: 50, name: 'half', label: 'Half', frac: 0.5 },
+      { at: 75, name: 'three quarters', label: 'Three quarters', frac: 0.75 }
+    ];
+    for (let i = 0; i < specials.length; i++) {
+      const spec = specials[i];
+      if (Math.abs(pct - spec.at) > 3) continue;
+      const value = Math.round(amount * spec.frac * 100) / 100;
+      if (!friendlyCheck(value)) continue;
+      const about = pct === spec.at ? spec.name : 'about ' + spec.name;
+      const valueText = q.money ? cash(value) : num(value);
+      return 'Check: ' + pct + '% is ' + about + '. ' + spec.label + ' of ' + ofAmount + ' is ' + valueText + ', so ' + answerText + ' makes sense.';
+    }
+    let tens = Math.round(pct / 10) * 10;
+    if (tens < 10) tens = 10;
+    if (tens > 100) tens = 100;
+    function valueOf(p) { return Math.round(amount * p) / 100; }
+    if (!friendlyCheck(valueOf(tens))) {
+      const down = Math.max(10, Math.floor(pct / 10) * 10);
+      const up = Math.min(100, Math.ceil(pct / 10) * 10);
+      const options = [tens, down, up];
+      options.sort(function (a, b) {
+        const fa = friendlyCheck(valueOf(a)) ? 0 : 1;
+        const fb = friendlyCheck(valueOf(b)) ? 0 : 1;
+        if (fa !== fb) return fa - fb;
+        return Math.abs(a - pct) - Math.abs(b - pct);
+      });
+      tens = options[0];
+    }
+    const valueText = q.money ? cash(valueOf(tens)) : num(valueOf(tens));
+    const lead = pct === tens ? '' : pct + '% \u2248 ' + tens + '%. ';
+    return 'Check: ' + lead + tens + '% of ' + ofAmount + ' = ' + valueText + ', so ' + answerText + ' makes sense.';
   }
 
   function ofQuestion(pct, amount, tricky) {
@@ -259,7 +280,7 @@
         rule: '50%: halve it.',
         rows: [],
         final: line,
-        steps: [teach('50%', '50%: halve it. ' + line, null)]
+        steps: [teach('50%', linePhrase(50, q), null)]
       };
     }
     if (q.pct === 25) {
@@ -271,7 +292,7 @@
         final: line,
         steps: [
           teach('Halve it', 'Half of ' + amt(q) + ' = ' + shown(q, half), null),
-          teach('Halve it again', '25%: halve it, then halve it again. ' + line, null)
+          teach('Halve it again', linePhrase(25, q), null)
         ]
       };
     }
@@ -305,8 +326,7 @@
       const last = rows.pop();
       steps.pop();
       final = last.left + ' = ' + last.right;
-      const rule = ruleFor(q.pct);
-      steps.push(teach(q.pct + '%', (rule ? rule + ' ' : '') + final, tagFor(q.pct)));
+      steps.push(teach(q.pct + '%', linePhrase(q.pct, q), tagFor(q.pct)));
     } else {
       final = q.pct + '% of ' + amt(q) + ' = ' + shown(q, found);
       steps.push(teach(q.pct + '%', final, tagFor(q.pct)));
@@ -488,7 +508,7 @@
       html += gridHtml(pack.rows);
       if (pack.final) html += '<p class="pct-final">' + pack.final + '</p>';
     }
-    const check = q.kind === 'of' && q.method === 'decimal' ? estimateCheck(q) : (q.kind === 'of' ? halfCheck(q) : q.check);
+    const check = q.kind === 'of' ? estimateCheck(q) : q.check;
     html += answerBox(q.answerText, check) + '</div>';
     el.innerHTML = html;
     if (pack.mul) {

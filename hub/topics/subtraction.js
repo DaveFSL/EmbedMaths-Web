@@ -451,7 +451,7 @@
           tradeInfo.nowHere = ad;
           results[i] = ad - b2;
           steps.push(snap({
-            readyText: ad + ' − ' + b2 + ' = ' + results[i] + ', then write ' + results[i],
+            readyText: ad + ' − ' + b2 + ' = ' + results[i] + ', write ' + results[i],
             isTrade: true,
             tradeInfo: tradeInfo,
             chip: 'Regrouping',
@@ -508,10 +508,10 @@
       const hop = info.hops[0];
       return titleCase(place) + ': ' + info.origHere + ' is not enough to take ' + info.sub +
         ', so regroup 1 ' + singular(hop.fromName, 1) + ' from the ' + hop.fromName + ': ' + hopPhrase(hop) +
-        ', then ' + info.nowHere + ' − ' + info.sub + ' = ' + digit + ', then write ' + digit;
+        ', then ' + info.nowHere + ' − ' + info.sub + ' = ' + digit + ', write ' + digit;
     }
     if (bottomEmpty(q, s.col)) return titleCase(place) + ': Nothing to take away, so write ' + digit;
-    return titleCase(place) + ': ' + s.wTop[s.col] + ' − ' + s.bd[s.col] + ' = ' + digit + ', then write ' + digit;
+    return titleCase(place) + ': ' + s.wTop[s.col] + ' − ' + s.bd[s.col] + ' = ' + digit + ', write ' + digit;
   }
 
   function buildSteps(q) {
@@ -536,7 +536,7 @@
         ? 'Hundreds / thousands'
         : titleCase(place));
       let text = s.readyText || columnText(s, q);
-      if (idx === raw.steps.length - 1) text += ' The answer is ' + answerText;
+      if (idx === raw.steps.length - 1) text += '. The answer is ' + answerText;
       ui.push({
         title: titleCase(place),
         text: text,
