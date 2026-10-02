@@ -775,10 +775,26 @@ const FractionsTopic = (function () {
       return q;
     },
     estimate: function (q) { return { prompt: q.estPrompt, answer: q.estAnswer }; },
+    cueLead: 'Tip:',
+    instruction: function (q) {
+      if (q.level === 1) return 'Find the missing number.';
+      if (q.level === 2) return 'Simplify this fraction.';
+      if (q.level === 3) return q.toMixed ? 'Change to a mixed number.' : 'Change to an improper fraction.';
+      if (q.level === 4) return 'Find the fraction of the amount.';
+      if (q.level === 7) return 'Put these in order, smallest first.';
+      if (q.level === 5 || q.level === 6 || q.level === 8) {
+        return (q.op === '\u2212' ? 'Subtract.' : 'Add.') + ' Simplify your answer.';
+      }
+      return '';
+    },
     estimateCue: function (q) {
-      if (q.kind === 'amount') return 'Estimate first: divide by the bottom, times by the top.';
-      if (q.kind === 'add' || q.kind === 'order') return 'Estimate first: is the answer more than 1, or less than 1?';
-      return 'Estimate first: what you do to the top, you do to the bottom.';
+      if (q.level === 1) return 'What you do to the top, you do to the bottom.';
+      if (q.level === 2) return 'Find the highest number that divides into both ' + q.n + ' and ' + q.d + '.';
+      if (q.level === 3) return 'How many wholes can you make?';
+      if (q.level === 4) return 'Divide by the bottom, times by the top.';
+      if (q.level === 5) return 'Same denominator: just ' + (q.op === '\u2212' ? 'subtract' : 'add') + ' the numerators.';
+      if (q.level === 7) return 'Change them all to the same denominator first.';
+      return 'Find a common denominator. Use the multiples lists.';
     },
     buildSteps: function (q) { return q.steps; },
     render: render,

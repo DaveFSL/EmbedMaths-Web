@@ -63,6 +63,7 @@ EM.registerTopic({
   id: 'sub',                       // used in links: ?t=sub
   name: 'Subtraction',
   homeExample: 'e.g. 5 002 − 1 738',  // third line on the home tile
+  instruction(q) {},               // optional bold line above the question
   section: 'written',              // written | placevalue | measurement | facts
   levels: [ { id: 1, name: '2-digit, no regrouping', example: '87 − 34' }, … ],
   tricky: [ … ],                   // generators for the "tricky ones" option
@@ -85,10 +86,10 @@ The mockup canvas has nine screens. Build these:
 ### Home (grouped by area)
 - Top right: **For teachers & parents**.
 - When a class link is used, the **Your practice** banner (topic, level, questions, Start, and "Daily mix instead") sits under the logo row. Hide it if there's no link.
-- Under that, a teal **How it works** strip: 1 Pick a topic (Start at Level 1) → 2 Work it out on paper (Show your working) → 3 Check each step (Then mark yourself), with **Hide** on the right. It stays open until the student finishes a session or taps Hide. After that, a small **How it works** link shows the strip again. The choice is saved on this device (`guide` in localStorage).
+- Under that, a teal **How it works** strip: 1 Pick a topic (Start at Level 1) → 2 Work it out on paper (Show your working) → 3 Check each step (Then mark yourself). The three steps spread evenly across the strip, each arrow sits halfway between two steps, and **Hide** stays on the far right. The "How it works" kicker is small Lexend, uppercase, with letter-spacing. The strip stays open until the student finishes a session or taps Hide. After that, a small **How it works** link shows the strip again. The choice is saved on this device (`guide` in localStorage).
 - Two columns, stretching so they end at the same height:
   - Left: **Written methods** (Addition, Subtraction, Multiplication, Division, in a 2 × 2 grid), then **Fractions, decimals & percentages**. That group is three tiles in a row, with the icon above the words: Fractions, Percentages (Coming soon), Convert (Coming soon).
-  - Right: **Place value & measurement** (× and ÷ by 10, 100, 1000, then Converting units, stacked), then **Number facts** (Times tables → `https://davefsl.github.io/FlashFlips-Web/`).
+  - Right: **Place value & measurement** (× and ÷ by 10, 100, 1000, then Converting units, stacked), then **Number facts** (Times tables → `https://davefsl.github.io/FlashFlips-Web/`). The place-value icon is ×10 above ÷10, centred in the box at a size that fits.
 - Each working tile shows "Level X of Y" from saved progress, then a small bold teal example from the topic's `homeExample`. Coming soon examples are grey.
 - Footer, bottom-left: "Progress is saved on this device only." and the version number (the previous shipped commit). It stays pinned there, inside the iPhone/iPad safe area. If the page content would reach the bottom, the footer sits at the end of the page instead, and never covers a tile.
 - On a phone, one column: Written methods, Fractions…, Place value & measurement, Number facts. The How it works steps stack. Long tile names wrap.
@@ -101,11 +102,12 @@ The mockup canvas has nine screens. Build these:
 - Use real radio-style segmented controls, not checkbox-looking buttons that only allow one choice.
 
 ### Question + self-check
-- Top: **← Levels** (back to that topic's level page) and a Home icon (main menu). For a teacher set, homework link or Daily mix, which have no level page, the button is **← Exit**. Both Exit and Home then ask "Leave this practice? Your answers so far won't be saved." A level the student picked does not ask. Beside that: "Level N · Question x of y", a progress strip of coloured segments (teal = right, orange = error, grey = to do), and a "Tricky one" tag when relevant. Back / Next step stay at the bottom for moving between steps.
-- Left card: the question in large type, the estimate line, then the written layout drawn by the topic's `render()`.
+- Top: **← Levels** (back to that topic's level page) and a Home icon (main menu). For a teacher set, homework link or Daily mix, which have no level page, the button is **← Exit**. Both Exit and Home then ask "Leave this practice? Your answers so far won't be saved." A level the student picked does not ask. Beside that: the topic and level name, e.g. "Fractions · Level 2, Simplifying · Question 1 of 5", on every topic (a mix uses the current question's topic and level). Then a progress strip of coloured segments (teal = right, orange = error, grey = to do), and a "Tricky one" tag when relevant. Back / Next step stay at the bottom for moving between steps.
+- Above the question, a short bold instruction when the task is not obvious. The topic sets it with `instruction(q)`. Addition, subtraction and multiplication have none.
+- Left card: the question in large type, the estimate or tip line, then the written layout drawn by the topic's `render()`. A fraction question is about twice the usual size, and its card takes more of the width. It still scales down so nothing overlaps.
 - Right: the step list. The current or key step is highlighted.
 - After the full reveal: **How did you go?** **I got it right** records the result and goes straight to the next question (or the summary after the last one). **I made an error** shows "Which step went wrong?" chips from `errorTags`, plus **Next question**. The chip is optional. Stepping through the working never blocks moving on.
-- **Reference first.** The heading stays the question (`31 ÷ 10 = ?`, or the plain sum for written methods) until **Show solution**. That opens the complete working and the full answer. **Show me each step** is optional on written methods: Next walks the steps (one column at a time for addition and subtraction, one row at a time for multiplication, with **Show me each column** inside a row), then returns to the whole answer. Back from the first step returns there too. Estimate first is still optional. Place value shows the chart and the short lines all at once, with no step list.
+- **Reference first.** The heading stays the question (`31 ÷ 10 = ?`, or the plain sum for written methods) until **Show solution**. That opens the complete working and the full answer. **Show me each step** is optional on written methods: Next walks the steps (one column at a time for addition and subtraction, one row at a time for multiplication, with **Show me each column** inside a row), then returns to the whole answer. Back from the first step returns there too. Estimate first is still optional on the calculation topics. Fractions show **Tip:** instead, because that line is not an estimate. Place value shows the chart and the short lines all at once, with no step list.
 
 ### Summary
 - "6 out of 8. Nice work." with a row of question tiles (tick, or the error tag in orange).
@@ -202,6 +204,8 @@ Levels 1–6 and 10 divide exactly. Level 7 always has a remainder. Levels 8 and
 
 **Remainders as fractions** (level 8): the remainder goes on top, the divisor underneath. "The remainder goes on top, the number we divided by goes underneath."
 
+Above the question on a remainder level: "Give the remainder as a remainder." (level 7), "Write the remainder as a fraction." (level 8), or "Write the answer as a decimal." (level 9). Other division levels have no instruction line.
+
 **Multiples list.** A **Multiples of n** dropdown sits in its own column beside the working, with a gap. When there isn't room it moves underneath. It can be opened before the reveal (`mul=1` opens it for the session; level 11 opens it by default). Rows are not highlighted until the working is revealed.
 
 ### Fractions
@@ -260,6 +264,7 @@ Self-check chips: Common denominator, Top and bottom, Adding / subtracting, Simp
 ## 6. Teaching approach to keep (Dave's wording)
 
 ### Place value slide (screens 8 and 9)
+- Above the question: "Work it out."
 - Columns: Th · H · T · O · **.** · t · h (add th for 3 dp). The decimal point has its own fixed column.
 - **The digits move. The decimal point never moves.** Never teach "add a zero" or "move the decimal point".
 - Before the reveal, two prompts only: "Will the answer be bigger or smaller?" and "Which way will the digits move — left or right?"
@@ -271,12 +276,15 @@ Self-check chips: Common denominator, Top and bottom, Adding / subtracting, Simp
 ### Converting units (match the laminated Metric Place Value Chart)
 - Tabs: **Length** (blue), **Mass** (purple), **Capacity** (green), using the chart's colours.
 - Pairs with arrows both ways: km ⇄ m (× 1000 / ÷ 1000), m ⇄ cm (× 100 / ÷ 100), cm ⇄ mm (× 10 / ÷ 10), t ⇄ kg and kg ⇄ g (× 1000), L ⇄ mL (× 1000). Highlight the pair in the question and fade the others.
+- Above a conversion: "Convert to metres." (the target unit, written out). A mixed kilometres question says "Convert to kilometres and metres." Ordering and "which unit" questions have no instruction line.
 - Before the reveal: "Going to a bigger or smaller unit?", "Will your number get bigger or smaller?", "Which way will the digits move — left or right?"
 - On reveal, everything at once: the unit chart (highlight the pair), the orange **Check yourself** box ("Going to a SMALLER unit? Then my number gets BIGGER." or "Going to a BIGGER unit? Then my number gets SMALLER."), then **Which rule?**, **Which way?**, **How many places?**, **Do the jumps** on the place value chart, **Zeros hold the place** only when a place is empty, and **Say it another way** (2.5 km = 2500 m = 2 km 500 m).
 - Self-check chips: Which rule, Which way, How many places, Zeros hold the place, Decimal point.
 - Level 7 uses the chart's "one measurement, five ways" idea: pick the unit that gives a number you can hold in your head.
 
 ### Fractions
+- A bold instruction sits above the question: Find the missing number. / Simplify this fraction. / Change to a mixed number. or Change to an improper fraction. / Find the fraction of the amount. / Add. Simplify your answer. or Subtract. Simplify your answer. / Put these in order, smallest first.
+- The line under the question is **Tip:**, not Estimate first. Level 1: "What you do to the top, you do to the bottom." Level 2 names the top and the bottom. Level 3: "How many wholes can you make?" Level 4: "Divide by the bottom, times by the top." Level 5: "Same denominator: just add (or subtract) the numerators." Levels 6 and 8: "Find a common denominator. Use the multiples lists." Level 7: "Change them all to the same denominator first."
 - Equivalent fractions: "What you do to the top, you do to the bottom." Example: "4 × 3 = 12, so 3 × 3 = 9."
 - Simplifying uses the same sentence, dividing by the highest common factor: "24 ÷ 6 = 4, so 18 ÷ 6 = 3."
 - Fraction of an amount: "Divide by the bottom, times by the top." Example: "45 ÷ 5 = 9, 9 × 3 = 27."

@@ -109,6 +109,11 @@ const Conversions = (function () {
     const names = q.gaps.map(function (pos) { return 'the ' + PLACE[pos]; });
     return 'Zeros hold the place. ' + names.join(' and ').replace(/^the/, 'The') + ' are empty, so a 0 holds each: ' + q.amount + '.';
   }
+  const UNIT_WORDS = {
+    km: 'kilometres', m: 'metres', cm: 'centimetres', mm: 'millimetres',
+    t: 'tonnes', kg: 'kilograms', g: 'grams', L: 'litres', mL: 'millilitres'
+  };
+  function unitWord(unit) { return UNIT_WORDS[unit] || unit; }
   function rowOf(measure, big) {
     const rows = MEASURES[measure].rows;
     for (let i = 0; i < rows.length; i++) if (rows[i].big === big) return rows[i];
@@ -554,6 +559,12 @@ const Conversions = (function () {
       return q;
     },
     estimate: function (q) { return { prompt: q.fromText, answer: q.answer }; },
+    instruction: function (q) {
+      if (!q || q.kind === 'order' || q.kind === 'choice') return '';
+      if (q.kind === 'mixed' && q.toUnit === 'km') return 'Convert to kilometres and metres.';
+      if (!q.toUnit) return '';
+      return 'Convert to ' + unitWord(q.toUnit) + '.';
+    },
     predict: predict,
     buildSteps: function (q) { return q.steps || []; },
     render: render,

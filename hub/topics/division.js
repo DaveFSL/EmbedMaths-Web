@@ -745,6 +745,12 @@ const Division = (function () {
       return q;
     },
     estimate: estimate,
+    instruction: function (q) {
+      if (q.mode === 'remainder') return 'Give the remainder as a remainder.';
+      if (q.mode === 'fraction') return 'Write the remainder as a fraction.';
+      if (q.mode === 'decimal') return 'Write the answer as a decimal.';
+      return '';
+    },
     estimateCue: function (q) {
       return 'Estimate first: round to a friendly multiple of ' + q.divisor + '.';
     },

@@ -49,11 +49,19 @@ const Player = (function () {
     } else if (session.est && !plain) {
       if (!revealed) {
         const cue = topic().estimateCue && topic().estimateCue(question);
-        estimateHtml = '<p class="estimate">' + (cue || 'Estimate first. Write a reasonable estimate on your paper.') + '</p>';
-      } else {
+        const lead = topic().cueLead;
+        const line = cue ? (lead ? lead + ' ' + cue : cue) : 'Estimate first. Write a reasonable estimate on your paper.';
+        estimateHtml = '<p class="estimate">' + line + '</p>';
+      } else if (!topic().cueLead) {
         const est = topic().estimate(question);
         estimateHtml = '<p class="estimate">Estimate: ' + est.prompt + ' = ' + est.answer + '</p>';
       }
+    }
+
+    let instructionHtml = '';
+    if (topic().instruction) {
+      const line = topic().instruction(question);
+      if (line) instructionHtml = '<p class="q-instruction">' + EM.escapeHtml(line) + '</p>';
     }
 
     let foot = '';
@@ -155,17 +163,18 @@ const Player = (function () {
 
     const assigned = !!(session.set || session.mix || session.assigned);
     const leaveLabel = assigned ? '\u2190 Exit' : '\u2190 Levels';
+    const roomy = topic().id === 'frac';
     document.getElementById('app').innerHTML =
       '<div class="shell play"><header class="play-top"><div class="play-nav">' +
       '<button type="button" class="btn ghost" id="leave">' + leaveLabel + '</button>' +
       '<button type="button" class="btn ghost icon-btn" id="toHome" aria-label="Home">' + EM.icons.home + '</button>' +
       '</div><div class="progress-wrap"><p>' +
-      EM.escapeHtml(session.title || (session.set ? 'Set' : (session.mix ? 'Daily mix' : ('Level ' + session.level)))) +
-      ' · Question ' + (session.index + 1) + ' of ' + session.count + '</p>' +
+      EM.escapeHtml(progressLabel()) + '</p>' +
       (session.msg ? '<p class="session-msg">' + EM.escapeHtml(session.msg) + '</p>' : '') +
       '<div class="progress" aria-hidden="true">' + segments +
       '</div></div>' + (question.tricky ? '<span class="tricky-tag">Tricky one</span>' : '<span></span>') + '</header>' +
-      '<div class="work"><section class="paper"><p class="equation">' +
+      '<div class="work' + (roomy ? ' frac-work' : '') + '"><section class="paper' + (roomy ? ' roomy' : '') + '">' +
+      instructionHtml + '<p class="equation">' +
       ((revealed && question.solvedEquation) ? question.solvedEquation : (question.equation || (question.textA + ' − ' + question.textB))) + '</p>' +
       estimateHtml + '<div id="algo"></div>' + foot + '</section><section class="steps-col">' +
       (revealed ? stepHtml : '<p class="wait-note">The working stays hidden until you are ready.</p>') +
@@ -283,6 +292,25 @@ const Player = (function () {
     if (scrollTop !== false) window.scrollTo(0, 0);
   }
 
+  function progressLabel() {
+    const session = EM.session;
+    const question = q();
+    const current = topic();
+    const level = (question && (question.mixLevel || question.level)) || session.level;
+    let name = '';
+    if (current && current.levels) {
+      current.levels.forEach(function (row) {
+        if (row.id === level) name = row.name;
+      });
+    }
+    let label = current && current.name ? current.name : '';
+    if (level) {
+      label += (label ? ' \u00b7 ' : '') + 'Level ' + level;
+      if (name) label += ', ' + name;
+    }
+    return label + ' \u00b7 Question ' + (session.index + 1) + ' of ' + session.count;
+  }
+
   function fitFont(el, box) {
     if (!el || !box) return;
     el.style.fontSize = '';
@@ -316,6 +344,9 @@ const Player = (function () {
   }
 
   function fitLayouts() {
+    document.querySelectorAll('.paper.roomy .equation').forEach(function (el) {
+      fitFont(el, el.parentElement);
+    });
     const layout = document.querySelector('.div-layout');
     if (layout) fitDivision(layout);
     document.querySelectorAll('.frac-board').forEach(function (el) {

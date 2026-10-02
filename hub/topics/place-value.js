@@ -435,6 +435,7 @@ const PlaceValue = (function () {
       return q;
     },
     estimate: estimate,
+    instruction: function () { return 'Work it out.'; },
     predict: predict,
     buildSteps: function (q) { return q.steps || []; },
     render: render,
