@@ -413,7 +413,7 @@ const FractionsTopic = (function () {
     }
     const verb = q.op === '\u2212' ? 'Subtract the numerators' : 'Add the numerators';
     steps.push(teach(verb, addHow(q), 'Adding / subtracting'));
-    steps.push(teach('Write the answer', mixedHtml(q.rows[0]) + '.', 'Adding / subtracting'));
+    steps.push(teach('Write the answer', mixedHtml(q.rows[0]), 'Adding / subtracting'));
     for (let i = 1; i < q.rows.length; i++) {
       const prev = q.rows[i - 1];
       const row = q.rows[i];
@@ -524,7 +524,7 @@ const FractionsTopic = (function () {
       if (!built) return null;
       Object.keys(built).forEach(function (key) { q[key] = built[key]; });
       q.kind = 'add';
-      q.equation = mixedHtml(q.a) + ' ' + q.op + ' ' + mixedHtml(q.b);
+      q.equation = '<span class="eq-sum">' + mixedHtml(q.a) + '<span class="eq-op">' + q.op + '</span>' + mixedHtml(q.b) + '</span>';
       const total = q.op === '\u2212' ? valueOf(q.a) - valueOf(q.b) : valueOf(q.a) + valueOf(q.b);
       q.estPrompt = total > 1 ? 'more than 1' : (total === 1 ? '1' : 'less than 1');
       q.estAnswer = mixedHtml(q.final);
@@ -570,7 +570,7 @@ const FractionsTopic = (function () {
       return '<button type="button" class="mult-closed" aria-expanded="false">' +
         label + ' <span aria-hidden="true">\u25bc</span></button>';
     }
-    const need = common / denom;
+    const need = Math.max(1, Math.ceil(common / denom));
     const rowsN = Math.max(6, need);
     let rows = '';
     for (let n = 1; n <= rowsN; n++) {

@@ -327,7 +327,10 @@ h2 { font-size: 22px; margin: 0; }
 }
 .equation { font-size: clamp(28px, 3.4vw, 40px); margin: 0 0 4px; font-weight: 760; container-type: inline-size; max-width: 100%; overflow-wrap: break-word; }
 .paper.roomy { padding: 28px 24px; }
-.paper.roomy .equation .frac { font-size: 1.45em; }
+.paper.roomy .equation .frac,
+.paper.roomy .equation .eq-op { font-size: 1.45em; }
+.eq-sum { display: inline-flex; align-items: center; gap: 0.95em; vertical-align: middle; max-width: 100%; }
+.eq-op { font-weight: 650; line-height: 1; }
 .equation .eq-amounts { display: block; margin-top: 4px; font-size: clamp(13px, 1.7vw, 20px); font-weight: 650; line-height: 1.35; overflow-wrap: break-word; }
 .equation .eq-choices {
   display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px;
@@ -477,6 +480,12 @@ h2 { font-size: 22px; margin: 0; }
   overflow-wrap: break-word;
 }
 .div-answer strong, .div-check { display: block; max-width: 100%; }
+.div-answer .frac, .step .frac, .order-line .frac {
+  font-size: 1.15em;
+  vertical-align: middle;
+  margin: 0 0.12em;
+}
+.div-answer .frac-n, .step .frac-n, .order-line .frac-n { border-bottom-width: 2px; }
 .mult-wrap { min-width: 0; max-width: 210px; }
 .mult-closed, .mult-toggle {
   min-height: 44px;
@@ -557,12 +566,29 @@ h2 { font-size: 22px; margin: 0; }
 .bar span.on { background: var(--teal); color: #fff; }
 .bar span + span { border-left: 2px solid var(--teal); }
 .bar-sum { margin: 8px 0 0; font-weight: 760; }
-.div-layout.has-lists { grid-template-columns: minmax(0, 1fr) minmax(168px, 240px); }
+.div-layout.has-lists { grid-template-columns: minmax(0, 1fr) max-content; align-items: start; }
 .div-layout.stacked.has-lists { grid-template-columns: minmax(0, 1fr); }
-.mult-wrap.multi { max-width: 240px; display: flex; flex-direction: column; gap: 10px; }
-.div-layout.stacked .mult-wrap.multi { max-width: 100%; flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
+.mult-wrap.multi {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 10px;
+  width: max-content;
+  max-width: 100%;
+}
+.mult-wrap.multi .mult-panel,
+.mult-wrap.multi .mult-closed {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 8.2em;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+.div-layout.stacked .mult-wrap.multi { width: 100%; max-width: 100%; }
 .div-layout.stacked .mult-wrap.multi .mult-panel,
-.div-layout.stacked .mult-wrap.multi .mult-closed { width: min(220px, 100%); }
+.div-layout.stacked .mult-wrap.multi .mult-closed { flex: 1 1 0; min-width: 0; }
 .order-line { margin: 12px 0 0; font-weight: 760; max-width: 100%; }
 @media (max-width: 600px) {
   .bus { font-size: 26px; }

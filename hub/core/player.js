@@ -124,8 +124,8 @@ const Player = (function () {
         });
         stepHtml = fold('<ol class="steps">' + lines.join('') + '</ol>', true);
       } else {
-        const lines = steps.map(function (s) {
-          return '<li class="step"><span class="n">•</span><div>' + stepBody(s) + '</div></li>';
+        const lines = steps.map(function (s, i) {
+          return '<li class="step"><span class="n">' + (i + 1) + '</span><div>' + stepBody(s) + '</div></li>';
         }).join('');
         stepHtml = fold('<ol class="steps">' + lines + '</ol>', false);
       }
@@ -329,10 +329,22 @@ const Player = (function () {
   function fitDivision(layout) {
     const piece = layout.querySelector('.bus, .frac-board');
     const work = layout.querySelector('.div-work');
+    const lists = layout.querySelector('.mult-wrap.multi');
     if (!work) return;
     layout.classList.remove('stacked');
     if (piece) piece.style.fontSize = '';
-    if (piece && piece.scrollWidth > work.clientWidth + 1) {
+    if (lists) {
+      const prev = lists.style.width;
+      lists.style.width = 'max-content';
+      const listW = lists.scrollWidth;
+      lists.style.width = prev;
+      const total = layout.clientWidth;
+      const room = total - listW - 18;
+      const boardW = piece ? piece.scrollWidth : 0;
+      const preferred = piece ? parseFloat(getComputedStyle(piece).fontSize) : 40;
+      const fitted = boardW > room && room > 0 ? preferred * room / boardW : preferred;
+      if (room < 160 || fitted < 22 || listW > total - 40) layout.classList.add('stacked');
+    } else if (piece && piece.scrollWidth > work.clientWidth + 1) {
       const preferred = parseFloat(getComputedStyle(piece).fontSize);
       const fitted = preferred * work.clientWidth / piece.scrollWidth;
       if (fitted < 22 || work.clientWidth < 150) layout.classList.add('stacked');
