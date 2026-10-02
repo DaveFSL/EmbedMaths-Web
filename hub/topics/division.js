@@ -665,7 +665,7 @@ const Division = (function () {
         kind: 'number',
         expect: each + ' r' + left,
         hint: 'Share them into equal groups first. What is left is the remainder.',
-        p: total + ' cupcakes are shared between ' + boxes + ' boxes. How many in each box, and how many are left over? Write it like ' + each + ' r' + left + '.',
+        p: total + ' cupcakes are shared between ' + boxes + ' boxes. How many in each box, and what is the remainder? Write it like ' + each + ' r' + left + '.',
         a: each + ' \u00d7 ' + boxes + ' = ' + (each * boxes) + ', plus the remainder ' + left + ' = ' + total + '. <strong>' + each + ' r' + left + '</strong>'
       },
       {

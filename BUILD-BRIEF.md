@@ -18,7 +18,7 @@ One page where students, teachers and parents choose what to practise. It replac
 4. **Converting units.** New topic that reuses the place value slide.
 5. **Class link builder + QR code**, and Daily mix across the topics that are ready.
 6. **Redirects (done).** Root `index.html` forwards to `/hub/` and keeps the query string. The old add/sub and multiplication pages forward to `/hub/?t=sub` and `/hub/?t=mul`; the originals are in `/archive/`. The hub was not moved.
-7. **Division (done).** Short division, 11 levels, in `topics/division.js`. Time and area units still show “Coming soon”.
+7. **Division (done).** Short division, 11 levels, in `topics/division.js`. Measurement on Home is Converting units only. Time is not a tile and not in Set practice.
 
 ---
 
@@ -84,11 +84,11 @@ The mockup canvas has nine screens. Build these:
 - Sections:
   - **Written methods**: Addition, Subtraction, Multiplication, Division
   - **Place value**: × and ÷ by 10, 100, 1000
-  - **Measurement**: Converting units, Time (coming soon)
+  - **Measurement**: Converting units only
   - **Number facts**: Times tables → opens `https://davefsl.github.io/FlashFlips-Web/`
 - Each tile shows "Level X of Y" from saved progress.
 - Top right: **For teachers & parents**.
-- Footer: "Progress is saved on this device only."
+- Footer, bottom-left: "Progress is saved on this device only." and the version number (the previous shipped commit). It stays pinned there, inside the iPhone/iPad safe area. If the page content would reach the bottom, the footer sits at the end of the page instead, and never covers a tile.
 - On a phone: one column with the same order.
 
 ### Level picker (one per topic)
@@ -99,7 +99,7 @@ The mockup canvas has nine screens. Build these:
 - Use real radio-style segmented controls, not checkbox-looking buttons that only allow one choice.
 
 ### Question + self-check
-- Top: Stop, "Level N · Question x of y", a progress strip of coloured segments (teal = right, orange = error, grey = to do), and a "Tricky one" tag when relevant.
+- Top: **← Levels** (back to that topic's level page) and a Home icon (main menu). For a teacher set, homework link or Daily mix, which have no level page, the button is **← Exit**. Both Exit and Home then ask "Leave this practice? Your answers so far won't be saved." A level the student picked does not ask. Beside that: "Level N · Question x of y", a progress strip of coloured segments (teal = right, orange = error, grey = to do), and a "Tricky one" tag when relevant. Back / Next step stay at the bottom for moving between steps.
 - Left card: the question in large type, the estimate line, then the written layout drawn by the topic's `render()`.
 - Right: the step list. The current or key step is highlighted.
 - After the full reveal: **How did you go?** **I got it right** records the result and goes straight to the next question (or the summary after the last one). **I made an error** shows "Which step went wrong?" chips from `errorTags`, plus **Next question**. The chip is optional. Stepping through the working never blocks moving on.
@@ -192,7 +192,15 @@ A set link uses `t=set` plus `set=`. `q` may be any count from 1 to 30. Invalid 
 10. Decimal ÷ whole number (7.56 ÷ 3 = 2.52)
 11. Extension: 2-digit divisors (1534 ÷ 13 = 118). Divisors 11 to 25. 3- and 4-digit numbers, regrouping at most steps, some zeros in the answer, and about a third with a remainder (1000 ÷ 13 = 76 r12). Dashed orange card. The multiples list opens by default.
 
-Levels 1–6 and 10 divide exactly. Level 7 always has a remainder. Levels 8 and 9 use divisors 2, 4, 5 and 8. A **Multiples of n** list sits beside the working and can be opened before the reveal (`mul=1` opens it for the session).
+Levels 1–6 and 10 divide exactly. Level 7 always has a remainder. Levels 8 and 9 use divisors 2, 4, 5 and 8.
+
+**Bus stop.** The answer row sits above the horizontal line. The vertical line is only as tall as the number row. A regrouped remainder sits raised at the top-left of the digit it joins (like a superscript, ²4), and it appears in the same step that creates it. A digit that will not go is a placeholder 0 (orange, dashed). Decimal points in the answer line up with the decimal point in the number. The remainder (`r 12`) is part of the answer row and stays fully visible. If the working is wider than its column, the digits scale down to fit.
+
+**Wording.** Every regroup reads the same way: "15 tens ÷ 4 = 3, remainder 3. Write 3. Regroup the 3 tens: 37 ones." Level 7's last step writes the remainder beside the answer: "37 ones ÷ 4 = 9, remainder 1. Write 9. Write the remainder beside the answer: 39 r1." The answer row shows "r 1". Level 10 adds a decimal-point step: "Write the decimal point in the answer, straight above the one in 7.56." For a 2-digit divisor, each step uses the list: "The largest multiple that isn't bigger than 100 is 91 (7 × 13)."
+
+**Remainders as fractions** (level 8): the remainder goes on top, the divisor underneath. "The remainder goes on top, the number we divided by goes underneath."
+
+**Multiples list.** A **Multiples of n** dropdown sits in its own column beside the working, with a gap. When there isn't room it moves underneath. It can be opened before the reveal (`mul=1` opens it for the session; level 11 opens it by default). Rows are not highlighted until the working is revealed.
 
 ### × and ÷ by 10, 100, 1000
 1. Whole numbers × 10, 100, 1000 (45 × 100)
@@ -240,9 +248,16 @@ Levels 1–6 and 10 divide exactly. Level 7 always has a remainder. Levels 8 and
 - Level 7 uses the chart's "one measurement, five ways" idea: pick the unit that gives a number you can hold in your head.
 
 ### Written methods
-- Use regrouping, the Australian Curriculum (ACARA v9) word, in every step, level name and self-check chip.
+- Student-facing text uses Australian Curriculum (ACARA v9) words in every step, level name and self-check chip: **regroup** and **remainder**. Never "carry", "trade" or "left over".
 - Keep the crossed-out digit with the new value above it. For regrouping across zeros, show every 0 becoming 9.
 - For multiplication, keep the regrouped digits visible (greyed) on the final step instead of hiding them.
+
+### Layout (every topic)
+- Nothing may overlap: the working, a multiples list, a legend, a label or a button each keep their own space, with a gap.
+- If the working is too wide for its column, scale the digits down to fit.
+- When there isn't room (long numbers, narrower screens), move the side panel underneath the working.
+- Shaded boxes (the answer/check box, hints, Check yourself, steps) are the full width of their column and grow with their text. Text wraps inside the box.
+- Check the longest cases at 1180×820, 1024×768 and 390 wide, with the multiples list open and closed: 4-digit ÷ 2-digit with a remainder, a decimal division, 3-digit × 2-digit, 2 dp × 1 dp, subtraction level 9, addition of three numbers, converting units with 5 amounts, and converting units multiple choice.
 
 ---
 
@@ -288,7 +303,7 @@ Port these instead of rewriting:
 
 - Colours: teal `#0E5D66` (main), ground `#F4F8F7`, ink `#16302F`, muted text `#4F6B6D`, orange `#B85A1E` (errors, regrouping, placeholders; tint `#FFF6EF`). Length blue `#1D5A9E`. Mass purple and capacity green to match the laminated chart.
 - Fonts: **Bricolage Grotesque** for headings, **Lexend** for body text and numbers, with `font-variant-numeric: tabular-nums` so columns line up. Save the font files in the repo; don't load them from Google at runtime.
-- Tap targets at least 44 px. Tested at iPad landscape (1180 × 820) and phone (390 wide).
+- Tap targets at least 44 px. Tested at 1180 × 820, 1024 × 768 and 390 wide.
 - Icons: simple inline SVG line icons, no emoji.
 
 ---
@@ -305,3 +320,13 @@ Live: https://embedmaths.com.au/hub/
 - [x] The QR code from the link builder opens the right session when scanned on an iPad.
 - [x] It loads nothing from outside the repo (no CDN or Google Fonts requests). Full offline use would need a service worker, which is optional.
 - [x] The old page URLs still work. `/`, `/?t=sub&lvl=6`, `/embedmaths-addition-subtraction.html` and `/embedmaths-multiplication.html` forward to the hub.
+
+---
+
+## Next topics
+
+Not on Home, and not in Set practice, until they are built:
+
+- Fractions
+- Percentages
+- Fractions–decimals–percentages

@@ -12,7 +12,6 @@ const EM = (function () {
     divide: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7" r="1.3" fill="currentColor"/><circle cx="12" cy="17" r="1.3" fill="currentColor"/></svg>',
     place: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h4M7 12h10M7 16h7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M15 6l2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     ruler: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M7 7v3M11 7v4M15 7v3M19 7v4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
-    clock: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v5l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     bolt: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L6 13h6l-1 8 7-10h-6l1-8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
     arrow: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     out: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7 17L17 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
@@ -266,9 +265,8 @@ const EM = (function () {
       '<section class="panel"><h2>Place value</h2><div class="tile-row">' +
       tile(ICONS.place, '× and ÷ by 10, 100, 1000', pvMeta, { action: 'pv' }) +
       '</div></section>' +
-      '<section class="panel"><h2>Measurement</h2><div class="tile-row two">' +
+      '<section class="panel"><h2>Measurement</h2><div class="tile-row">' +
       tile(ICONS.ruler, 'Converting units', convMeta, { action: 'conv' }) +
-      tile(ICONS.clock, 'Time', 'Coming soon', { soon: true }) +
       '</div></section>' +
       '<section class="panel"><h2>Number facts</h2><div class="tile-row">' +
       tile(ICONS.bolt, 'Times tables', 'Open FlashFlips', { href: 'https://davefsl.github.io/FlashFlips-Web/', warm: true }) +
