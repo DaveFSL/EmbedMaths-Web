@@ -232,7 +232,7 @@ Final answers are fully simplified. An improper answer becomes a mixed number, e
 
 The small orange × labels (×3, ×4) sit just to the right of the numerator and the denominator and take up no layout space, so the lines, the + and = signs and the answers line up from row to row. No circles, ovals or arrows.
 
-**Fraction of an amount.** "Divide by the bottom, times by the top." A small orange × sits to the left of the numerator and a small orange ÷ to the left of the denominator. Underneath, a bar of equal parts: for 3/5 of 45, five parts labelled 9, three shaded, giving 27. No reminder caption.
+**Fraction of an amount.** The tip is "Divide by the denominator, times by the numerator." A small orange × sits to the left of the numerator and a small orange ÷ to the left of the denominator. Underneath, a bar of equal parts: for 3/5 of 45, five parts labelled 9, three shaded, giving 27. No reminder caption.
 
 **Common denominator.** Write the multiples of each denominator and use the first number in both lists. The same **Multiples of n** dropdown as division. Two lists sit side by side (Multiples of 12 next to Multiples of 5). Each list shows in full, with no inner scroll, and goes at least as far as the common multiple. On a narrow screen the pair drops underneath the working and stays side by side. It never covers the working. It can be opened before the reveal. Nothing is highlighted until after the reveal, then the common multiple is highlighted in each list. Skip any step that is not needed. For 3/4 + 2/3 the steps are numbered 1, 2, 3…: find the common denominator and write 12 as both denominators; "What you do to the top, you do to the bottom" (4 × 3 = 12, so 3 × 3 = 9, and 3 × 4 = 12, so 2 × 4 = 8); add the numerators (9 + 8 = 17); write 17/12; change to a mixed number (1 5/12).
 
@@ -289,22 +289,22 @@ Self-check chips: Common denominator, Top and bottom, Adding / subtracting, Simp
 
 ### Fractions
 - A bold instruction sits above the question: Find the missing number. / Simplify this fraction. / Change to a mixed number. or Change to an improper fraction. / Find the fraction of the amount. / Add. Simplify your answer. or Subtract. Simplify your answer. / Put these in order, smallest first.
-- The line under the question is **Tip:**, not Estimate first. Level 1: "What you do to the top, you do to the bottom." Level 2 names the top and the bottom. Level 3: "How many wholes can you make?" Level 4: "Divide by the bottom, times by the top." Level 5: "Same denominator: just add (or subtract) the numerators." Levels 6 and 8: "Find a common denominator. Use the multiples lists." Level 7: "Change them all to the same denominator first."
+- The line under the question is **Tip:**, not Estimate first. Level 1: "What you do to the top, you do to the bottom." Level 2: "Find the highest number that divides into both 18 and 24" (it names the numerator and the denominator). Level 3: "How many wholes can you make?" Level 4: "Divide by the denominator, times by the numerator." Level 5: "Same denominator: just add (or subtract) the numerators." Levels 6 and 8: "Find a common denominator. Use the multiples lists." Level 7: "Change them all to the same denominator first."
 - Equivalent fractions: "What you do to the top, you do to the bottom." Example: "4 × 3 = 12, so 3 × 3 = 9."
-- Simplifying uses the same sentence, dividing by the highest common factor: "24 ÷ 6 = 4, so 18 ÷ 6 = 3."
-- Fraction of an amount: "Divide by the bottom, times by the top." Example: "45 ÷ 5 = 9, 9 × 3 = 27."
+- Simplifying uses the same sentence, dividing by the highest common factor: "24 ÷ 6 = 4, so 18 ÷ 6 = 3." The tip is "Divide the numerator and the denominator by the highest common factor."
+- Fraction of an amount: "Divide by the denominator, times by the numerator." Example: "45 ÷ 5 = 9, 9 × 3 = 27."
 - A common denominator comes from the multiples lists: the first number that is in both lists.
 - Same-denominator subtraction that needs a whole uses **Regroup**. Never "carry", "trade" or "left over".
 
 ### Percentages
 - Six levels in `topics/percentages.js` (`?t=pct`). Answers are whole numbers or have at most 2 decimal places. Money is always 2 decimal places (`$51.00`).
 - A bold instruction sits above the question: Find the percentage of the amount. / Work it out. / Find the sale price. / Write as a percentage.
-- The line under the question is **Tip:**. Level 1: "50% is half. 10% is divide by 10." Level 2: "Build it up from 10%, 5% and 1%." Level 3: "Find the nearest easy percentage, then add or take away." Level 4: "Change the percentage to a decimal first." Level 5: "Find the discount, then take it off." Level 6: "Make the bottom 100."
+- The line under the question is **Tip:**. Level 1: "50% is half. 10% is divide by 10" Level 2: "Build it up from 10%, 5% and 1%." Level 3: "Find the nearest easy percentage, then add or take away." Level 4: "Change the percentage to a decimal first." Level 5: "Find the discount, then take it off." Level 6: "Make the denominator 100"
 - After the reveal, percent-of-amount questions can show method tabs: **Build up**, **Near a benchmark**, **Decimal × amount**. Level 1 has one method only, so it has no tabs. Levels 1–2 open on Build up, level 3 on Near a benchmark, level 4 on Decimal × amount. A tab is shown only when that method makes sense for the question.
-- Wording: 50% is "halve it." 25% is "halve it, then halve it again." 10% is "divide by 10." 5% is "half of 10%." 1% is "divide by 100."
+- Wording: 50% is "halve it." 25% is "halve it, then halve it again." 10% is "divide by 10" 5% is "half of 10%." 1% is "divide by 100"
 - Build up writes one line per part, then adds them. 35% of 80 is 10% = 8, 30% = 24, 5% = 4, then 35% = 24 + 4 = 28.
 - Near a benchmark writes each part on its own line, then the whole comparison on one line that does not wrap. A gap of 2 is 2%, not 1% + 1%. 48% of 75 is 50% − 2% = 37.5 − 1.5 = 36.
-- Decimal × amount changes the percentage to a decimal (35% = 0.35), then uses the multiplication written layout, with the decimal point placed in the answer.
+- Decimal × amount changes the percentage to a decimal (35% = 0.35), then uses the multiplication written layout, with the decimal point placed in the answer. If the written product has a zero on the end (31.20), the last line is 31.20 = 31.2, with the note "The zero on the end isn't needed." The check is an estimate (52% is about half), never the same sum again. A full stop never sits straight after a number in the working, the steps, or the answer box.
 - A discount is two steps: find the discount, then take it off the price. Also show "Another way: 15% off means you pay 85%."
 - One amount as a percentage of another is written as a fraction, then the denominator is made 100. "What you do to the top, you do to the bottom." The fraction is the same stacked drawing as Fractions, with the small orange × labels. 18/25 ×4 = 72/100 = 72%.
 - Self-check chips, only the ones that question used: Finding 10%, Finding 1%, Adding the parts, Decimal point, Taking off the discount, Making it out of 100.

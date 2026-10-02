@@ -424,7 +424,7 @@
         };
         if (zeroIdx.length) {
           const zeroNames = zeroIdx.map(function (idx) { return colName(idx, dp); });
-          let intro = hereBefore + ' is not enough to take ' + b2 + '. ';
+          let intro = hereBefore + ' is not enough to take ' + b2 + ', so ';
           if (zeroNames.length === 1) intro += 'The ' + zeroNames[0] + ' are 0, so regroup from the ' + tradeInfo.donorName + '.';
           else intro += 'The ' + joinAnd(zeroNames) + ' are 0, so regroup from the ' + tradeInfo.donorName + '.';
           steps.push(snap({ readyText: intro, isTrade: true, chip: 'Regrouping', hiCols: [i] }));
@@ -441,7 +441,7 @@
               newVals[hop.toCol] = hop.toAfter;
             }
             steps.push(snap({
-              readyText: hopPhrase(hop) + '.',
+              readyText: hopPhrase(hop),
               isTrade: true,
               chip: 'Regrouping',
               hiCols: [hop.fromCol, hop.toCol]
@@ -451,7 +451,7 @@
           tradeInfo.nowHere = ad;
           results[i] = ad - b2;
           steps.push(snap({
-            readyText: ad + ' − ' + b2 + ' = ' + results[i] + '. Write ' + results[i] + '.',
+            readyText: ad + ' − ' + b2 + ' = ' + results[i] + ', then write ' + results[i],
             isTrade: true,
             tradeInfo: tradeInfo,
             chip: 'Regrouping',
@@ -507,11 +507,11 @@
       const info = s.tradeInfo;
       const hop = info.hops[0];
       return titleCase(place) + ': ' + info.origHere + ' is not enough to take ' + info.sub +
-        '. Regroup 1 ' + singular(hop.fromName, 1) + ' from the ' + hop.fromName + ': ' + hopPhrase(hop) +
-        '. ' + info.nowHere + ' − ' + info.sub + ' = ' + digit + '. Write ' + digit + '.';
+        ', so regroup 1 ' + singular(hop.fromName, 1) + ' from the ' + hop.fromName + ': ' + hopPhrase(hop) +
+        ', then ' + info.nowHere + ' − ' + info.sub + ' = ' + digit + ', then write ' + digit;
     }
-    if (bottomEmpty(q, s.col)) return titleCase(place) + ': Nothing to take away, so write ' + digit + '.';
-    return titleCase(place) + ': ' + s.wTop[s.col] + ' − ' + s.bd[s.col] + ' = ' + digit + '. Write ' + digit + '.';
+    if (bottomEmpty(q, s.col)) return titleCase(place) + ': Nothing to take away, so write ' + digit;
+    return titleCase(place) + ': ' + s.wTop[s.col] + ' − ' + s.bd[s.col] + ' = ' + digit + ', then write ' + digit;
   }
 
   function buildSteps(q) {
@@ -536,7 +536,7 @@
         ? 'Hundreds / thousands'
         : titleCase(place));
       let text = s.readyText || columnText(s, q);
-      if (idx === raw.steps.length - 1) text += ' Answer ' + answerText + '.';
+      if (idx === raw.steps.length - 1) text += ' The answer is ' + answerText;
       ui.push({
         title: titleCase(place),
         text: text,
@@ -651,7 +651,7 @@
         a + ' − ' + rb + ' = ' + (a - rb) + ', then ' + dir + ' ' + Math.abs(gap) +
         ' = <strong>' + diff + '</strong>';
     }
-    return '<strong>Count up.</strong> From ' + b + ' up to ' + a + ' is <strong>' + diff + '</strong>.';
+    return '<strong>Count up.</strong> From ' + b + ' up to ' + a + ' is <strong>' + diff + '</strong>';
   }
 
   function addStrategy(a, b) {
@@ -669,7 +669,7 @@
           ' = <strong>' + (a + b) + '</strong>';
       }
     }
-    return '<strong>Split the tens and ones.</strong> ' + a + ' + ' + b + ' = <strong>' + (a + b) + '</strong>.';
+    return '<strong>Split the tens and ones.</strong> ' + a + ' + ' + b + ' = <strong>' + (a + b) + '</strong>';
   }
 
   function estimate(q) {

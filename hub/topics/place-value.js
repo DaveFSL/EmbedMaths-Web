@@ -119,7 +119,7 @@ const PlaceValue = (function () {
     if (named.length > 3) {
       return 'Do the jumps. Every digit jumps ' + q.places + ' place' + (q.places === 1 ? '' : 's') + ' ' + q.dir + '.';
     }
-    return 'Do the jumps. ' + named.join(', ') + ': ' + q.resultText + '.';
+    return 'Do the jumps. ' + named.join(', ') + ': ' + q.resultText;
   }
 
   function zerosLine(q) {
@@ -127,17 +127,17 @@ const PlaceValue = (function () {
     if (q.resultMilli < 1000) {
       const extras = q.gaps.filter(function (pos) { return pos !== 0; });
       let line = 'Zeros hold the place. There are no ones, so a 0 holds the ones place';
-      if (!extras.length) return line + ': ' + q.resultText + '.';
+      if (!extras.length) return line + ': ' + q.resultText;
       const names = extras.map(function (pos) { return 'the ' + PLACE[pos]; });
       const be = extras.length === 1 ? ' is' : ' are';
       const hold = extras.length === 1 ? 'it' : 'each';
-      return line + '. ' + names.join(' and ').replace(/^the/, 'The') + be + ' empty, so a 0 holds ' + hold + ': ' + q.resultText + '.';
+      return line + '. ' + names.join(' and ').replace(/^the/, 'The') + be + ' empty, so a 0 holds ' + hold + ': ' + q.resultText;
     }
     if (q.gaps.length === 1) {
-      return 'Zeros hold the place. The ' + PLACE[q.gaps[0]] + ' place is empty, so a 0 holds it: ' + q.resultText + '.';
+      return 'Zeros hold the place. The ' + PLACE[q.gaps[0]] + ' place is empty, so a 0 holds it: ' + q.resultText;
     }
     const names = q.gaps.map(function (pos) { return 'the ' + PLACE[pos]; });
-    return 'Zeros hold the place. ' + names.join(' and ').replace(/^the/, 'The') + ' are empty, so a 0 holds each: ' + q.resultText + '.';
+    return 'Zeros hold the place. ' + names.join(' and ').replace(/^the/, 'The') + ' are empty, so a 0 holds each: ' + q.resultText;
   }
 
   function revealLines(q) {
@@ -345,7 +345,7 @@ const PlaceValue = (function () {
   function strategy(q) {
     return '<strong>The digits move ' + q.dir + '.</strong> The decimal point stays where it is. ' +
       q.places + ' place' + (q.places === 1 ? '' : 's') + ' gives <strong>' +
-      (q.missing ? q.power : q.resultText) + '</strong>.';
+      (q.missing ? q.power : q.resultText) + '</strong>';
   }
 
   function extBank() {

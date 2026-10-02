@@ -257,10 +257,10 @@ const Division = (function () {
   }
 
   function regroupLine(col, next) {
-    return ' Regroup the ' + phrase(col.r, col.place) + ': ' + phrase(next.value, next.place) + '.';
+    return ' Regroup the ' + phrase(col.r, col.place) + ': ' + phrase(next.value, next.place);
   }
   function remainderLine(q) {
-    return ' Write the remainder beside the answer: ' + q.wholeAns + ' r' + q.rem + '.';
+    return ' Write the remainder beside the answer: ' + q.wholeAns + ' r' + q.rem;
   }
 
   function columnText(col, q, i) {
@@ -269,29 +269,28 @@ const Division = (function () {
     const two = d >= 10;
     const heading = phrase(col.value, col.place);
     if (col.q === 0) {
-      let line = heading + ' \u00f7 ' + d + " won't go. Write a placeholder 0.";
+      let line = heading + ' \u00f7 ' + d + " won't go, so write a placeholder 0";
       if (next) line += regroupLine(col, next);
       else if (q.mode === 'remainder' && col.r > 0) line += remainderLine(q);
-      else if (col.r > 0) line += ' Remainder ' + col.r + '.';
+      else if (col.r > 0) line += ', and the remainder is ' + col.r;
       return line;
     }
     if (two) {
       const multiple = col.q * d;
-      let line = heading + ' \u00f7 ' + d + '. The largest multiple that isn\u2019t bigger than ' + col.value +
-        ' is ' + multiple + ' (' + col.q + ' \u00d7 ' + d + '). Write ' + col.q;
+      let line = heading + ' \u00f7 ' + d + ', and the largest multiple that isn\u2019t bigger than ' + col.value +
+        ' is ' + multiple + ' (' + col.q + ' \u00d7 ' + d + '), so write ' + col.q;
       if (col.r > 0) line += ', remainder ' + col.r;
-      line += '.';
       if (next && col.r > 0) line += regroupLine(col, next);
       else if (!next && q.mode === 'remainder' && q.rem > 0) line += remainderLine(q);
       return line;
     }
     let line = heading + ' \u00f7 ' + d + ' = ' + col.q;
     if (col.r > 0) line += ', remainder ' + col.r;
-    line += '. Write ' + col.q + '.';
+    line += ', then write ' + col.q;
     if (next && next.added && col.r > 0 && q.mode === 'decimal' && !col.added) {
       /* The regroup is told in the "keep going" step. */
     } else if (col.added && next && next.added && col.r > 0) {
-      line += ' Add another 0.' + regroupLine(col, next);
+      line += ' Add another 0' + regroupLine(col, next);
     } else if (next && col.r > 0) {
       line += regroupLine(col, next);
     }
@@ -312,19 +311,19 @@ const Division = (function () {
       const list = [];
       for (let n = 1; n <= 10; n++) list.push(n * q.divisor);
       steps.push(teach('Start a list', 'Write the multiples of ' + q.divisor + ' down the side: ' +
-        list.slice(0, 3).join(', ') + ' \u2026 ' + list[9] + '.', ['Times fact']));
+        list.slice(0, 3).join(', ') + ' \u2026 ' + list[9], ['Times fact']));
     }
     let jumped = false;
     cols.forEach(function (col, i) {
       if (q.mode === 'decimal' && col.added && !jumped) {
         steps.push(teach('Keep going past the remainder',
-          'Write the decimal point and a placeholder 0.' + regroupLine(q.cols[i - 1], col),
+          'Write the decimal point and a placeholder 0' + regroupLine(q.cols[i - 1], col),
           ['Decimal point', 'Placeholder zero', 'Regrouping']));
         jumped = true;
       }
       if (col.pointBefore && !col.added) {
         steps.push(teach('Decimal point',
-          'Write the decimal point in the answer, straight above the one in ' + q.dividendText + '.',
+          'Write the decimal point in the answer, straight above the one in ' + q.dividendText,
           ['Decimal point']));
       }
       const tags = ['Times fact'];
@@ -344,18 +343,18 @@ const Division = (function () {
     const mixed = q.wholeAns + ' ' + fracHtml(q.fracN, q.fracD);
     const rawMixed = q.wholeAns + ' ' + fracHtml(q.rawN, q.rawD);
     const why = q.rem === 1
-      ? "There's 1 remainder, but it still has to be shared between " + q.divisor + '. Each share is ' + fractionWords(1, q.divisor) + '.'
-      : 'There are ' + q.rem + ' remainder, but they still have to be shared between ' + q.divisor + '. Each share is ' + fractionWords(1, q.divisor) + '.';
-    let simplify = 'e.g. 26 \u00f7 4 = 6 r2 = 6 ' + fracHtml(2, 4) + ' = 6' + fracHtml(1, 2) + '.';
+      ? "There's 1 remainder, but it still has to be shared between " + q.divisor + ' shares. Each share is ' + fractionWords(1, q.divisor)
+      : 'There are ' + q.rem + ' remainder, but they still have to be shared between ' + q.divisor + ' shares. Each share is ' + fractionWords(1, q.divisor);
+    let simplify = 'e.g. 26 \u00f7 4 = 6 r2 = 6 ' + fracHtml(2, 4) + ' = 6' + fracHtml(1, 2);
     if (simplified) {
-      simplify = q.wholeAns + ' r' + q.rem + ' = ' + rawMixed + ' = ' + mixed + '. ' + simplify;
+      simplify = q.wholeAns + ' r' + q.rem + ' = ' + rawMixed + ' = ' + mixed + ', for example ' + simplify;
     }
     return [
       teach('Divide as usual', story, ['Times fact', 'Regrouping', 'Placeholder zero']),
       teach('Write the remainder as a fraction', 'The remainder goes on top, the number we divided by goes underneath.', ['Remainder']),
       teach('Why?', why, ['Remainder']),
       teach('Simplify if you can', simplify, ['Remainder']),
-      teach('Answer', q.dividendText + ' \u00f7 ' + q.divisor + ' = ' + mixed + ' (the same as ' + q.decimalText + ').', ['Remainder', 'Decimal point'])
+      teach('Answer', q.dividendText + ' \u00f7 ' + q.divisor + ' = ' + mixed + ' (the same as ' + q.decimalText + ')', ['Remainder', 'Decimal point'])
     ];
   }
 
@@ -488,7 +487,7 @@ const Division = (function () {
         work += '<p class="closeness">' + shown + ' is close to the estimate of ' + est.answer + ' \u2713</p>';
       }
       if (q.leadingPh && q.mode !== 'remainder' && q.mode !== 'fraction') {
-        work += '<p class="mult-note">The placeholder 0 at the front isn\u2019t needed when we write the answer: ' + q.answerText + '.</p>';
+        work += '<p class="mult-note">The placeholder 0 at the front isn\u2019t needed when we write the answer: ' + q.answerText + '</p>';
       }
       work += legendHtml(q);
     }
@@ -515,7 +514,7 @@ const Division = (function () {
 
   function strategy(q) {
     const est = estimate(q);
-    return '<strong>Round to a friendly multiple of ' + q.divisor + '.</strong> ' +
+    return '<strong>Round to a friendly multiple of ' + q.divisor + '</strong> ' +
       est.prompt + ' = <strong>' + est.answer + '</strong>';
   }
 
@@ -665,7 +664,7 @@ const Division = (function () {
         kind: 'number',
         expect: each + ' r' + left,
         hint: 'Share them into equal groups first. What is left is the remainder.',
-        p: total + ' cupcakes are shared between ' + boxes + ' boxes. How many in each box, and what is the remainder? Write it like ' + each + ' r' + left + '.',
+        p: total + ' cupcakes are shared between ' + boxes + ' boxes. How many in each box, and what is the remainder? Write it like ' + each + ' r' + left,
         a: each + ' \u00d7 ' + boxes + ' = ' + (each * boxes) + ', plus the remainder ' + left + ' = ' + total + '. <strong>' + each + ' r' + left + '</strong>'
       },
       {
@@ -674,7 +673,7 @@ const Division = (function () {
         expect: 'false',
         hint: 'A remainder is not the same as that many tenths.',
         p: 'True or false: ' + remQ.wholeAns + ' r' + remQ.rem + ' is the same as ' + remQ.wholeAns + '.' + remQ.rem,
-        a: '<strong>False.</strong> ' + remQ.wholeAns + ' r' + remQ.rem + ' means ' + remQ.wholeAns + ' and ' + fractionWords(remQ.rem, remQ.divisor) + ', not ' + remQ.wholeAns + '.' + remQ.rem + '.'
+        a: '<strong>False.</strong> ' + remQ.wholeAns + ' r' + remQ.rem + ' means ' + remQ.wholeAns + ' and ' + fractionWords(remQ.rem, remQ.divisor) + ', not ' + remQ.wholeAns + '.' + remQ.rem
       },
       {
         type: 'Which is bigger?',
@@ -752,7 +751,7 @@ const Division = (function () {
       return '';
     },
     estimateCue: function (q) {
-      return 'Estimate first: round to a friendly multiple of ' + q.divisor + '.';
+      return 'Estimate first: round to a friendly multiple of ' + q.divisor;
     },
     buildSteps: function (q) { return q.steps || buildSteps(q); },
     render: render,

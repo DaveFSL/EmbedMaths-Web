@@ -249,7 +249,7 @@ const FractionsTopic = (function () {
   }
 
   function convertSentence(fromD, fromN, mul, common) {
-    return fromD + ' \u00d7 ' + mul + ' = ' + common + ', so ' + fromN + ' \u00d7 ' + mul + ' = ' + (fromN * mul) + '.';
+    return fromD + ' \u00d7 ' + mul + ' = ' + common + ', so ' + fromN + ' \u00d7 ' + mul + ' = ' + (fromN * mul);
   }
 
   function topBottomStep(parts, common) {
@@ -267,7 +267,7 @@ const FractionsTopic = (function () {
   function commonStep(denoms, common) {
     const word = denoms.length > 2 ? 'all the lists' : 'both lists';
     return teach('Find the common denominator',
-      'Use the multiples lists. The first number in ' + word + ' is ' + common + '. Write ' + common + ' as ' +
+      'Use the multiples lists. The first number in ' + word + ' is ' + common + ', so write ' + common + ' as ' +
       (denoms.length > 2 ? 'the denominator for each fraction.' : 'both denominators.'),
       'Common denominator');
   }
@@ -283,7 +283,7 @@ const FractionsTopic = (function () {
     }
     let text = rawD + ' ' + unitName(rawD, rawD) + ' make 1 whole, with ' + rem + ' ' + unitName(rawD, rem) + ' left';
     if (rawWhole) text += ', so that is ' + made + ' and ' + rem + ' ' + unitName(rawD, rem);
-    text += ': ' + mixedHtml({ whole: made, n: rem, d: rawD }) + '.';
+    text += ': ' + mixedHtml({ whole: made, n: rem, d: rawD });
     return teach('Change to a mixed number', text, 'Mixed numbers');
   }
 
@@ -292,21 +292,21 @@ const FractionsTopic = (function () {
     if (g < 2) return null;
     const s = simplify(n, d);
     return teach('Simplify',
-      'The highest common factor of ' + n + ' and ' + d + ' is ' + g + '. ' +
-      d + ' \u00f7 ' + g + ' = ' + s.d + ', so ' + n + ' \u00f7 ' + g + ' = ' + s.n + '.',
+      'The highest common factor of ' + n + ' and ' + d + ' is ' + g + ', so ' +
+      d + ' \u00f7 ' + g + ' = ' + s.d + ', so ' + n + ' \u00f7 ' + g + ' = ' + s.n,
       'Simplifying');
   }
 
   function steps1(q) {
     return [teach('What you do to the top, you do to the bottom.',
-      q.d + ' \u00d7 ' + q.k + ' = ' + q.target + ', so ' + q.n + ' \u00d7 ' + q.k + ' = ' + q.missing + '.',
+      q.d + ' \u00d7 ' + q.k + ' = ' + q.target + ', so ' + q.n + ' \u00d7 ' + q.k + ' = ' + q.missing,
       'Top and bottom')];
   }
   function steps2(q) {
     return [
-      teach('Simplify', 'The highest common factor of ' + q.n + ' and ' + q.d + ' is ' + q.hcf + '.', 'Simplifying'),
+      teach('Simplify', 'The highest common factor of ' + q.n + ' and ' + q.d + ' is ' + q.hcf, 'Simplifying'),
       teach('What you do to the top, you do to the bottom.',
-        q.d + ' \u00f7 ' + q.hcf + ' = ' + q.bottom + ', so ' + q.n + ' \u00f7 ' + q.hcf + ' = ' + q.top + '.',
+        q.d + ' \u00f7 ' + q.hcf + ' = ' + q.bottom + ', so ' + q.n + ' \u00f7 ' + q.hcf + ' = ' + q.top,
         'Top and bottom')
     ];
   }
@@ -316,7 +316,7 @@ const FractionsTopic = (function () {
       const rem = q.imp % q.d;
       const steps = [teach('Change to a mixed number',
         q.imp + ' \u00f7 ' + q.d + ' = ' + whole + ' whole' + (whole === 1 ? '' : 's') + ', with ' + rem + ' ' + unitName(q.d, rem) + ' left: ' +
-        mixedHtml({ whole: whole, n: rem, d: q.d }) + '.',
+        mixedHtml({ whole: whole, n: rem, d: q.d }),
         'Mixed numbers')];
       const simple = simplifyStep(rem, q.d);
       if (simple) steps.push(simple);
@@ -324,14 +324,14 @@ const FractionsTopic = (function () {
     }
     return [teach('Change to an improper fraction',
       q.whole + ' wholes = ' + (q.whole * q.d) + ' ' + unitName(q.d, q.whole * q.d) + '. ' +
-      (q.whole * q.d) + ' + ' + q.n + ' = ' + q.imp + '. Write ' + frac(q.imp, q.d) + '.',
+      (q.whole * q.d) + ' + ' + q.n + ' = ' + q.imp + ', then write ' + frac(q.imp, q.d),
       'Mixed numbers')];
   }
   function steps4(q) {
     return [
-      teach('Divide by the bottom', q.amount + ' \u00f7 ' + q.d + ' = ' + q.part + '. Each part is ' + q.part + '.', 'Divide and times'),
-      teach('Times by the top', q.part + ' \u00d7 ' + q.n + ' = ' + q.answer + '.', 'Divide and times'),
-      teach('Check with the bar', q.d + ' equal parts of ' + q.part + ', ' + q.n + ' of them shaded: ' + q.answer + '.', 'Divide and times')
+      teach('Divide by the bottom', q.amount + ' \u00f7 ' + q.d + ' = ' + q.part + ', so each part is ' + q.part, 'Divide and times'),
+      teach('Times by the top', q.part + ' \u00d7 ' + q.n + ' = ' + q.answer, 'Divide and times'),
+      teach('Check with the bar', q.d + ' equal parts of ' + q.part + ', ' + q.n + ' of them shaded: ' + q.answer, 'Divide and times')
     ];
   }
 
@@ -363,21 +363,21 @@ const FractionsTopic = (function () {
       if (q.op === '\u2212' && a.n < b.n) {
         const leftW = a.whole - 1;
         let how = 'Regroup 1 whole as ' + a.d + ' ' + unitName(a.d, a.d) + '. ' +
-          (a.d + a.n) + ' \u2212 ' + b.n + ' = ' + (a.d + a.n - b.n) + '.';
-        if (leftW || b.whole) how += ' The wholes: ' + leftW + ' \u2212 ' + b.whole + ' = ' + (leftW - b.whole) + '.';
+          (a.d + a.n) + ' \u2212 ' + b.n + ' = ' + (a.d + a.n - b.n);
+        if (leftW || b.whole) how += ', and the wholes: ' + leftW + ' \u2212 ' + b.whole + ' = ' + (leftW - b.whole);
         return how;
       }
       if (q.op === '\u2212') {
         const wholeBit = a.whole && b.whole
-          ? 'The wholes: ' + a.whole + ' \u2212 ' + b.whole + ' = ' + (a.whole - b.whole) + '. '
-          : 'The whole is ' + a.whole + '. ';
-        return wholeBit + a.n + ' \u2212 ' + b.n + ' = ' + (a.n - b.n) + '.';
+          ? 'The wholes: ' + a.whole + ' \u2212 ' + b.whole + ' = ' + (a.whole - b.whole) + ', and '
+          : 'The whole is ' + a.whole + ', and ';
+        return wholeBit + a.n + ' \u2212 ' + b.n + ' = ' + (a.n - b.n);
       }
       const nSum = a.n + b.n;
       const wholeBit = a.whole && b.whole
-        ? 'Add the wholes: ' + a.whole + ' + ' + b.whole + ' = ' + (a.whole + b.whole) + '. '
-        : 'The whole is ' + (a.whole + b.whole) + '. ';
-      let how = wholeBit + 'Add the numerators: ' + a.n + ' + ' + b.n + ' = ' + nSum + '.';
+        ? 'Add the wholes: ' + a.whole + ' + ' + b.whole + ' = ' + (a.whole + b.whole) + ', then '
+        : 'The whole is ' + (a.whole + b.whole) + ', and ';
+      let how = wholeBit + 'Add the numerators: ' + a.n + ' + ' + b.n + ' = ' + nSum;
       if (nSum >= a.d) {
         const extra = Math.floor(nSum / a.d);
         const rem = nSum % a.d;
@@ -388,14 +388,14 @@ const FractionsTopic = (function () {
       return how;
     }
     const sign = q.op === '\u2212' ? '\u2212' : '+';
-    return q.leftNum + ' ' + sign + ' ' + q.rightNum + ' = ' + q.sumNum + '. The denominator stays ' + q.common + '.';
+    return q.leftNum + ' ' + sign + ' ' + q.rightNum + ' = ' + q.sumNum + ', and the denominator stays ' + q.common;
   }
 
   function improperStep(parts) {
     const bits = [];
     parts.forEach(function (part) {
       if (!part.whole) return;
-      bits.push(mixedHtml(part) + ' = ' + frac(improper(part), part.d) + '.');
+      bits.push(mixedHtml(part) + ' = ' + frac(improper(part), part.d));
     });
     if (!bits.length) return null;
     return teach('Change to an improper fraction', bits.join(' '), 'Mixed numbers');
@@ -434,8 +434,8 @@ const FractionsTopic = (function () {
     if (convert) steps.push(convert);
     const nums = q.fracs.map(function (f) { return f.n * (q.common / f.d); });
     steps.push(teach('Put them in order',
-      'Compare the numerators: ' + nums.join(', ') + '. Smallest first: ' +
-      q.ordered.map(mixedHtml).join(', ') + '.',
+      'Compare the numerators: ' + nums.join(', ') + ', then smallest first: ' +
+      q.ordered.map(mixedHtml).join(', '),
       'Top and bottom'));
     return steps;
   }
@@ -716,9 +716,9 @@ const FractionsTopic = (function () {
     const of = extAmount();
     const add = question(8, genUnrelated(false)) || question(8, { op: '+', a: { whole: 0, n: 3, d: 4 }, b: { whole: 0, n: 2, d: 3 } });
     return [
-      { type: 'Fraction of an amount', kind: 'number', expect: String(of.answer), hint: 'Divide by the bottom, times by the top.', p: 'What is ' + frac(of.n, of.d) + ' of ' + of.amount + '?', a: of.amount + ' \u00f7 ' + of.d + ' = ' + (of.amount / of.d) + ', then \u00d7 ' + of.n + ' = <strong>' + of.answer + '</strong>' },
-      { type: 'Word problem', kind: 'number', expect: String(of.answer), hint: 'The bottom is how many equal parts. The top is how many of those parts you want.', p: 'A ribbon is ' + of.amount + ' cm. You use ' + frac(of.n, of.d) + ' of it. How many centimetres do you use?', a: '<strong>' + of.answer + ' cm</strong>' },
-      { type: 'Simplify', kind: 'number', expect: '3/4', hint: 'Divide the top and the bottom by the highest common factor.', p: 'Write ' + frac(18, 24) + ' in its simplest form. Type it as 3/4.', a: 'The highest common factor is 6. <strong>' + frac(3, 4) + '</strong>' },
+      { type: 'Fraction of an amount', kind: 'number', expect: String(of.answer), hint: 'Divide by the denominator, times by the numerator.', p: 'What is ' + frac(of.n, of.d) + ' of ' + of.amount + '?', a: of.amount + ' \u00f7 ' + of.d + ' = ' + (of.amount / of.d) + ', then \u00d7 ' + of.n + ' = <strong>' + of.answer + '</strong>' },
+      { type: 'Word problem', kind: 'number', expect: String(of.answer), hint: 'The denominator is how many equal parts. The numerator is how many of those parts you want.', p: 'A ribbon is ' + of.amount + ' cm. You use ' + frac(of.n, of.d) + ' of it. How many centimetres do you use?', a: '<strong>' + of.answer + ' cm</strong>' },
+      { type: 'Simplify', kind: 'number', expect: '3/4', hint: 'Divide the numerator and the denominator by the highest common factor.', p: 'Write ' + frac(18, 24) + ' in its simplest form. Type it as 3/4.', a: 'The highest common factor is 6. <strong>' + frac(3, 4) + '</strong>' },
       { type: 'Mixed number', kind: 'number', expect: '3 2/5', hint: 'How many 5s are in 17, and what is the remainder?', p: 'Write ' + frac(17, 5) + ' as a mixed number. Type it as 3 2/5.', a: '17 \u00f7 5 = 3 wholes, with 2 fifths left. <strong>3 ' + frac(2, 5) + '</strong>' },
       { type: 'Add', kind: 'number', expect: typed(add.final), hint: 'Use a common denominator. What you do to the top, you do to the bottom.', p: 'Add ' + mixedHtml(add.a) + ' and ' + mixedHtml(add.b) + '. Type a mixed number as 1 5/12.', a: 'The answer is <strong>' + mixedHtml(add.final) + '</strong>' },
       { type: 'True or false', kind: 'tf', expect: 'true', hint: 'What you do to the top, you do to the bottom.', p: 'True or false?<br>' + frac(1, 2) + ' = ' + frac(50, 100), a: '2 \u00d7 50 = 100, so 1 \u00d7 50 = 50. <strong>True</strong>' }
@@ -729,9 +729,9 @@ const FractionsTopic = (function () {
     'Common denominator': 'Write the multiples of each denominator. The first number in both lists is the common denominator.',
     'Top and bottom': 'What you do to the top, you do to the bottom.',
     'Adding / subtracting': 'Add or subtract the numerators. The denominator stays the same.',
-    'Simplifying': 'Divide the top and the bottom by the highest common factor.',
+    'Simplifying': 'Divide the numerator and the denominator by the highest common factor.',
     'Mixed numbers': 'An improper fraction is a whole number and a remainder. The remainder stays as the numerator.',
-    'Divide and times': 'Divide by the bottom, times by the top.'
+    'Divide and times': 'Divide by the denominator, times by the numerator.'
   };
 
   EM.registerTopic({
@@ -789,9 +789,9 @@ const FractionsTopic = (function () {
     },
     estimateCue: function (q) {
       if (q.level === 1) return 'What you do to the top, you do to the bottom.';
-      if (q.level === 2) return 'Find the highest number that divides into both ' + q.n + ' and ' + q.d + '.';
+      if (q.level === 2) return 'Find the highest number that divides into both ' + q.n + ' and ' + q.d;
       if (q.level === 3) return 'How many wholes can you make?';
-      if (q.level === 4) return 'Divide by the bottom, times by the top.';
+      if (q.level === 4) return 'Divide by the denominator, times by the numerator.';
       if (q.level === 5) return 'Same denominator: just ' + (q.op === '\u2212' ? 'subtract' : 'add') + ' the numerators.';
       if (q.level === 7) return 'Change them all to the same denominator first.';
       return 'Find a common denominator. Use the multiples lists.';
@@ -799,11 +799,11 @@ const FractionsTopic = (function () {
     buildSteps: function (q) { return q.steps; },
     render: render,
     strategy: function (q) {
-      if (q.kind === 'amount') return '<strong>Divide by the bottom, times by the top.</strong>';
+      if (q.kind === 'amount') return '<strong>Divide by the denominator, times by the numerator.</strong>';
       if (q.kind === 'add' && !q.lists) return '<strong>The denominator stays the same.</strong> Add or subtract the numerators.';
       if (q.lists) return '<strong>List the multiples.</strong> The first number in both lists is the common denominator. What you do to the top, you do to the bottom.';
       if (q.kind === 'simplify') return '<strong>Divide by the highest common factor.</strong> What you do to the top, you do to the bottom.';
-      if (q.kind === 'mixed') return '<strong>Wholes and a remainder.</strong> The remainder stays on the top.';
+      if (q.kind === 'mixed') return '<strong>Wholes and a remainder.</strong> The remainder stays as the numerator.';
       return '<strong>What you do to the top, you do to the bottom.</strong>';
     },
     chipsFor: function (q) {

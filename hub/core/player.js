@@ -72,8 +72,8 @@ const Player = (function () {
       const gap = Math.abs(answer - est.answer);
       const close = gap <= Math.max(1, Math.abs(est.answer) * 0.15);
       foot = '<p class="closeness">' + (close
-        ? shown + ' is close to the estimate of ' + est.answer + '.'
-        : 'The answer is ' + shown + '. The estimate was ' + est.answer + '.') + '</p>';
+        ? shown + ' is close to the estimate of ' + est.answer
+        : 'The answer is ' + shown + ', and the estimate was ' + est.answer) + '</p>';
     }
 
     function stepBody(s) {

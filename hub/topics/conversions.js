@@ -91,23 +91,23 @@ const Conversions = (function () {
     if (named.length > 3) {
       return 'Do the jumps. Every digit jumps ' + q.places + ' place' + (q.places === 1 ? '' : 's') + ' ' + q.dir + '.';
     }
-    return 'Do the jumps. ' + named.join(', ') + ': ' + q.amount + '.';
+    return 'Do the jumps. ' + named.join(', ') + ': ' + q.amount;
   }
   function zerosLine(q) {
     if (!q.gaps.length) return '';
     if (q.resultMilli < 1000) {
       const extras = q.gaps.filter(function (pos) { return pos !== 0; });
       let line = 'Zeros hold the place. There are no ones, so a 0 holds the ones place';
-      if (!extras.length) return line + ': ' + q.amount + '.';
+      if (!extras.length) return line + ': ' + q.amount;
       const names = extras.map(function (pos) { return 'the ' + PLACE[pos]; });
       return line + '. ' + names.join(' and ').replace(/^the/, 'The') + (extras.length === 1 ? ' is' : ' are') +
-        ' empty, so a 0 holds ' + (extras.length === 1 ? 'it' : 'each') + ': ' + q.amount + '.';
+        ' empty, so a 0 holds ' + (extras.length === 1 ? 'it' : 'each') + ': ' + q.amount;
     }
     if (q.gaps.length === 1) {
-      return 'Zeros hold the place. The ' + PLACE[q.gaps[0]] + ' place is empty, so a 0 holds it: ' + q.amount + '.';
+      return 'Zeros hold the place. The ' + PLACE[q.gaps[0]] + ' place is empty, so a 0 holds it: ' + q.amount;
     }
     const names = q.gaps.map(function (pos) { return 'the ' + PLACE[pos]; });
-    return 'Zeros hold the place. ' + names.join(' and ').replace(/^the/, 'The') + ' are empty, so a 0 holds each: ' + q.amount + '.';
+    return 'Zeros hold the place. ' + names.join(' and ').replace(/^the/, 'The') + ' are empty, so a 0 holds each: ' + q.amount;
   }
   const UNIT_WORDS = {
     km: 'kilometres', m: 'metres', cm: 'centimetres', mm: 'millimetres',
@@ -173,7 +173,7 @@ const Conversions = (function () {
     const op = base.down ? '×' : '÷';
     const placeWord = q.places === 1 ? 'place' : 'places';
     q.revealLines = [
-      'Which rule? ' + q.fromUnit + ' → ' + q.toUnit + ' is ' + op + ' ' + q.factor + '.',
+      'Which rule? ' + q.fromUnit + ' → ' + q.toUnit + ' means ' + op + ' ' + q.factor,
       'Which way? ' + (base.down ? 'Left' : 'Right') + ' — ' + (base.down ? '× makes it bigger.' : '÷ makes it smaller.'),
       'How many places? ' + q.places + ' — ' + op + ' ' + q.factor + ' is ' + q.places + ' ' + placeWord + '.',
       jumpsLine(q)

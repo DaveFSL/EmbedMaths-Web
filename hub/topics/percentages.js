@@ -2,12 +2,12 @@
    after the reveal: build up, near a benchmark, and decimal × amount. */
 (function () {
   const TIPS = {
-    1: '50% is half. 10% is divide by 10.',
+    1: '50% is half. 10% is divide by 10',
     2: 'Build it up from 10%, 5% and 1%.',
     3: 'Find the nearest easy percentage, then add or take away.',
     4: 'Change the percentage to a decimal first.',
     5: 'Find the discount, then take it off.',
-    6: 'Make the bottom 100.'
+    6: 'Make the denominator 100'
   };
   const METHOD_LABEL = {
     build: 'Build up',
@@ -74,18 +74,18 @@
   function ruleFor(pct) {
     if (pct === 50) return '50%: halve it.';
     if (pct === 25) return '25%: halve it, then halve it again.';
-    if (pct === 10) return '10%: divide by 10.';
-    if (pct === 5) return '5%: half of 10%.';
-    if (pct === 1) return '1%: divide by 100.';
+    if (pct === 10) return '10%: divide by 10';
+    if (pct === 5) return '5%: half of 10%';
+    if (pct === 1) return '1%: divide by 100';
     return '';
   }
 
   function linePhrase(pct, q) {
     const value = shown(q, partValue(pct, q.amount));
     const line = pct + '% of ' + amt(q) + ' = ' + value;
-    if (pct === 10) return '10%: divide by 10. ' + line;
-    if (pct === 5) return '5%: half of 10%. ' + line;
-    if (pct === 1) return '1%: divide by 100. ' + line;
+    if (pct === 10) return '10%: divide by 10, then ' + line;
+    if (pct === 5) return '5%: half of 10%, so ' + line;
+    if (pct === 1) return '1%: divide by 100, then ' + line;
     if (pct === 50) return '50%: halve it. ' + line;
     if (pct === 25) return '25%: halve it, then halve it again. ' + line;
     return line;
@@ -114,6 +114,41 @@
     if (answer < half - 1e-9) ansWord = ((just && ansJust) ? 'just ' : '') + 'under half';
     else if (answer > half + 1e-9) ansWord = ((just && ansJust) ? 'just ' : '') + 'over half';
     return 'Check: ' + q.pct + '% is ' + pctWord + ', and ' + text + ' is ' + ansWord + ' of ' + q.amount + '\u00a0\u2713';
+  }
+
+  function estimateCheck(q) {
+    const pct = q.pct;
+    const amount = q.amount;
+    const answer = q.answer;
+    const benches = [
+      { dist: Math.abs(pct - 50), about: 'about half', label: 'Half', value: amount / 2 },
+      { dist: Math.abs(pct - 25), about: 'about a quarter', label: 'A quarter', value: amount / 4 },
+      { dist: Math.abs(pct - 10), about: 'about 10%', label: '10%', value: amount / 10 }
+    ];
+    const ten = Math.round(pct / 10) * 10;
+    if (ten >= 10 && ten !== 50 && ten !== 25 && ten !== 10) {
+      benches.push({ dist: Math.abs(pct - ten), about: 'about ' + ten + '%', label: ten + '%', value: amount * ten / 100 });
+    }
+    benches.sort(function (a, b) { return a.dist - b.dist; });
+    let pick = null;
+    for (let i = 0; i < benches.length; i++) {
+      const value = Math.round(benches[i].value * 100) / 100;
+      if (Math.abs(value - answer) > 0.05) {
+        pick = benches[i];
+        pick.value = value;
+        break;
+      }
+    }
+    if (!pick) {
+      const other = pct >= 50 ? Math.max(10, pct - 10) : pct + 10;
+      const more = other < pct;
+      pick = {
+        about: (more ? 'a bit more than ' : 'a bit less than ') + other + '%',
+        label: other + '%',
+        value: Math.round(amount * other) / 100
+      };
+    }
+    return 'Check: ' + pct + '% is ' + pick.about + '. ' + pick.label + ' of ' + amount + ' is ' + num(pick.value) + ', so ' + num(answer) + ' makes sense.';
   }
 
   function ofQuestion(pct, amount, tricky) {
@@ -233,7 +268,7 @@
         rule: '50%: halve it.',
         rows: [],
         final: line,
-        steps: [teach('50%', '50%: halve it. ' + line + '.', null)]
+        steps: [teach('50%', '50%: halve it. ' + line, null)]
       };
     }
     if (q.pct === 25) {
@@ -244,8 +279,8 @@
         rows: [{ left: 'Half of ' + amt(q), right: shown(q, half) }],
         final: line,
         steps: [
-          teach('Halve it', 'Half of ' + amt(q) + ' = ' + shown(q, half) + '.', null),
-          teach('Halve it again', '25%: halve it, then halve it again. ' + line + '.', null)
+          teach('Halve it', 'Half of ' + amt(q) + ' = ' + shown(q, half), null),
+          teach('Halve it again', '25%: halve it, then halve it again. ' + line, null)
         ]
       };
     }
@@ -274,16 +309,16 @@
     if (bits.length > 1) {
       const values = bits.map(function (pct) { return shown(q, partValue(pct, q.amount)); });
       final = q.pct + '% of ' + amt(q) + ' = ' + values.join(' + ') + ' = ' + shown(q, found);
-      steps.push(teach('Add the parts', final + '.', 'Adding the parts'));
+      steps.push(teach('Add the parts', final, 'Adding the parts'));
     } else if (rows.length && rows[rows.length - 1].left.indexOf(q.pct + '%') === 0) {
       const last = rows.pop();
       steps.pop();
       final = last.left + ' = ' + last.right;
       const rule = ruleFor(q.pct);
-      steps.push(teach(q.pct + '%', (rule ? rule + ' ' : '') + final + '.', tagFor(q.pct)));
+      steps.push(teach(q.pct + '%', (rule ? rule + ' ' : '') + final, tagFor(q.pct)));
     } else {
       final = q.pct + '% of ' + amt(q) + ' = ' + shown(q, found);
-      steps.push(teach(q.pct + '%', final + '.', tagFor(q.pct)));
+      steps.push(teach(q.pct + '%', final, tagFor(q.pct)));
     }
     return { rule: ruleFor(q.pct), rows: rows, final: final, steps: steps };
   }
@@ -297,7 +332,7 @@
       const line = pct + '% of ' + amt(q) + ' = ' + shown(q, partValue(pct, q.amount));
       rows.push({ left: pct + '% of ' + amt(q), right: shown(q, partValue(pct, q.amount)) });
       const rule = ruleFor(pct);
-      steps.push(teach(pct + '%', (rule ? rule + ' ' : '') + line + '.', tag));
+      steps.push(teach(pct + '%', (rule ? rule + ' ' : '') + line, tag));
     }
     const benchTag = info.bench === 10 ? 'Finding 10%' : null;
     add(info.bench, benchTag);
@@ -306,7 +341,7 @@
     const gapValue = shown(q, partValue(info.gap, q.amount));
     const benchValue = shown(q, partValue(info.bench, q.amount));
     const final = q.pct + '% = ' + info.bench + '% ' + sign + ' ' + info.gap + '% = ' + benchValue + ' ' + sign + ' ' + gapValue + ' = ' + shown(q, q.answer);
-    steps.push(teach('Add or take away', final + '.', 'Adding the parts'));
+    steps.push(teach('Add or take away', final, 'Adding the parts'));
     return { rule: '', rows: rows, final: final, steps: steps };
   }
 
@@ -343,9 +378,14 @@
       if (i === 0) {
         copy.title = 'Change to a decimal';
         copy.label = 'Change to a decimal';
-        copy.text = q.pct + '% = ' + decText(q.pct) + '. ' + (s.text || '');
+        copy.text = q.pct + '% = ' + decText(q.pct) + '<br>' + (s.text || '');
         copy.stepTag = 'Decimal point';
         copy.tags = ['Decimal point'].concat(s.tags || []);
+      }
+      if (s.label === 'Check' || s.title === 'Check') {
+        copy.title = 'Check';
+        copy.label = 'Check';
+        copy.text = estimateCheck(q);
       }
       return copy;
     });
@@ -359,7 +399,7 @@
       if (i > 0) return s;
       return teach('Find the discount', 'Step 1: find the discount. ' + s.text, s.stepTag);
     });
-    steps.push(teach('Take it off the price', 'Step 2: take it off the price. ' + take + '.', 'Taking off the discount'));
+    steps.push(teach('Take it off the price', 'Step 2: take it off the price. ' + take, 'Taking off the discount'));
     return {
       discount: true,
       rule: '',
@@ -371,14 +411,18 @@
     };
   }
 
+  function miniFrac(n, d) {
+    return '<span class="frac"><span class="frac-n">' + n + '</span><span class="frac-d">' + d + '</span></span>';
+  }
+
   function outWorking(q) {
     const top = q.n * q.mul;
     return {
       out: true,
       steps: [
-        teach('Write it as a fraction', q.n + ' out of ' + q.d + ' is ' + q.n + '/' + q.d + '.', 'Making it out of 100'),
-        teach('What you do to the top, you do to the bottom', q.d + ' \u00d7 ' + q.mul + ' = 100, so ' + q.n + ' \u00d7 ' + q.mul + ' = ' + top + '.', 'Making it out of 100'),
-        teach('Out of 100', top + '/100 = ' + q.percent + '%.', 'Making it out of 100')
+        teach('Write it as a fraction', q.n + ' out of ' + q.d + ' is ' + miniFrac(q.n, q.d), 'Making it out of 100'),
+        teach('What you do to the top, you do to the bottom', q.d + ' \u00d7 ' + q.mul + ' = 100, so ' + q.n + ' \u00d7 ' + q.mul + ' = ' + top, 'Making it out of 100'),
+        teach('Out of 100', miniFrac(top, 100) + ' = ' + q.percent + '%', 'Making it out of 100')
       ]
     };
   }
@@ -430,7 +474,13 @@
         '<span class="frac-op">=</span>' + stack(q.n * q.mul, 100, 0) +
         '<span class="frac-op">=</span><span class="frac-res">' + q.percent + '%</span></div>';
     } else if (pack.mul) {
-      html += '<p class="pct-lead">' + q.pct + '% = ' + decText(q.pct) + '.</p><div class="pct-mul"></div>';
+      html += '<p class="pct-lead">' + q.pct + '% = ' + decText(q.pct) + '</p><div class="pct-mul"></div>';
+      const dp = (decText(q.pct).split('.')[1] || '').length;
+      const fixed = Number(q.answer).toFixed(dp);
+      if (fixed !== num(q.answer)) {
+        html += '<p class="pct-final">' + fixed + ' = ' + num(q.answer) + '</p>';
+        html += '<p class="pct-note">The zero on the end isn\u2019t needed.</p>';
+      }
     } else if (pack.discount) {
       html += '<p class="pct-kicker">Step 1: find the discount.</p>' + gridHtml(pack.rows) +
         (pack.sum ? '<p class="pct-line">' + pack.sum + '</p>' : '') +
@@ -444,7 +494,7 @@
       html += gridHtml(pack.rows);
       if (pack.final) html += '<p class="pct-final">' + pack.final + '</p>';
     }
-    const check = q.kind === 'of' ? halfCheck(q) : q.check;
+    const check = q.kind === 'of' && q.method === 'decimal' ? estimateCheck(q) : (q.kind === 'of' ? halfCheck(q) : q.check);
     html += answerBox(q.answerText, check) + '</div>';
     el.innerHTML = html;
     if (pack.mul) {
@@ -482,17 +532,17 @@
       return '<strong>Another way:</strong> ' + q.pct + '% off means you pay ' + q.pay + '%.';
     }
     if (q.kind === 'outof') {
-      return '<strong>Make the bottom 100.</strong> What you do to the top, you do to the bottom.';
+      return '<strong>Make the denominator 100</strong><br>What you do to the top, you do to the bottom.';
     }
     if (q.method === 'decimal') {
-      return '<strong>Change it to a decimal first.</strong> ' + q.pct + '% = ' + decText(q.pct) + '.';
+      return '<strong>Change it to a decimal first.</strong> ' + q.pct + '% = ' + decText(q.pct);
     }
     if (q.method === 'bench') {
       return '<strong>Find the nearest easy percentage, then add or take away.</strong>';
     }
     if (q.pct === 50) return '<strong>50%: halve it.</strong>';
     if (q.pct === 25) return '<strong>25%: halve it, then halve it again.</strong>';
-    if (q.pct === 10) return '<strong>10%: divide by 10.</strong>';
+    if (q.pct === 10) return '<strong>10%: divide by 10</strong>';
     return '<strong>Build it up from 10%, 5% and 1%.</strong>';
   }
 
@@ -510,7 +560,7 @@
           type: 'Percentage',
           kind: 'number',
           expect: String(q.percent),
-          hint: 'Make the bottom 100.',
+          hint: 'Make the denominator 100',
           p: 'Write ' + q.n + ' out of ' + q.d + ' as a percentage. Give the number only.',
           a: q.n + '/' + q.d + ' = ' + (q.n * q.mul) + '/100 = <strong>' + q.percent + '%</strong>'
         });

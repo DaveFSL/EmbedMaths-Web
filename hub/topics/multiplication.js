@@ -188,7 +188,6 @@
         ? 'The ' + digs[i] + ' in the ' + place + ' place × ' + digit + ' = ' + prod
         : titleCase(place) + ': ' + digs[i] + ' × ' + digit + ' = ' + prod;
       if (incoming > 0) calc += ', plus the ' + incoming + ' regrouped = ' + sum;
-      calc += '.';
       row[at] = write;
       carry = nc;
       const tags = [];
@@ -197,15 +196,15 @@
         state.carries[at + 1] = nc;
         tags.push('Regrouping');
         calc += shift > 0 && i === 0
-          ? ' Write ' + write + ' in the ' + colName(shift) + ' column, ' + regroupInto(nc, colName(at + 1)) + '.'
-          : ' Write ' + write + ', ' + regroupInto(nc, colName(at + 1)) + '.';
+          ? ', then write ' + write + ' in the ' + colName(shift) + ' column, and ' + regroupInto(nc, colName(at + 1))
+          : ', then write ' + write + ', and ' + regroupInto(nc, colName(at + 1));
       } else if (nc > 0 && last) {
         row[at + 1] = nc;
-        calc += ' Write ' + sum + '.';
+        calc += ', then write ' + sum;
       } else if (shift > 0 && i === 0) {
-        calc += ' Write ' + write + ' in the ' + colName(shift) + ' column.';
+        calc += ', then write ' + write + ' in the ' + colName(shift) + ' column';
       } else {
-        calc += ' Write ' + write + '.';
+        calc += ', then write ' + write;
       }
       const view = state.carries.slice();
       for (let k = 0; k < view.length; k++) {
@@ -251,7 +250,7 @@
         state.total[i] = write;
         columns.push({
           label: titleCase(place),
-          text: titleCase(place) + ': Nothing to add, so write ' + write + '.',
+          text: titleCase(place) + ': Nothing to add, so write ' + write,
           chip: 'Adding the rows',
           tags: [],
           algo: clone(state),
@@ -261,7 +260,7 @@
       }
       let calc = titleCase(place) + ': ' + bits.join(' + ');
       if (incoming > 0) calc += ' + the ' + incoming + ' regrouped';
-      calc += ' = ' + sum + '.';
+      calc += ' = ' + sum;
       if (incoming > 0) state.addUsed[i] = true;
       state.total[i] = write;
       carry = nc;
@@ -270,12 +269,12 @@
       if (nc > 0 && !last) {
         state.addCarries[i + 1] = nc;
         tags.push('Regrouping');
-        calc += ' Write ' + write + ', ' + regroupInto(nc, colName(i + 1)) + '.';
+        calc += ', then write ' + write + ', and ' + regroupInto(nc, colName(i + 1));
       } else if (nc > 0 && last) {
         state.total[i + 1] = nc;
-        calc += ' Write ' + sum + '.';
+        calc += ', then write ' + sum;
       } else {
-        calc += ' Write ' + write + '.';
+        calc += ', then write ' + write;
       }
       const view = state.addCarries.slice();
       for (let k = 0; k < view.length; k++) {
@@ -346,7 +345,7 @@
       steps.push({
         label: 'Whole numbers',
         title: 'Whole numbers',
-        text: 'Ignore the decimal points for now. Work out ' + q.aInt + ' × ' + q.bInt + '.',
+        text: 'Ignore the decimal points for now. Work out ' + q.aInt + ' × ' + q.bInt,
         stepTag: null,
         kind: 'lineup',
         columns: [],
@@ -398,21 +397,23 @@
       steps.push({
         label: 'Decimal point',
         title: 'Decimal point',
-        text: 'Count the decimal places: ' + q.dpA + ' + ' + q.dpB + ' = ' + q.dpTotal + '. Put the decimal point so the answer has ' + q.dpTotal + ' decimal ' + placeWord + ': ' + answerShown + '.',
+        text: 'Count the decimal places: ' + q.dpA + ' + ' + q.dpB + ' = ' + q.dpTotal + ' ' + placeWord + '. The answer is ' + answerShown,
         stepTag: 'Decimal point',
         tags: ['Decimal point'],
         kind: 'calc',
         columns: [],
         algo: clone(state)
       });
-      const ra = q.a >= 1 ? Math.round(q.a) : q.a;
-      const rb = q.b < 1 ? q.b : Math.round(q.b);
-      const right = q.b < 1 ? q.textB : String(rb);
+      let ra = q.a >= 1 ? Math.round(q.a) : Math.round(q.a * 2) / 2;
+      let rb = q.b < 1 ? Math.round(q.b * 2) / 2 : Math.round(q.b);
+      if (Math.abs(ra - q.a) < 1e-9) ra = q.a >= 1 ? Math.round(q.a / 10) * 10 || (q.a + 1) : Math.round((q.a + 0.1) * 10) / 10;
+      if (Math.abs(rb - q.b) < 1e-9) rb = q.b >= 1 ? Math.round(q.b / 10) * 10 || (q.b + 1) : Math.round((q.b + 0.1) * 10) / 10;
+      const right = rb < 1 || String(rb).indexOf('.') >= 0 ? String(rb) : String(rb);
       const product = Math.round(ra * rb * 1000) / 1000;
       steps.push({
         label: 'Check',
         title: 'Check',
-        text: 'Check: ' + q.textA + ' × ' + q.textB + ' ≈ ' + ra + ' × ' + right + ' = ' + product + '. ' + answerShown + ' is close to ' + product + ', so it makes sense.',
+        text: 'Check: ' + q.textA + ' × ' + q.textB + ' is about ' + ra + ' × ' + right + ' = ' + product + ', and ' + answerShown + ' is close to that, so it makes sense.',
         stepTag: 'Decimal point',
         kind: 'calc',
         columns: [],
@@ -528,14 +529,14 @@
   function strategy(q) {
     if (q.dpTotal > 0) {
       return '<strong>Ignore the decimal points.</strong> ' + q.aInt + ' × ' + q.bInt + ' = ' + (q.aInt * q.bInt) +
-        '.<br>Then count ' + q.dpTotal + ' decimal place' + (q.dpTotal === 1 ? '' : 's') + ': <strong>' + fmtDp(q.answer, q.dpTotal) + '</strong>';
+        '<br>Then count ' + q.dpTotal + ' decimal place' + (q.dpTotal === 1 ? '' : 's') + ': <strong>' + fmtDp(q.answer, q.dpTotal) + '</strong>';
     }
     const tens = Math.floor(q.a / 10) * 10;
     const ones = q.a - tens;
     if (!ones) return '<strong>Use place value.</strong> ' + q.equation + ' = <strong>' + (q.a * q.b) + '</strong>';
     return '<strong>Split the first number.</strong> ' + tens + ' × ' + q.b + ' = ' + (tens * q.b) +
       ', and ' + ones + ' × ' + q.b + ' = ' + (ones * q.b) +
-      '.<br>Add: <strong>' + (q.a * q.b) + '</strong>';
+      '<br>Add: <strong>' + (q.a * q.b) + '</strong>';
   }
 
   function extBank(level) {

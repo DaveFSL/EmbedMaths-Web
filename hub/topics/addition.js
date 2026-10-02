@@ -225,12 +225,12 @@
       const missing = present.some(function (v) { return v === null; });
       if (vals.length === 1 && incoming === 0 && nc === 0 && missing) {
         results[i] = write;
-        steps.push(snap({ col: i, chip: tag, text: titleCase(place) + ': Nothing to add, so write ' + write + '.' }));
+        steps.push(snap({ col: i, chip: tag, text: titleCase(place) + ': Nothing to add, so write ' + write }));
         continue;
       }
       let calc = titleCase(place) + ': ' + vals.join(' + ');
       if (incoming > 0) calc += ' + the ' + incoming + ' regrouped';
-      calc += ' = ' + sum + '.';
+      calc += ' = ' + sum;
       if (incoming > 0) used[i] = true;
       results[i] = write;
       carry = nc;
@@ -241,12 +241,12 @@
         if (i === L - 1) {
           results[i + 1] = nc;
           used[i + 1] = true;
-          calc += ' Write ' + sum + '.';
+          calc += ', then write ' + sum;
         } else {
-          calc += ' Write ' + write + ', ' + regroupInto(nc, colName(i + 1, dp)) + '.';
+          calc += ', then write ' + write + ', and ' + regroupInto(nc, colName(i + 1, dp));
         }
       } else {
-        calc += ' Write ' + write + '.';
+        calc += ', then write ' + write;
       }
       steps.push(snap({ col: i, chip: tag, tags: tags, hiCols: nc && i === L - 1 ? [i, i + 1] : [i], text: calc }));
     }
@@ -271,7 +271,7 @@
     const answerText = q.dp ? (raw.total / Math.pow(10, q.dp)).toFixed(q.dp) : String(raw.total);
     raw.steps.forEach(function (s, idx) {
       let text = s.readyText;
-      if (idx === raw.steps.length - 1) text += ' Answer ' + answerText + '.';
+      if (idx === raw.steps.length - 1) text += ' The answer is ' + answerText;
       ui.push({
         title: titleCase(colName(s.col, q.dp)),
         text: text,
