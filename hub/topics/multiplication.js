@@ -656,10 +656,10 @@
     html += '</div>';
     if (q.key && (q.key.row1 || q.key.row2 || q.key.add)) {
       html += '<ul class="mul-key">';
-      if (q.key.long && q.key.row1) html += '<li><span class="k struck">2</span> regrouped in row 1, crossed out when row 2 starts</li>';
-      if (q.key.long && q.key.row2) html += '<li><span class="k">2</span> regrouped in row 2</li>';
-      if (q.key.long && q.key.add) html += '<li><span class="k quiet">1</span> regrouped when adding the rows</li>';
-      if (!q.key.long && q.key.row1) html += '<li><span class="k">2</span> regrouped into the next column</li>';
+      if (q.key.long && q.key.row1) html += '<li><span class="k struck"></span> regrouped in row 1, crossed out when row 2 starts</li>';
+      if (q.key.long && q.key.row2) html += '<li><span class="k"></span> regrouped in row 2</li>';
+      if (q.key.long && q.key.add) html += '<li><span class="k quiet"></span> regrouped when adding the rows</li>';
+      if (!q.key.long && q.key.row1) html += '<li><span class="k"></span> regrouped into the next column</li>';
       html += '</ul>';
     }
     if (showDp && q.decimalLine) html += '<p class="algo-dp-note">' + q.decimalLine + '</p>';
@@ -671,31 +671,161 @@
     return { prompt: est.left + ' × ' + est.right, answer: est.product };
   }
 
-  function scaleStory(factor, other) {
-    let unit = 10;
-    if (factor % 1000 === 0) unit = 1000;
-    else if (factor % 100 === 0) unit = 100;
-    else if (factor % 10 === 0) unit = 10;
-    else return '';
-    const small = factor / unit;
-    const mid = small * other;
-    return small + ' \u00d7 ' + cleanNum(other) + ' = ' + cleanNum(mid) + ', so ' +
-      cleanNum(factor) + ' \u00d7 ' + cleanNum(other) + ' = ' + cleanNum(factor * other);
+  function zerosOf(n) {
+    let v = Math.abs(Math.round(n));
+    let z = 0;
+    if (!v) return { core: 0, zeros: 0 };
+    while (v % 10 === 0) {
+      v = v / 10;
+      z++;
+    }
+    return { core: v, zeros: z };
+  }
+
+  /* A product is easy when it is a times table, a double, a friendly chunk
+     (25, 50, 75), or a small digit times a 2-digit number. */
+  function isEasy(a, b) {
+    const A = zerosOf(a);
+    const B = zerosOf(b);
+    const x = A.core;
+    const y = B.core;
+    if (x < 10 && y < 10) return true;
+    let digit = 0;
+    let other = 0;
+    if (x < 10) { digit = x; other = y; }
+    else if (y < 10) { digit = y; other = x; }
+    else return false;
+    if (digit === 1 || digit === 2) return other < 10000;
+    if (other === 25 || other === 50 || other === 75) return true;
+    if (other <= 20) return true;
+    if (other < 100 && digit <= 5) return true;
+    return false;
+  }
+
+  function placeParts(n) {
+    const s = String(Math.abs(Math.round(n)));
+    const parts = [];
+    for (let i = 0; i < s.length; i++) {
+      const d = Number(s[i]);
+      if (!d) continue;
+      parts.push(d * Math.pow(10, s.length - 1 - i));
+    }
+    return parts;
+  }
+
+  function mergeEasy(parts, by, original) {
+    const list = parts.slice();
+    let changed = true;
+    while (changed && list.length > 1) {
+      changed = false;
+      for (let i = list.length - 2; i >= 0; i--) {
+        const merged = list[i] + list[i + 1];
+        if (original && merged === original) continue;
+        if (isEasy(merged, by)) {
+          list.splice(i, 2, merged);
+          changed = true;
+          break;
+        }
+      }
+    }
+    return list;
+  }
+
+  function canScale(a, b) {
+    const A = zerosOf(a);
+    const B = zerosOf(b);
+    if (!A.zeros && !B.zeros) return false;
+    return isEasy(A.core, B.core);
+  }
+
+  function soText(a, b) {
+    const A = zerosOf(a);
+    const B = zerosOf(b);
+    return cleanNum(A.core) + ' \u00d7 ' + cleanNum(B.core) + ' = ' + cleanNum(A.core * B.core) +
+      ', so ' + cleanNum(a) + ' \u00d7 ' + cleanNum(b) + ' = ' + cleanNum(a * b);
+  }
+
+  function productLine(x, y) {
+    const A = zerosOf(x);
+    const B = zerosOf(y);
+    const zeros = A.zeros + B.zeros;
+    const multi = A.core >= 10 || B.core >= 10;
+    const tiny =
+      (A.zeros && !B.zeros && A.core <= 2 && B.core >= 10) ||
+      (B.zeros && !A.zeros && B.core <= 2 && A.core >= 10);
+    if (zeros && multi && !tiny) return soText(x, y);
+    return cleanNum(x) + ' \u00d7 ' + cleanNum(y) + ' = ' + cleanNum(x * y);
+  }
+
+  function splitSide(keep, split, onRight) {
+    if (placeParts(split).length < 2) return null;
+    const parts = mergeEasy(placeParts(split), keep, split);
+    if (parts.length < 2) return null;
+    if (!parts.every(function (p) { return isEasy(p, keep); })) return null;
+    const pairs = parts.map(function (p) { return onRight ? [keep, p] : [p, keep]; });
+    return pairs;
+  }
+
+  function deepPieces(a, b) {
+    if (isEasy(a, b)) return [[a, b]];
+    const pa = placeParts(a);
+    const pb = placeParts(b);
+    if (pa.length > 1 && (pa.length >= pb.length || pb.length < 2)) {
+      let out = [];
+      pa.forEach(function (p) { out = out.concat(deepPieces(p, b)); });
+      return out;
+    }
+    if (pb.length > 1) {
+      let out = [];
+      pb.forEach(function (p) { out = out.concat(deepPieces(a, p)); });
+      return out;
+    }
+    return [[a, b]];
+  }
+
+  function mentalPairs(a, b) {
+    const left = splitSide(b, a, false);
+    const right = splitSide(a, b, true);
+    if (left && right) return left.length <= right.length ? left : right;
+    if (left || right) return left || right;
+    return deepPieces(a, b);
+  }
+
+  function intFromText(text) {
+    const dp = (String(text).split('.')[1] || '').length;
+    return Math.round(Number(text) * Math.pow(10, dp));
+  }
+
+  function mentalHtml(a, b) {
+    if (canScale(a, b)) {
+      const A = zerosOf(a);
+      const B = zerosOf(b);
+      return '<strong>Use place value.</strong> ' +
+        cleanNum(A.core) + ' \u00d7 ' + cleanNum(B.core) + ' = ' + cleanNum(A.core * B.core) +
+        ', so ' + cleanNum(a) + ' \u00d7 ' + cleanNum(b) + ' = <strong>' + cleanNum(a * b) + '</strong>';
+    }
+    const pairs = mentalPairs(a, b);
+    if (pairs.length < 2) {
+      return '<strong>Use place value.</strong> ' + productLine(a, b).replace(
+        /= (\d+)$/,
+        '= <strong>$1</strong>'
+      );
+    }
+    const lines = pairs.map(function (p) { return productLine(p[0], p[1]); });
+    const total = pairs.reduce(function (n, p) { return n + p[0] * p[1]; }, 0);
+    return '<strong>Split by place value.</strong><br>' + lines.join('<br>') +
+      '<br>Add: <strong>' + cleanNum(total) + '</strong>';
   }
 
   function strategy(q) {
+    const a = intFromText(q.textA);
+    const b = intFromText(q.textB);
     if (q.dpTotal > 0) {
       const places = q.dpTotal === 1 ? '1 decimal place' : q.dpTotal + ' decimal places';
-      return '<strong>Ignore the decimal points.</strong> ' + q.aInt + ' \u00d7 ' + q.bInt + ' = ' + (q.aInt * q.bInt) +
+      return '<strong>Ignore the decimal points.</strong><br>' + mentalHtml(a, b) +
         '<br>Then count ' + places + ': <strong>' + fmtDp(q.answer, q.dpTotal) + '</strong>';
     }
-    if (q.a % 10 === 0) return '<strong>Use place value.</strong> ' + scaleStory(q.a, q.b);
-    if (q.b % 10 === 0) return '<strong>Use place value.</strong> ' + scaleStory(q.b, q.a);
-    const tens = Math.floor(q.a / 10) * 10;
-    const ones = q.a - tens;
-    return '<strong>Split the first number.</strong> ' + scaleStory(tens, q.b) +
-      '<br>' + ones + ' \u00d7 ' + cleanNum(q.b) + ' = ' + cleanNum(ones * q.b) +
-      '<br>Add: <strong>' + cleanNum(q.a * q.b) + '</strong>';
+    return mentalHtml(a, b);
   }
 
   function extBank(level) {

@@ -402,9 +402,22 @@ h2 { font-size: 22px; margin: 0; }
 .dc .d.fresh { color: var(--orange); background: var(--tint); border-radius: 5px; box-shadow: 0 0 0 3px var(--tint); }
 .mul-key { list-style: none; margin: 10px 0 0; padding: 0; color: var(--muted); font-size: 14px; line-height: 1.45; font-weight: 650; }
 .mul-key li { display: flex; align-items: center; gap: 8px; }
-.mul-key .k { font-weight: 760; color: var(--orange); min-width: 0.8em; }
-.mul-key .k.struck { color: #9aabaa; text-decoration: line-through; }
-.mul-key .k.quiet { color: #8aa0a0; }
+.mul-key .k {
+  display: block; width: 14px; height: 4px; border-radius: 2px;
+  background: var(--orange); flex: 0 0 14px;
+}
+.mul-key .k.struck { background: #9aabaa; position: relative; }
+.mul-key .k.struck::after {
+  content: ""; position: absolute; left: -2px; right: -2px; top: 1px;
+  height: 1.5px; background: #6d8080; transform: rotate(-28deg);
+}
+.mul-key .k.quiet {
+  height: 7px; background: transparent; position: relative;
+}
+.mul-key .k.quiet::before {
+  content: ""; position: absolute; left: 3px; top: 0;
+  width: 7px; height: 7px; border-radius: 50%; background: #8aa0a0;
+}
 .dc .d.ph {
   color: var(--orange);
   border: 1.5px dashed var(--orange);

@@ -177,12 +177,6 @@
     };
   }
 
-  function decimalQuestion(pct, amount, tricky) {
-    const q = ofQuestion(pct, amount, tricky);
-    q.equation = decText(pct) + ' \u00d7 ' + amount;
-    return q;
-  }
-
   function discountQuestion(pct, price, item, tricky) {
     const discount = partValue(pct, price);
     const sale = Math.round((price - discount) * 100) / 100;
@@ -234,7 +228,7 @@
       return ofQuestion(pick([8, 9, 11, 12, 23, 24, 26, 27, 48, 49, 51, 52]), pick([40, 60, 75, 80, 90, 100, 120, 200]), false);
     }
     if (level === 4) {
-      return decimalQuestion(pick([8, 12, 17, 18, 33, 35, 36, 47, 52, 63, 64, 68, 73, 84]), pick([20, 40, 60, 75, 80, 120]), false);
+      return ofQuestion(pick([8, 12, 17, 18, 33, 35, 36, 47, 52, 63, 64, 68, 73, 84]), pick([20, 40, 60, 75, 80, 120]), false);
     }
     if (level === 5) {
       return discountQuestion(pick([5, 10, 15, 20, 25, 50]), pick([20, 40, 60, 80, 100]), pick(ITEMS), false);
@@ -258,7 +252,7 @@
       return ofQuestion(pick([48, 49, 52, 26, 27, 11, 12, 8]), pick([75, 90, 125, 150, 250]), true);
     }
     if (level === 4) {
-      return decimalQuestion(pick([12, 15, 18, 36, 48, 65]), pick([25, 75, 80, 125, 240]), true);
+      return ofQuestion(pick([12, 15, 18, 36, 48, 65]), pick([25, 75, 80, 125, 240]), true);
     }
     if (level === 5) {
       return discountQuestion(pick([5, 12, 15, 35]), pick([48, 60, 75, 85, 120, 250]), pick(ITEMS), true);
@@ -611,7 +605,7 @@
       { id: 1, name: '50%, 25% and 10%', example: '25% of 64' },
       { id: 2, name: 'Build up', example: '35% of 80' },
       { id: 3, name: 'Near a benchmark', example: '48% of 75' },
-      { id: 4, name: 'Decimal \u00d7 amount', example: '0.35 \u00d7 80' },
+      { id: 4, name: 'Decimal \u00d7 amount', example: '35% of 80' },
       { id: 5, name: 'Discounts', example: 'A $60 jumper is 15% off' },
       { id: 6, name: 'One amount as a percentage of another', example: '18 out of 25' }
     ],
@@ -627,8 +621,7 @@
     estimateCue: function (q) { return TIPS[q.level] || ''; },
     estimate: function (q) { return { prompt: TIPS[q.level] || '', answer: q.answer }; },
     instruction: function (q) {
-      if (q.level <= 3) return 'Find the percentage of the amount.';
-      if (q.level === 4) return 'Work it out.';
+      if (q.level <= 4) return 'Find the percentage of the amount.';
       if (q.level === 5) return 'Find the sale price.';
       return 'Write as a percentage.';
     },

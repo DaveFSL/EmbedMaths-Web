@@ -338,7 +338,6 @@ const Division = (function () {
   }
 
   function fractionSteps(q) {
-    const story = q.cols.map(function (col, i) { return columnText(col, q, i); }).join(' ');
     const simplified = q.fracN !== q.rawN;
     const mixed = q.wholeAns + ' ' + fracHtml(q.fracN, q.fracD);
     const rawMixed = q.wholeAns + ' ' + fracHtml(q.rawN, q.rawD);
@@ -349,13 +348,19 @@ const Division = (function () {
     if (simplified) {
       simplify = q.wholeAns + ' r' + q.rem + ' = ' + rawMixed + ' = ' + mixed + ', for example ' + simplify;
     }
-    return [
-      teach('Divide as usual', story, ['Times fact', 'Regrouping', 'Placeholder zero']),
-      teach('Write the remainder as a fraction', 'The remainder goes on top, the number we divided by goes underneath.', ['Remainder']),
-      teach('Why?', why, ['Remainder']),
-      teach('Simplify if you can', simplify, ['Remainder']),
-      teach('Answer', q.dividendText + ' \u00f7 ' + q.divisor + ' = ' + mixed + ' (the same as ' + q.decimalText + ')', ['Remainder', 'Decimal point'])
-    ];
+    const steps = [];
+    q.cols.forEach(function (col, i) {
+      const tags = ['Times fact'];
+      if (col.placeholder) tags.push('Placeholder zero');
+      if (col.remIn > 0 || (col.r > 0 && i < q.cols.length - 1)) tags.push('Regrouping');
+      if (col.r > 0 && !nextCol(q.cols, i)) tags.push('Remainder');
+      steps.push(teach(cap(col.place), columnText(col, q, i), tags));
+    });
+    steps.push(teach('Write the remainder as a fraction', 'The remainder goes on top, the number we divided by goes underneath.', ['Remainder']));
+    steps.push(teach('Why?', why, ['Remainder']));
+    steps.push(teach('Simplify if you can', simplify, ['Remainder']));
+    steps.push(teach('Answer', q.dividendText + ' \u00f7 ' + q.divisor + ' = ' + mixed + ' (the same as ' + q.decimalText + ')', ['Remainder', 'Decimal point']));
+    return steps;
   }
 
   function answerLabel(q) {
@@ -458,13 +463,14 @@ const Division = (function () {
     const steps = q.steps || [];
     const last = !steps.length || stepIndex >= steps.length - 1;
     let through = q.cols.length;
-    if (stepIndex >= 0 && stepIndex < steps.length - 1 && q.mode !== 'fraction') {
+    if (stepIndex >= 0 && stepIndex < steps.length - 1) {
       const title = steps[stepIndex].title;
+      const isPlace = q.cols.some(function (col) { return cap(col.place) === title; });
       if (title === 'Start a list') through = -1;
       else if (title === 'Keep going past the remainder') {
         through = -1;
         q.cols.forEach(function (col, i) { if (!col.added && i > through) through = i; });
-      } else {
+      } else if (isPlace) {
         through = -1;
         q.cols.forEach(function (col, i) {
           if (cap(col.place) === title) through = i;
@@ -475,10 +481,13 @@ const Division = (function () {
           if (name === title && seen[name]) through = i;
           seen[name] = true;
         });
-      }
+      } else if (q.mode !== 'fraction') through = -1;
     }
     let work = busHtml(q, through < 0 ? -1 : through);
-    if (q.mode === 'fraction' && stepIndex >= 2) work += shareHtml(q);
+    const stepTitle = steps[stepIndex] ? steps[stepIndex].title : '';
+    const explaining = q.mode === 'fraction' && stepIndex >= 0 &&
+      !q.cols.some(function (col) { return cap(col.place) === stepTitle; });
+    if (q.mode === 'fraction' && (explaining || last)) work += shareHtml(q);
     if (last) {
       work += '<p class="div-answer"><strong>Answer: ' + answerLabel(q) + '</strong><span class="div-check">' + checkLine(q) + '</span></p>';
       if (EM.session && EM.session.est !== false) {
