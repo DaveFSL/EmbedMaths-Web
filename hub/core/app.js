@@ -73,7 +73,7 @@ const EM = (function () {
 
   const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const SHORT = { add: 'Addition', sub: 'Subtraction', mul: 'Multiplication', div: 'Division', frac: 'Fractions', pv: 'Place value', conv: 'Converting units' };
+  const SHORT = { add: 'Addition', sub: 'Subtraction', mul: 'Multiplication', div: 'Division', frac: 'Fractions', pct: 'Percentages', pv: 'Place value', conv: 'Converting units' };
 
   function formatDue(iso) {
     if (!iso) return '';
@@ -267,6 +267,7 @@ const EM = (function () {
     const convMeta = 'Level ' + Store.progressFor('conv').level + ' of ' + conv.levels.length;
     const divMeta = 'Level ' + Store.progressFor('div').level + ' of ' + topics.div.levels.length;
     const fracMeta = 'Level ' + Store.progressFor('frac').level + ' of ' + topics.frac.levels.length;
+    const pctMeta = 'Level ' + Store.progressFor('pct').level + ' of ' + topics.pct.levels.length;
     const half = '<span class="mini-frac" aria-hidden="true"><span>1</span><span>2</span></span>';
     let strip = '';
     if (link && link.hasLink) {
@@ -286,7 +287,7 @@ const EM = (function () {
       tile(ICONS.divide, 'Division', divMeta, { action: 'div', example: topics.div.homeExample }) +
       '</div></section><section class="panel grow"><h2>Fractions, decimals &amp; percentages</h2><div class="tile-grid three">' +
       tile(half, 'Fractions', fracMeta, { action: 'frac', stack: true, example: topics.frac.homeExample }) +
-      tile(ICONS.percent, 'Percentages', 'Coming soon', { soon: true, stack: true, example: 'e.g. 48% of 75' }) +
+      tile(ICONS.percent, 'Percentages', pctMeta, { action: 'pct', stack: true, example: topics.pct.homeExample }) +
       tile(half + '<span class="mini-eq">= 0.5</span>', 'Convert', 'Coming soon', { soon: true, stack: true, iconClass: 'convert-icon', example: 'e.g. \u2157 = 0.6 = 60%' }) +
       '</div></section></div><div class="home-col"><section class="panel"><h2>Place value &amp; measurement</h2><div class="tile-stack">' +
       tile('<span class="pv-mark"><span>\u00d710</span><span>\u00f710</span></span>', pv.name, pvMeta, { action: 'pv', iconClass: 'pv-icon', example: pv.homeExample }) +
@@ -311,6 +312,8 @@ const EM = (function () {
     if (convBtn) convBtn.onclick = function () { openLevels('conv'); };
     const fracBtn = app.querySelector('[data-go="frac"]');
     if (fracBtn) fracBtn.onclick = function () { openLevels('frac'); };
+    const pctBtn = app.querySelector('[data-go="pct"]');
+    if (pctBtn) pctBtn.onclick = function () { openLevels('pct'); };
     const howHide = document.getElementById('howHide');
     if (howHide) howHide.onclick = function () { Store.setGuide(false); renderHome(); };
     const howShow = document.getElementById('howShow');
@@ -430,7 +433,7 @@ const EM = (function () {
   }
 
   function buildMixQuestions(opts) {
-    const ids = ['add', 'sub', 'mul', 'div', 'frac', 'pv', 'conv'];
+    const ids = ['add', 'sub', 'mul', 'div', 'frac', 'pct', 'pv', 'conv'];
     let count = parseInt(opts.count, 10);
     if (!isFinite(count) || count < 1 || count > 30) count = 8;
     let trickyN = opts.tricky == null ? 1 : opts.tricky;

@@ -164,6 +164,7 @@ const Player = (function () {
     const assigned = !!(session.set || session.mix || session.assigned);
     const leaveLabel = assigned ? '\u2190 Exit' : '\u2190 Levels';
     const roomy = topic().id === 'frac';
+    const pctPaper = topic().id === 'pct';
     document.getElementById('app').innerHTML =
       '<div class="shell play"><header class="play-top"><div class="play-nav">' +
       '<button type="button" class="btn ghost" id="leave">' + leaveLabel + '</button>' +
@@ -173,7 +174,7 @@ const Player = (function () {
       (session.msg ? '<p class="session-msg">' + EM.escapeHtml(session.msg) + '</p>' : '') +
       '<div class="progress" aria-hidden="true">' + segments +
       '</div></div>' + (question.tricky ? '<span class="tricky-tag">Tricky one</span>' : '<span></span>') + '</header>' +
-      '<div class="work' + (roomy ? ' frac-work' : '') + '"><section class="paper' + (roomy ? ' roomy' : '') + '">' +
+      '<div class="work' + (roomy ? ' frac-work' : '') + '"><section class="paper' + (roomy ? ' roomy' : '') + (pctPaper ? ' pct-paper' : '') + '">' +
       instructionHtml + '<p class="equation">' +
       ((revealed && question.solvedEquation) ? question.solvedEquation : (question.equation || (question.textA + ' − ' + question.textB))) + '</p>' +
       estimateHtml + '<div id="algo"></div>' + foot + '</section><section class="steps-col">' +
@@ -188,6 +189,18 @@ const Player = (function () {
       btn.onclick = function () {
         const open = btn.getAttribute('aria-expanded') === 'true';
         EM.session.multiplesOpen = !open;
+        paint(false);
+      };
+    });
+    document.querySelectorAll('.method-tab').forEach(function (btn) {
+      btn.onclick = function () {
+        if (!topic().setMethod) return;
+        topic().setMethod(question, btn.getAttribute('data-method'));
+        phase = 'steps';
+        revealAll = true;
+        walking = false;
+        col = -1;
+        step = (question.steps || []).length - 1;
         paint(false);
       };
     });
@@ -366,6 +379,9 @@ const Player = (function () {
       fitFont(el, el.parentElement);
     });
     document.querySelectorAll('.algo-grid-wrap').forEach(function (el) {
+      fitFont(el, el.parentElement);
+    });
+    document.querySelectorAll('.paper.pct-paper .equation, .pct-grid, .pct-final, .pct-frac').forEach(function (el) {
       fitFont(el, el.parentElement);
     });
     document.querySelectorAll('.pv').forEach(function (el) {

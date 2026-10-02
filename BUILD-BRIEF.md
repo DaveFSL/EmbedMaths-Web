@@ -20,7 +20,8 @@ One page where students, teachers and parents choose what to practise. It replac
 5. **Class link builder + QR code**, and Daily mix across the topics that are ready.
 6. **Redirects (done).** Root `index.html` forwards to `/hub/` and keeps the query string. The old add/sub and multiplication pages forward to `/hub/?t=sub` and `/hub/?t=mul`; the originals are in `/archive/`. The hub was not moved.
 7. **Division (done).** Short division, 11 levels, in `topics/division.js`. Measurement on Home is Converting units only. Time is not a tile and not in Set practice.
-8. **Fractions (done).** Eight levels in `topics/fractions.js`. Home has a Fractions tile. Percentages, and Fractions–decimals–percentages, stay as Coming soon.
+8. **Fractions (done).** Eight levels in `topics/fractions.js`. Home has a Fractions tile.
+9. **Percentages (done).** Six levels in `topics/percentages.js`. Home has a Percentages tile. Fractions–decimals–percentages stays as Coming soon.
 
 ---
 
@@ -48,6 +49,7 @@ EmbedMaths-Web/
       conversions.js
       division.js            short division, 11 levels
       fractions.js           eight fraction levels
+      percentages.js         six percentage levels
     index.html               links the manifest and apple-touch-icon
   archive/                   original add/sub and multiplication pages
   icons/  manifest.webmanifest   icons stay here; start_url and scope are https://embedmaths.com.au/hub/
@@ -89,7 +91,7 @@ The mockup canvas has nine screens. Build these:
 - When a class link is used, the **Your practice** banner (topic, level, questions, Start, and "Daily mix instead") sits under the logo row. Hide it if there's no link.
 - Under that, a teal **How it works** strip: 1 Pick a topic (Start at Level 1) → 2 Work it out on paper (Show your working) → 3 Check each step (Then mark yourself). The three steps spread evenly across the strip, each arrow sits halfway between two steps, and **Hide** stays on the far right. The "How it works" kicker is small Lexend, uppercase, with letter-spacing. The strip stays open until the student finishes a session or taps Hide. After that, a small **How it works** link shows the strip again. The choice is saved on this device (`guide` in localStorage).
 - Two columns, stretching so they end at the same height:
-  - Left: **Written methods** (Addition, Subtraction, Multiplication, Division, in a 2 × 2 grid), then **Fractions, decimals & percentages**. That group is three tiles in a row, with the icon above the words: Fractions, Percentages (Coming soon), Convert (Coming soon).
+  - Left: **Written methods** (Addition, Subtraction, Multiplication, Division, in a 2 × 2 grid), then **Fractions, decimals & percentages**. That group is three tiles in a row, with the icon above the words: Fractions, Percentages, Convert (Coming soon).
   - Right: **Place value & measurement** (× and ÷ by 10, 100, 1000, then Converting units, stacked), then **Number facts** (Times tables → `https://davefsl.github.io/FlashFlips-Web/`). The place-value icon is ×10 above ÷10, centred in the box at a size that fits.
 - Each working tile shows "Level X of Y" from saved progress, then a small bold teal example from the topic's `homeExample`. Coming soon examples are grey.
 - Footer, bottom-left: "Progress is saved on this device only." and the version number (the short id of the commit that is live). It stays pinned there, inside the iPhone/iPad safe area. If the page content would reach the bottom, the footer sits at the end of the page instead, and never covers a tile.
@@ -294,6 +296,19 @@ Self-check chips: Common denominator, Top and bottom, Adding / subtracting, Simp
 - A common denominator comes from the multiples lists: the first number that is in both lists.
 - Same-denominator subtraction that needs a whole uses **Regroup**. Never "carry", "trade" or "left over".
 
+### Percentages
+- Six levels in `topics/percentages.js` (`?t=pct`). Answers are whole numbers or have at most 2 decimal places. Money is always 2 decimal places (`$51.00`).
+- A bold instruction sits above the question: Find the percentage of the amount. / Work it out. / Find the sale price. / Write as a percentage.
+- The line under the question is **Tip:**. Level 1: "50% is half. 10% is divide by 10." Level 2: "Build it up from 10%, 5% and 1%." Level 3: "Find the nearest easy percentage, then add or take away." Level 4: "Change the percentage to a decimal first." Level 5: "Find the discount, then take it off." Level 6: "Make the bottom 100."
+- After the reveal, percent-of-amount questions can show method tabs: **Build up**, **Near a benchmark**, **Decimal × amount**. Level 1 has one method only, so it has no tabs. Levels 1–2 open on Build up, level 3 on Near a benchmark, level 4 on Decimal × amount. A tab is shown only when that method makes sense for the question.
+- Wording: 50% is "halve it." 25% is "halve it, then halve it again." 10% is "divide by 10." 5% is "half of 10%." 1% is "divide by 100."
+- Build up writes one line per part, then adds them. 35% of 80 is 10% = 8, 30% = 24, 5% = 4, then 35% = 24 + 4 = 28.
+- Near a benchmark writes each part on its own line, then the whole comparison on one line that does not wrap. A gap of 2 is 2%, not 1% + 1%. 48% of 75 is 50% − 2% = 37.5 − 1.5 = 36.
+- Decimal × amount changes the percentage to a decimal (35% = 0.35), then uses the multiplication written layout, with the decimal point placed in the answer.
+- A discount is two steps: find the discount, then take it off the price. Also show "Another way: 15% off means you pay 85%."
+- One amount as a percentage of another is written as a fraction, then the denominator is made 100. "What you do to the top, you do to the bottom." The fraction is the same stacked drawing as Fractions, with the small orange × labels. 18/25 ×4 = 72/100 = 72%.
+- Self-check chips, only the ones that question used: Finding 10%, Finding 1%, Adding the parts, Decimal point, Taking off the discount, Making it out of 100.
+
 ### Written methods
 - Student-facing text uses Australian Curriculum (ACARA v9) words in every step, level name and self-check chip: **regroup** and **remainder**. Never "carry", "trade" or "left over".
 - Keep the crossed-out digit with the new value above it. For regrouping across zeros, show every 0 becoming 9.
@@ -304,7 +319,7 @@ Self-check chips: Common denominator, Top and bottom, Adding / subtracting, Simp
 - If the working is too wide for its column, scale the digits down to fit.
 - When there isn't room (long numbers, narrower screens), move the side panel underneath the working.
 - Shaded boxes (the answer/check box, hints, Check yourself, steps) are the full width of their column and grow with their text. Text wraps inside the box.
-- Check the longest cases at 1180×820, 1024×768 and 390 wide, with the multiples list open and closed: 4-digit ÷ 2-digit with a remainder, a decimal division, 3-digit × 2-digit, 2 dp × 1 dp, subtraction level 9, addition of three numbers, converting units with 5 amounts, converting units multiple choice, fraction of an amount with the bar, and adding fractions with two multiples lists.
+- Check the longest cases at 1180×820, 1024×768 and 390 wide, with the multiples list open and closed: 4-digit ÷ 2-digit with a remainder, a decimal division, 3-digit × 2-digit, 2 dp × 1 dp, subtraction level 9, addition of three numbers, converting units with 5 amounts, converting units multiple choice, fraction of an amount with the bar, adding fractions with two multiples lists, a percentage near a benchmark (the final line on one line), a discount, and one amount as a percentage of another.
 
 ---
 
@@ -375,5 +390,4 @@ Live: https://embedmaths.com.au/hub/
 
 Not on Home as a working tile, and not in Set practice, until they are built. Home shows them as Coming soon:
 
-- Percentages
 - Fractions–decimals–percentages
