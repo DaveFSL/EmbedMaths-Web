@@ -483,8 +483,7 @@
       const dp = (decText(q.pct).split('.')[1] || '').length;
       const fixed = Number(q.answer).toFixed(dp);
       if (fixed !== num(q.answer)) {
-        html += '<p class="pct-final">' + fixed + ' = ' + num(q.answer) + '</p>';
-        html += '<p class="pct-note">The zero on the end isn\u2019t needed.</p>';
+        html += '<p class="pct-trim">' + fixed + ' = ' + num(q.answer) + ' (the zero on the end isn\u2019t needed)</p>';
       }
     } else if (pack.discount) {
       html += '<p class="pct-kicker">Find the discount.</p>';

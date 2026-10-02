@@ -191,11 +191,11 @@ const Player = (function () {
       '<div class="progress" aria-hidden="true">' + segments +
       '</div></div>' + (question.tricky ? '<span class="tricky-tag">Tricky one</span>' : '<span></span>') + '</header>' +
       '<div class="work' + (roomy ? ' frac-work' : '') + '"><section class="paper' + (roomy ? ' roomy' : '') + (pctPaper ? ' pct-paper' : '') + '">' +
-      instructionHtml + '<p class="equation' + (question.kind === 'discount' ? ' eq-prose' : '') + '">' +
+      '<div class="paper-fit">' + instructionHtml + '<p class="equation' + (question.kind === 'discount' ? ' eq-prose' : '') + '">' +
       ((revealed && question.solvedEquation) ? question.solvedEquation : (question.equation || (question.textA + ' − ' + question.textB))) + '</p>' +
-      estimateHtml + '<div id="algo"></div>' + foot + '</section><section class="steps-col">' +
+      estimateHtml + '<div id="algo"></div>' + foot + '</div></section><section class="steps-col">' +
       (revealed ? stepHtml : '<p class="wait-note">The working stays hidden until you are ready.</p>') +
-      strategy + '</section></div><div class="dock">' + check + '<div class="action-row">' + actions + '</div></div></div>';
+      strategy + '</section></div><div class="dock"><div class="dock-left">' + check + '</div><div class="action-row">' + actions + '</div></div></div>';
 
     question.view = { col: col, reveal: revealAll, walking: walking, step: step };
     if (phase === 'steps' || topic().showsPrep) {
@@ -318,7 +318,22 @@ const Player = (function () {
     const nextQ = document.getElementById('nextQ');
     if (nextQ) nextQ.onclick = commit;
     fitLayouts();
+    showCurrentStep();
     if (scrollTop !== false) window.scrollTo(0, 0);
+  }
+
+  function showCurrentStep() {
+    const current = document.querySelector('.steps-col .step.current');
+    const scroller = document.querySelector('.shell.play .steps-col');
+    if (!current || !scroller) return;
+    if (window.matchMedia('(max-width: 700px)').matches) {
+      current.scrollIntoView({ block: 'center', inline: 'nearest' });
+      return;
+    }
+    const cRect = current.getBoundingClientRect();
+    const sRect = scroller.getBoundingClientRect();
+    if (cRect.bottom > sRect.bottom - 8) scroller.scrollTop += cRect.bottom - sRect.bottom + 12;
+    else if (cRect.top < sRect.top + 8) scroller.scrollTop -= sRect.top - cRect.top + 12;
   }
 
   function progressLabel() {
@@ -404,10 +419,44 @@ const Player = (function () {
       const grid = el.querySelector('.pv-grid');
       if (grid && el.scrollWidth > el.clientWidth + 1) fitFont(grid, el);
     });
+    fitPaperHeight();
+    pinDock();
+  }
+
+  function fitPaperHeight() {
+    const fit = document.querySelector('.shell.play .paper-fit');
+    if (!fit) return;
+    fit.style.zoom = '1';
+    if (window.matchMedia('(max-width: 700px)').matches) return;
+    const paper = fit.parentElement;
+    const style = getComputedStyle(paper);
+    const pad = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+    const avail = paper.clientHeight - pad;
+    const need = fit.scrollHeight;
+    if (avail < 80 || need <= avail + 2) return;
+    let floor = 0.72;
+    const sample = fit.querySelector('.algo-grid-wrap, .bus, .frac-board, .equation');
+    if (sample) {
+      const size = parseFloat(getComputedStyle(sample).fontSize);
+      if (size > 0) floor = Math.max(floor, Math.min(1, 16 / size));
+    }
+    fit.style.zoom = String(Math.max(floor, Math.min(1, avail / need)));
+  }
+
+  function pinDock() {
+    const shell = document.querySelector('.shell.play');
+    const dock = shell && shell.querySelector('.dock');
+    if (!shell || !dock) return;
+    if (window.matchMedia('(max-width: 700px)').matches) {
+      shell.style.paddingBottom = (dock.offsetHeight + 8) + 'px';
+    } else shell.style.paddingBottom = '';
   }
 
   window.addEventListener('resize', function () {
-    if (document.querySelector('.shell.play')) fitLayouts();
+    if (document.querySelector('.shell.play')) {
+      fitLayouts();
+      showCurrentStep();
+    }
   });
 
   function commit() {

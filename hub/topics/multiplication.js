@@ -457,10 +457,10 @@
             text += ' Regroup ' + nc + ' ' + singular(next, nc) + '.';
             tags.push('Regrouping');
             if (which === 1) {
-              state.carries[at + 1] = nc;
+              state.carries[i + 1] = nc;
               sawRow1 = true;
             } else {
-              state.row2Carries[at + 1] = nc;
+              state.row2Carries[i + 1] = nc;
               sawRow2 = true;
             }
             carry = nc;

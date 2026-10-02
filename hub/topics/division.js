@@ -257,10 +257,10 @@ const Division = (function () {
   }
 
   function regroupLine(col, next) {
-    return ' Regroup the ' + phrase(col.r, col.place) + ': ' + phrase(next.value, next.place);
+    return 'Regroup the ' + phrase(col.r, col.place) + ': ' + phrase(next.value, next.place);
   }
   function remainderLine(q) {
-    return ' Write the remainder beside the answer: ' + q.wholeAns + ' r' + q.rem;
+    return 'Write the remainder beside the answer: ' + q.wholeAns + ' r' + q.rem;
   }
 
   function columnText(col, q, i) {
@@ -268,35 +268,39 @@ const Division = (function () {
     const next = nextCol(q.cols, i);
     const two = d >= 10;
     const heading = phrase(col.value, col.place);
+    const lines = [];
     if (col.q === 0) {
-      let line = heading + ' \u00f7 ' + d + " won't go, so write a placeholder 0";
-      if (next) line += regroupLine(col, next);
-      else if (q.mode === 'remainder' && col.r > 0) line += remainderLine(q);
-      else if (col.r > 0) line += ', and the remainder is ' + col.r;
-      return line;
+      lines.push(heading + ' \u00f7 ' + d + " won't go, so write a placeholder 0");
+      if (next && col.r > 0) lines.push(regroupLine(col, next));
+      else if (q.mode === 'remainder' && col.r > 0) lines.push(remainderLine(q));
+      else if (col.r > 0) lines.push('The remainder is ' + col.r);
+      return lines.join('<br>');
     }
     if (two) {
       const multiple = col.q * d;
       let line = heading + ' \u00f7 ' + d + ', and the largest multiple that isn\u2019t bigger than ' + col.value +
         ' is ' + multiple + ' (' + col.q + ' \u00d7 ' + d + '), so write ' + col.q;
       if (col.r > 0) line += ', remainder ' + col.r;
-      if (next && col.r > 0) line += regroupLine(col, next);
-      else if (!next && q.mode === 'remainder' && q.rem > 0) line += remainderLine(q);
-      return line;
+      lines.push(line);
+      if (next && col.r > 0) lines.push(regroupLine(col, next));
+      else if (!next && q.mode === 'remainder' && q.rem > 0) lines.push(remainderLine(q));
+      return lines.join('<br>');
     }
     let line = heading + ' \u00f7 ' + d + ' = ' + col.q;
     if (col.r > 0) line += ', remainder ' + col.r;
-    line += ', then write ' + col.q;
+    line += '. Write ' + col.q;
+    lines.push(line);
     if (next && next.added && col.r > 0 && q.mode === 'decimal' && !col.added) {
       /* The regroup is told in the "keep going" step. */
     } else if (col.added && next && next.added && col.r > 0) {
-      line += ' Add another 0' + regroupLine(col, next);
+      lines.push('Add another 0');
+      lines.push(regroupLine(col, next));
     } else if (next && col.r > 0) {
-      line += regroupLine(col, next);
+      lines.push(regroupLine(col, next));
     }
-    if (!next && col.r === 0 && (col.added || q.mode === 'decimal')) line += ' No remainder, so stop.';
-    if (!next && q.mode === 'remainder' && q.rem > 0) line += remainderLine(q);
-    return line;
+    if (!next && col.r === 0 && (col.added || q.mode === 'decimal')) lines.push('No remainder, so stop.');
+    if (!next && q.mode === 'remainder' && q.rem > 0) lines.push(remainderLine(q));
+    return lines.join('<br>');
   }
 
   function teach(title, text, tags) {
@@ -317,7 +321,7 @@ const Division = (function () {
     cols.forEach(function (col, i) {
       if (q.mode === 'decimal' && col.added && !jumped) {
         steps.push(teach('Keep going past the remainder',
-          'Write the decimal point and a placeholder 0' + regroupLine(q.cols[i - 1], col),
+          'Write the decimal point and a placeholder 0<br>' + regroupLine(q.cols[i - 1], col),
           ['Decimal point', 'Placeholder zero', 'Regrouping']));
         jumped = true;
       }
@@ -341,9 +345,8 @@ const Division = (function () {
     const simplified = q.fracN !== q.rawN;
     const mixed = q.wholeAns + ' ' + fracHtml(q.fracN, q.fracD);
     const rawMixed = q.wholeAns + ' ' + fracHtml(q.rawN, q.rawD);
-    const why = q.rem === 1
-      ? "There's 1 remainder, but it still has to be shared between " + q.divisor + ' shares. Each share is ' + fractionWords(1, q.divisor)
-      : 'There are ' + q.rem + ' remainder, but they still have to be shared between ' + q.divisor + ' shares. Each share is ' + fractionWords(1, q.divisor);
+    const why = 'The remainder is ' + q.rem + ', but it still has to be shared between ' + q.divisor +
+      '. Each share is ' + fractionWords(1, q.divisor) + '.';
     let simplify = 'e.g. 26 \u00f7 4 = 6 r2 = 6 ' + fracHtml(2, 4) + ' = 6' + fracHtml(1, 2);
     if (simplified) {
       simplify = q.wholeAns + ' r' + q.rem + ' = ' + rawMixed + ' = ' + mixed + ', for example ' + simplify;
@@ -359,7 +362,7 @@ const Division = (function () {
     steps.push(teach('Write the remainder as a fraction', 'The remainder goes on top, the number we divided by goes underneath.', ['Remainder']));
     steps.push(teach('Why?', why, ['Remainder']));
     steps.push(teach('Simplify if you can', simplify, ['Remainder']));
-    steps.push(teach('Answer', q.dividendText + ' \u00f7 ' + q.divisor + ' = ' + mixed + ' (the same as ' + q.decimalText + ')', ['Remainder', 'Decimal point']));
+    steps.push(teach('Answer', q.dividendText + ' \u00f7 ' + q.divisor + ' = ' + mixed, ['Remainder']));
     return steps;
   }
 
@@ -446,8 +449,7 @@ const Division = (function () {
     return '<p class="share-note">The remainder ' + q.rem + ' is shared between ' + q.divisor + '. Each share is ' +
       fracHtml(1, q.divisor) + '.</p><div class="share-bar">' + parts + '</div>' +
       '<p class="share-eq">' + q.wholeAns + ' r' + q.rem + ' = ' + q.wholeAns + ' ' + fracHtml(q.rawN, q.rawD) +
-      (q.fracN !== q.rawN ? ' = ' + q.wholeAns + ' ' + fracHtml(q.fracN, q.fracD) : '') +
-      ' = ' + q.decimalText + '</p>';
+      (q.fracN !== q.rawN ? ' = ' + q.wholeAns + ' ' + fracHtml(q.fracN, q.fracD) : '') + '</p>';
   }
 
   function legendHtml(q) {
