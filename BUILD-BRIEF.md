@@ -190,7 +190,7 @@ A set link uses `t=set` plus `set=`. `q` may be any count from 1 to 30. Invalid 
 8. Remainders as fractions (157 ÷ 4 = 39¼)
 9. Remainders as decimals (157 ÷ 4 = 39.25)
 10. Decimal ÷ whole number (7.56 ÷ 3 = 2.52)
-11. Extension: 2-digit divisors (852 ÷ 12 = 71). Divisors 11, 12, 15, 20, 25. Dashed orange card. The multiples list opens by default.
+11. Extension: 2-digit divisors (1534 ÷ 13 = 118). Divisors 11 to 25. 3- and 4-digit numbers, regrouping at most steps, some zeros in the answer, and about a third with a remainder (1000 ÷ 13 = 76 r12). Dashed orange card. The multiples list opens by default.
 
 Levels 1–6 and 10 divide exactly. Level 7 always has a remainder. Levels 8 and 9 use divisors 2, 4, 5 and 8. A **Multiples of n** list sits beside the working and can be opened before the reveal (`mul=1` opens it for the session).
 

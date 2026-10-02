@@ -17,7 +17,8 @@ const EM = (function () {
     arrow: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     out: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7 17L17 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
     check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
+    close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+    home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5L12 5l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-8.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>'
   };
 
   function readLink() {
@@ -372,6 +373,7 @@ const EM = (function () {
       fin: opts.fin || '',
       seed: opts.seed || '',
       focus: focus,
+      assigned: !!opts.assigned,
       questions: questions,
       index: 0,
       results: []
@@ -479,7 +481,8 @@ const EM = (function () {
       due: info.due,
       seed: info.seed,
       order: info.order,
-      rows: info.rows
+      rows: info.rows,
+      assigned: true
     };
   }
 

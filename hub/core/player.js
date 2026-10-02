@@ -48,7 +48,8 @@ const Player = (function () {
       estimateHtml = lines.map(function (line) { return '<p class="estimate">' + line + '</p>'; }).join('');
     } else if (session.est && !plain) {
       if (!revealed) {
-        estimateHtml = '<p class="estimate">Estimate first. Write a reasonable estimate on your paper.</p>';
+        const cue = topic().estimateCue && topic().estimateCue(question);
+        estimateHtml = '<p class="estimate">' + (cue || 'Estimate first. Write a reasonable estimate on your paper.') + '</p>';
       } else {
         const est = topic().estimate(question);
         estimateHtml = '<p class="estimate">Estimate: ' + est.prompt + ' = ' + est.answer + '</p>';
@@ -56,7 +57,7 @@ const Player = (function () {
     }
 
     let foot = '';
-    if (whole && session.est && !topic().predict) {
+    if (whole && session.est && !topic().predict && topic().id !== 'div') {
       const est = topic().estimate(question);
       const answer = Math.round(question.answer * Math.pow(10, question.dp)) / Math.pow(10, question.dp);
       const shown = question.dp ? answer.toFixed(question.dp) : String(Math.round(answer));
@@ -140,7 +141,7 @@ const Player = (function () {
     }
 
     let strategy = '';
-    if (whole && session.strat && !plain) {
+    if (whole && session.strat && !plain && topic().id !== 'div') {
       strategy = '<aside class="strategy"><p class="eyebrow">One way in your head</p>' + topic().strategy(question) + '</aside>';
     }
 
@@ -152,9 +153,13 @@ const Player = (function () {
         : '<button type="button" class="btn ghost" id="prevStep">Back</button>' +
           (plain ? '' : '<button type="button" class="btn ghost" id="eachStep">Show me each step ' + EM.icons.arrow + '</button>'));
 
+    const assigned = !!(session.set || session.mix || session.assigned);
+    const leaveLabel = assigned ? '\u2190 Exit' : '\u2190 Levels';
     document.getElementById('app').innerHTML =
-      '<div class="shell play"><header class="play-top"><button type="button" class="btn ghost" id="stop">' +
-      EM.icons.close + ' Stop</button><div class="progress-wrap"><p>' +
+      '<div class="shell play"><header class="play-top"><div class="play-nav">' +
+      '<button type="button" class="btn ghost" id="leave">' + leaveLabel + '</button>' +
+      '<button type="button" class="btn ghost icon-btn" id="toHome" aria-label="Home">' + EM.icons.home + '</button>' +
+      '</div><div class="progress-wrap"><p>' +
       EM.escapeHtml(session.title || (session.set ? 'Set' : (session.mix ? 'Daily mix' : ('Level ' + session.level)))) +
       ' · Question ' + (session.index + 1) + ' of ' + session.count + '</p>' +
       (session.msg ? '<p class="session-msg">' + EM.escapeHtml(session.msg) + '</p>' : '') +
@@ -177,7 +182,19 @@ const Player = (function () {
       paint(false);
     };
 
-    document.getElementById('stop').onclick = function () { EM.home(); };
+    function confirmLeave() {
+      if (!assigned) return true;
+      return window.confirm('Leave this practice? Your answers so far won\u2019t be saved.');
+    }
+    document.getElementById('leave').onclick = function () {
+      if (!confirmLeave()) return;
+      if (assigned) EM.home();
+      else EM.openLevels(session.topicId);
+    };
+    document.getElementById('toHome').onclick = function () {
+      if (!confirmLeave()) return;
+      EM.home();
+    };
     const show = document.getElementById('showSolution');
     if (show) show.onclick = function () {
       phase = 'steps';

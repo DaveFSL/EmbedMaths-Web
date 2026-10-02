@@ -116,6 +116,8 @@ h2 { font-size: 22px; margin: 0; }
 .btn.dark { background: var(--teal-deep); color: #fff; }
 .btn.peach { background: #f6e2d4; color: var(--orange); }
 .btn svg { width: 18px; height: 18px; }
+.play-nav { display: flex; align-items: center; gap: 8px; }
+.btn.icon-btn { width: 44px; min-width: 44px; padding: 0; }
 .text-link { background: none; border: 0; color: var(--teal); text-decoration: underline; min-height: 44px; font-weight: 650; }
 
 .teacher {
@@ -298,13 +300,11 @@ h2 { font-size: 22px; margin: 0; }
 .div-layout { display: flex; align-items: flex-start; gap: 18px; flex-wrap: wrap; margin-top: 18px; }
 .div-work { flex: 1; min-width: 240px; }
 .bus { display: flex; align-items: flex-end; gap: 8px; font-size: clamp(26px, 3vw, 40px); font-weight: 760; line-height: 1; }
-.bus-divisor { font-size: 1em; padding-bottom: 4px; }
+.bus-divisor { font-size: 1em; padding-bottom: 2px; }
 .bus-board {
   display: grid;
   grid-template-rows: auto auto;
   align-items: end;
-  border-left: 3px solid var(--ink);
-  border-radius: 14px 0 0 0;
 }
 .bus-ans, .bus-slot {
   display: flex;
@@ -313,6 +313,17 @@ h2 { font-size: 22px; margin: 0; }
   min-height: 1.2em;
 }
 .bus-slot { border-top: 3px solid var(--ink); padding-top: 6px; position: relative; }
+.bus-slot.bracket::before {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: -3px;
+  bottom: 0;
+  width: 3px;
+  background: var(--ink);
+  border-radius: 12px 0 0 0;
+}
+.bus-figwrap { position: relative; display: inline-flex; align-items: flex-end; justify-content: center; }
 .bus-ans.ph, .bus-fig.ph {
   color: var(--orange);
   border: 1.5px dashed var(--orange);
@@ -322,17 +333,19 @@ h2 { font-size: 22px; margin: 0; }
   line-height: 1.05;
   justify-content: center;
 }
-.bus-rem {
+.bus-figwrap .bus-rem {
   position: absolute;
-  right: calc(50% + 0.78em + 8px);
-  bottom: 0.12em;
+  top: -0.42em;
+  left: -0.55em;
   color: var(--orange);
-  font-size: 0.42em;
+  font-size: 0.46em;
   font-weight: 760;
   line-height: 1;
   margin: 0;
 }
 .bus-r { font-size: 0.62em; font-weight: 760; padding: 0 4px 2px; justify-content: flex-start; }
+.div-answer { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.35em; }
+.check-keep { white-space: nowrap; }
 .mult-wrap { min-width: 168px; max-width: 220px; }
 .mult-closed, .mult-toggle {
   min-height: 44px;

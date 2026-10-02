@@ -2,7 +2,6 @@
 const Division = (function () {
   const DIGIT_DIVS = [2, 3, 4, 5, 6, 7, 8, 9];
   const TERM_DIVS = [2, 4, 5, 8];
-  const TWO_DIVS = [11, 12, 15, 20, 25];
   const WHOLE = ['ones', 'tens', 'hundreds', 'thousands', 'ten-thousands'];
   const DECIMALS = ['tenths', 'hundredths', 'thousandths'];
   const WORD = {
@@ -168,6 +167,13 @@ const Division = (function () {
     return cols.some(function (col, i) { return col.r > 0 && i < cols.length - 1; }) ||
       cols.some(function (col) { return col.remIn > 0; });
   }
+  function regroups(cols) {
+    let n = 0;
+    cols.forEach(function (col, i) {
+      if (!col.added && col.r > 0 && i < cols.length - 1) n += 1;
+    });
+    return n;
+  }
 
   function buildRecord(text, divisor, level, mode) {
     const bits = String(text).split('.');
@@ -269,12 +275,14 @@ const Division = (function () {
       else if (col.r > 0) line += ' Remainder ' + col.r + '.';
       return line;
     }
-    if (two && col.r > 0) {
+    if (two) {
       const multiple = col.q * d;
       let line = heading + ' \u00f7 ' + d + '. The largest multiple that isn\u2019t bigger than ' + col.value +
-        ' is ' + multiple + ' (' + col.q + ' \u00d7 ' + d + '). Write ' + col.q + ', remainder ' + col.r + '.';
-      if (next) line += regroupLine(col, next);
-      else if (q.mode === 'remainder') line += remainderLine(q);
+        ' is ' + multiple + ' (' + col.q + ' \u00d7 ' + d + '). Write ' + col.q;
+      if (col.r > 0) line += ', remainder ' + col.r;
+      line += '.';
+      if (next && col.r > 0) line += regroupLine(col, next);
+      else if (!next && q.mode === 'remainder' && q.rem > 0) line += remainderLine(q);
       return line;
     }
     let line = heading + ' \u00f7 ' + d + ' = ' + col.q;
@@ -391,26 +399,30 @@ const Division = (function () {
 
   function busHtml(q, through) {
     const showAll = through == null || through >= q.cols.length;
-    let template = '10px';
+    let template = '';
     let ans = '';
     let digs = '';
-    let gi = 2;
+    let gi = 1;
+    let bracketed = false;
     q.cols.forEach(function (col, i) {
       const reached = showAll || i <= through;
-      if (col.added && !reached) return;
+      const born = showAll || i <= through + 1;
+      if (col.added && !born) return;
       if (col.pointBefore) {
-        template += ' 0.42em';
+        template += (template ? ' ' : '') + '0.42em';
         ans += '<span class="bus-ans" style="grid-column:' + gi + '">' + (reached ? '.' : '') + '</span>';
         digs += '<span class="bus-slot" style="grid-column:' + gi + '">.</span>';
         gi += 1;
       }
-      template += ' 1.6em';
+      template += (template ? ' ' : '') + '1.6em';
       const fig = reached ? String(col.q) : '';
       ans += '<span class="bus-ans' + (reached && col.placeholder ? ' ph' : '') + '" style="grid-column:' + gi + '">' + fig + '</span>';
-      const rem = reached && col.remIn > 0 ? '<sup class="bus-rem">' + col.remIn + '</sup>' : '';
+      const rem = born && col.remIn > 0 ? '<sup class="bus-rem">' + col.remIn + '</sup>' : '';
       const digCls = col.added ? ' ph' : '';
-      digs += '<span class="bus-slot" style="grid-column:' + gi + '">' + rem +
-        '<span class="bus-fig' + digCls + '">' + col.digit + '</span></span>';
+      const bracket = !bracketed ? ' bracket' : '';
+      bracketed = true;
+      digs += '<span class="bus-slot' + bracket + '" style="grid-column:' + gi + '"><span class="bus-figwrap">' +
+        rem + '<span class="bus-fig' + digCls + '">' + col.digit + '</span></span></span>';
       gi += 1;
     });
     if (showAll && (q.mode === 'remainder' || q.mode === 'fraction') && q.rem > 0) {
@@ -469,7 +481,12 @@ const Division = (function () {
     let work = busHtml(q, through < 0 ? -1 : through);
     if (q.mode === 'fraction' && stepIndex >= 2) work += shareHtml(q);
     if (last) {
-      work += '<p class="div-answer"><strong>Answer: ' + answerLabel(q) + '</strong> \u00b7 ' + checkLine(q) + '</p>';
+      work += '<p class="div-answer"><strong>Answer: ' + answerLabel(q) + '</strong><span class="check-keep"> \u00b7 ' + checkLine(q) + '</span></p>';
+      if (EM.session && EM.session.est !== false) {
+        const est = estimate(q);
+        const shown = (q.mode === 'remainder' || q.mode === 'fraction') ? String(q.wholeAns) : q.answerText;
+        work += '<p class="closeness">' + shown + ' is close to the estimate of ' + est.answer + ' \u2713</p>';
+      }
       if (q.leadingPh && q.mode !== 'remainder' && q.mode !== 'fraction') {
         work += '<p class="mult-note">The placeholder 0 at the front isn\u2019t needed when we write the answer: ' + q.answerText + '.</p>';
       }
@@ -516,7 +533,13 @@ const Division = (function () {
 
   function fits(level, q) {
     if (!q) return false;
-    if (level === 11) return TWO_DIVS.indexOf(q.divisor) >= 0 && q.exact && q.len === 3 && !q.dp && q.rem === 0;
+    if (level === 11) {
+      if (q.divisor < 11 || q.divisor > 25 || q.dp) return false;
+      if (q.len !== 3 && q.len !== 4) return false;
+      if (regroups(q.cols) < 2) return false;
+      if (q.rem > 0) return q.mode === 'remainder';
+      return q.exact && q.rem === 0;
+    }
     if (q.divisor < 2 || q.divisor > 9) return false;
     if (level === 1) return q.len === 2 && q.exact && !q.dp && !q.hasRegroup && !q.leadingPh && !q.zeroInNumber && !q.zeroInAnswer;
     if (level === 2) return q.len === 2 && q.exact && !q.dp && q.hasRegroup && !q.leadingPh && !q.zeroInNumber && !q.zeroInAnswer;
@@ -554,12 +577,28 @@ const Division = (function () {
       return makeFrom(text, d, level, 'exact');
     }
     if (level === 11) {
-      const d = pick(TWO_DIVS);
-      const q = irand(Math.ceil(100 / d), Math.floor(999 / d));
-      const dividend = q * d;
-      if (dividend < 100 || dividend > 999) return null;
-      if (wantZero && String(dividend).indexOf('0') < 0 && String(q).indexOf('0') < 0) return null;
-      return makeFrom(String(dividend), d, level, 'exact');
+      const d = irand(11, 25);
+      const withRem = Math.random() < 0.33;
+      const four = Math.random() < 0.45;
+      const len = four ? 4 : 3;
+      const minN = four ? 1000 : 100;
+      const maxN = four ? 9999 : 999;
+      const rem = withRem ? irand(1, d - 1) : 0;
+      const minQ = Math.ceil(minN / d);
+      const maxQ = Math.floor((maxN - rem) / d);
+      if (maxQ < minQ) return null;
+      let quot = irand(minQ, maxQ);
+      if (Math.random() < 0.35) {
+        const s = String(quot);
+        if (s.length >= 2 && s.indexOf('0') < 0) {
+          const pos = irand(1, s.length - 1);
+          const nudged = parseInt(s.slice(0, pos) + '0' + s.slice(pos + 1), 10);
+          if (nudged >= 1) quot = nudged;
+        }
+      }
+      const dividend = quot * d + rem;
+      if (String(dividend).length !== len) return null;
+      return makeFrom(String(dividend), d, 11, rem ? 'remainder' : 'exact');
     }
     let d = pick(level === 8 || level === 9 ? TERM_DIVS : DIGIT_DIVS);
     let q;
@@ -681,7 +720,7 @@ const Division = (function () {
       { id: 8, name: 'Remainders as fractions', example: '157 \u00f7 4 = 39\u00bc' },
       { id: 9, name: 'Remainders as decimals', example: '157 \u00f7 4 = 39.25' },
       { id: 10, name: 'Decimal \u00f7 whole number', example: '7.56 \u00f7 3' },
-      { id: 11, name: 'Extension: 2-digit divisors', example: '852 \u00f7 12', extension: true }
+      { id: 11, name: 'Extension: 2-digit divisors', example: '1534 \u00f7 13', extension: true }
     ],
     tricky: [
       { id: 'zero', tags: ['Placeholder zero'], levels: [4, 5, 6] },
@@ -705,6 +744,9 @@ const Division = (function () {
       return q;
     },
     estimate: estimate,
+    estimateCue: function (q) {
+      return 'Estimate first: round to a friendly multiple of ' + q.divisor + '.';
+    },
     buildSteps: function (q) { return q.steps || buildSteps(q); },
     render: render,
     strategy: strategy,
