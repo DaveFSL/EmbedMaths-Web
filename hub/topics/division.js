@@ -368,9 +368,9 @@ const Division = (function () {
     if (q.mode === 'remainder' || q.mode === 'fraction') {
       const prod = q.wholeAns * q.divisor;
       return 'Check: ' + q.wholeAns + ' \u00d7 ' + q.divisor + ' = ' + prod +
-        ', plus the remainder ' + q.rem + ' = ' + q.dividendText + ' \u2713';
+        ', plus the remainder ' + q.rem + ' = ' + q.dividendText + '\u00a0\u2713';
     }
-    return 'Check: ' + q.answerText + ' \u00d7 ' + q.divisor + ' = ' + q.dividendText + ' \u2713';
+    return 'Check: ' + q.answerText + ' \u00d7 ' + q.divisor + ' = ' + q.dividendText + '\u00a0\u2713';
   }
 
   function listOpen(q) {
@@ -426,7 +426,7 @@ const Division = (function () {
       gi += 1;
     });
     if (showAll && (q.mode === 'remainder' || q.mode === 'fraction') && q.rem > 0) {
-      template += ' auto';
+      template += ' max-content';
       ans += '<span class="bus-ans bus-r" style="grid-column:' + gi + '">r ' + q.rem + '</span>';
       digs += '<span class="bus-slot" style="grid-column:' + gi + '"></span>';
     }
@@ -481,7 +481,7 @@ const Division = (function () {
     let work = busHtml(q, through < 0 ? -1 : through);
     if (q.mode === 'fraction' && stepIndex >= 2) work += shareHtml(q);
     if (last) {
-      work += '<p class="div-answer"><strong>Answer: ' + answerLabel(q) + '</strong><span class="check-keep"> \u00b7 ' + checkLine(q) + '</span></p>';
+      work += '<p class="div-answer"><strong>Answer: ' + answerLabel(q) + '</strong><span class="div-check">' + checkLine(q) + '</span></p>';
       if (EM.session && EM.session.est !== false) {
         const est = estimate(q);
         const shown = (q.mode === 'remainder' || q.mode === 'fraction') ? String(q.wholeAns) : q.answerText;

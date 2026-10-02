@@ -278,13 +278,57 @@ const Player = (function () {
     });
     const nextQ = document.getElementById('nextQ');
     if (nextQ) nextQ.onclick = commit;
-    const dock = document.querySelector('.dock');
-    const shell = document.querySelector('.shell.play');
-    if (dock && shell && window.matchMedia('(max-width: 600px)').matches) {
-      shell.style.paddingBottom = (dock.offsetHeight + 16) + 'px';
-    }
+    fitLayouts();
     if (scrollTop !== false) window.scrollTo(0, 0);
   }
+
+  function fitFont(el, box) {
+    if (!el || !box) return;
+    el.style.fontSize = '';
+    const avail = box.clientWidth;
+    if (avail <= 0) return;
+    if (el.scrollWidth <= avail + 1) return;
+    const size = parseFloat(getComputedStyle(el).fontSize);
+    let next = Math.max(15, size * avail / el.scrollWidth * 0.97);
+    el.style.fontSize = next + 'px';
+    if (el.scrollWidth > avail + 1) {
+      next = Math.max(15, parseFloat(el.style.fontSize) * avail / el.scrollWidth * 0.97);
+      el.style.fontSize = next + 'px';
+    }
+  }
+
+  function fitDivision(layout) {
+    const bus = layout.querySelector('.bus');
+    const work = layout.querySelector('.div-work');
+    if (!work) return;
+    layout.classList.remove('stacked');
+    if (bus) bus.style.fontSize = '';
+    if (bus && bus.scrollWidth > work.clientWidth + 1) {
+      const preferred = parseFloat(getComputedStyle(bus).fontSize);
+      const fitted = preferred * work.clientWidth / bus.scrollWidth;
+      if (fitted < 24 || work.clientWidth < 150) layout.classList.add('stacked');
+    }
+    if (bus) {
+      bus.style.fontSize = '';
+      fitFont(bus, work);
+    }
+  }
+
+  function fitLayouts() {
+    const layout = document.querySelector('.div-layout');
+    if (layout) fitDivision(layout);
+    document.querySelectorAll('.algo-grid-wrap').forEach(function (el) {
+      fitFont(el, el.parentElement);
+    });
+    document.querySelectorAll('.pv').forEach(function (el) {
+      const grid = el.querySelector('.pv-grid');
+      if (grid && el.scrollWidth > el.clientWidth + 1) fitFont(grid, el);
+    });
+  }
+
+  window.addEventListener('resize', function () {
+    if (document.querySelector('.shell.play')) fitLayouts();
+  });
 
   function commit() {
     const session = EM.session;
