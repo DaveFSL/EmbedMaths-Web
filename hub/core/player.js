@@ -166,8 +166,16 @@ const Player = (function () {
       (revealed ? stepHtml : '<p class="wait-note">The working stays hidden until you are ready.</p>') +
       strategy + '</section></div><div class="dock">' + check + '<div class="action-row">' + actions + '</div></div></div>';
 
-    question.view = { col: col, reveal: revealAll };
-    if (phase === 'steps') topic().render(question, revealAll ? steps.length - 1 : step, document.getElementById('algo'));
+    question.view = { col: col, reveal: revealAll, walking: walking, step: step };
+    if (phase === 'steps' || topic().showsPrep) {
+      topic().render(question, phase === 'steps' ? (revealAll ? steps.length - 1 : step) : -1, document.getElementById('algo'));
+    }
+    const multToggle = document.getElementById('multToggle');
+    if (multToggle) multToggle.onclick = function () {
+      const open = multToggle.getAttribute('aria-expanded') === 'true';
+      EM.session.multiplesOpen = !open;
+      paint(false);
+    };
 
     document.getElementById('stop').onclick = function () { EM.home(); };
     const show = document.getElementById('showSolution');

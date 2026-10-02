@@ -18,7 +18,7 @@ const Levels = (function () {
       const here = level.id === prog.level;
       const on = level.id === selected;
       const ticked = done.has(level.id) && !here;
-      const cls = 'level-card' + (on ? ' on' : '') + (ticked ? ' done' : '');
+      const cls = 'level-card' + (level.extension ? ' level-ext' : '') + (on ? ' on' : '') + (ticked ? ' done' : '');
       const kicker = 'Level ' + level.id + (here && on ? ' · You are here' : '');
       return '<button type="button" class="' + cls + '" data-level="' + level.id + '"><span class="kicker">' +
         kicker + '</span><span class="level-name">' + level.name + '</span><span class="level-ex">' +
@@ -33,7 +33,7 @@ const Levels = (function () {
     document.getElementById('app').innerHTML =
       '<div class="shell picker"><div class="picker-top"><button type="button" class="btn ghost" id="backHome">' +
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Home</button></div>' +
-      '<h1>' + topic.name + '</h1><p class="lede">Pick a level. The highlighted one is where you are up to.</p>' +
+      '<h1>' + topic.name + '</h1><p class="lede">' + (topic.lede || 'Pick a level. The highlighted one is where you are up to.') + '</p>' +
       '<div class="level-grid">' + cards +
       '<button type="button" class="level-card ext-card" id="extOpen"><span class="level-name">Finished your level? Try the extension challenges \u2192</span></button></div>' +
       '<div class="picker-bar"><div class="q-block"><span class="eyebrow">Questions</span>' +

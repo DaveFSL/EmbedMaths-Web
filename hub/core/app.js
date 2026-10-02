@@ -38,6 +38,7 @@ const EM = (function () {
     if (!isFinite(tricky) || tricky < 0) tricky = 0;
     if (tricky > 3) tricky = 3;
     const go = params.get('go') === '1';
+    const mul = params.get('mul') === '1';
     const ttl = cleanText(params.get('ttl'), 50);
     const msg = cleanText(params.get('msg'), 80);
     const fin = cleanText(params.get('fin'), 80);
@@ -49,7 +50,7 @@ const EM = (function () {
     const hasLink = t === 'mix' || rows.length > 0 || !!(t && topics[t] && lvl && !isNaN(lvl));
     return {
       t: t, lvl: lvl, q: rows.length ? rowsTotal(rows) : q,
-      est: est, strat: strat, tricky: tricky, go: go,
+      est: est, strat: strat, tricky: tricky, mul: mul, go: go,
       ttl: ttl, msg: msg, fin: fin, due: due, order: order, seed: seed, rows: rows, hasLink: hasLink
     };
   }
@@ -70,7 +71,7 @@ const EM = (function () {
 
   const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const SHORT = { add: 'Addition', sub: 'Subtraction', mul: 'Multiplication', pv: 'Place value', conv: 'Converting units' };
+  const SHORT = { add: 'Addition', sub: 'Subtraction', mul: 'Multiplication', div: 'Division', pv: 'Place value', conv: 'Converting units' };
 
   function formatDue(iso) {
     if (!iso) return '';
@@ -96,7 +97,7 @@ const EM = (function () {
     if (!raw) return [];
     const found = [];
     String(raw).split(',').forEach(function (part) {
-      const match = String(part).trim().match(/^(add|sub|mul|pv|conv)(\d+)x(\d+)$/i);
+      const match = String(part).trim().match(/^(add|sub|mul|div|pv|conv)(\d+)x(\d+)$/i);
       if (!match) return;
       const id = match[1].toLowerCase();
       const topic = topics[id];
@@ -243,6 +244,7 @@ const EM = (function () {
     const pvMeta = 'Level ' + Store.progressFor('pv').level + ' of ' + pv.levels.length;
     const conv = topics.conv;
     const convMeta = 'Level ' + Store.progressFor('conv').level + ' of ' + conv.levels.length;
+    const divMeta = 'Level ' + Store.progressFor('div').level + ' of ' + topics.div.levels.length;
     let strip = '';
     if (link && link.hasLink) {
       strip = teacherStrip(link, '<div class="teacher-actions"><button type="button" class="btn light" id="teacherStart">Start ' +
@@ -258,7 +260,7 @@ const EM = (function () {
       tile(ICONS.plus, 'Addition', addMeta, { action: 'add' }) +
       tile(ICONS.minus, 'Subtraction', subMeta, { action: 'sub' }) +
       tile(ICONS.times, 'Multiplication', mulMeta, { action: 'mul' }) +
-      tile(ICONS.divide, 'Division', 'Coming soon', { soon: true }) +
+      tile(ICONS.divide, 'Division', divMeta, { action: 'div' }) +
       '</div></section><div class="side-col">' +
       '<section class="panel"><h2>Place value</h2><div class="tile-row">' +
       tile(ICONS.place, '× and ÷ by 10, 100, 1000', pvMeta, { action: 'pv' }) +
@@ -279,6 +281,8 @@ const EM = (function () {
     if (addBtn) addBtn.onclick = function () { openLevels('add'); };
     const mulBtn = app.querySelector('[data-go="mul"]');
     if (mulBtn) mulBtn.onclick = function () { openLevels('mul'); };
+    const divBtn = app.querySelector('[data-go="div"]');
+    if (divBtn) divBtn.onclick = function () { openLevels('div'); };
     const pvBtn = app.querySelector('[data-go="pv"]');
     if (pvBtn) pvBtn.onclick = function () { openLevels('pv'); };
     const convBtn = app.querySelector('[data-go="conv"]');
@@ -350,6 +354,8 @@ const EM = (function () {
       count: questions.length,
       est: opts.est !== false,
       strat: opts.strat !== false,
+      mulDefault: !!opts.mul,
+      multiplesOpen: null,
       msg: opts.msg || '',
       title: opts.title || '',
       due: opts.due || '',
@@ -385,7 +391,7 @@ const EM = (function () {
   }
 
   function buildMixQuestions(opts) {
-    const ids = ['add', 'sub', 'mul', 'pv', 'conv'];
+    const ids = ['add', 'sub', 'mul', 'div', 'pv', 'conv'];
     let count = parseInt(opts.count, 10);
     if (!isFinite(count) || count < 1 || count > 30) count = 8;
     let trickyN = opts.tricky == null ? 1 : opts.tricky;
@@ -456,6 +462,7 @@ const EM = (function () {
       tricky: info.tricky,
       est: info.est,
       strat: info.strat,
+      mul: info.mul,
       msg: info.msg,
       fin: info.fin,
       title: info.ttl,
@@ -502,6 +509,8 @@ const EM = (function () {
       count: questions.length,
       est: opts.est !== false,
       strat: opts.strat !== false,
+      mulDefault: !!opts.mul,
+      multiplesOpen: null,
       focus: null,
       questions: questions,
       index: 0,
@@ -522,6 +531,8 @@ const EM = (function () {
       count: questions.length,
       est: opts.est !== false,
       strat: opts.strat !== false,
+      mulDefault: !!opts.mul,
+      multiplesOpen: null,
       msg: opts.msg || '',
       title: opts.title || '',
       due: opts.due || '',

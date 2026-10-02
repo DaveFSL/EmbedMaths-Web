@@ -18,7 +18,7 @@ One page where students, teachers and parents choose what to practise. It replac
 4. **Converting units.** New topic that reuses the place value slide.
 5. **Class link builder + QR code**, and Daily mix across the topics that are ready.
 6. **Redirects (done).** Root `index.html` forwards to `/hub/` and keeps the query string. The old add/sub and multiplication pages forward to `/hub/?t=sub` and `/hub/?t=mul`; the originals are in `/archive/`. The hub was not moved.
-7. Later: Division, Time, area units. These still show “Coming soon” on the home screen.
+7. **Division (done).** Short division, 11 levels, in `topics/division.js`. Time and area units still show “Coming soon”.
 
 ---
 
@@ -44,7 +44,7 @@ EmbedMaths-Web/
       multiplication.js
       place-value.js
       conversions.js
-      division.js            later
+      division.js            short division, 11 levels
     index.html               links the manifest and apple-touch-icon
   archive/                   original add/sub and multiplication pages
   icons/  manifest.webmanifest   icons stay here; start_url and scope are https://embedmaths.com.au/hub/
@@ -82,7 +82,7 @@ The mockup canvas has nine screens. Build these:
 ### Home (grouped by area)
 - Top strip: **Your practice**. Shows the practice from the link (topic, level, number of questions), a Start button and "Daily mix instead". Hide it if there's no link. The title is the heading.
 - Sections:
-  - **Written methods**: Addition, Subtraction, Multiplication, Division (coming soon)
+  - **Written methods**: Addition, Subtraction, Multiplication, Division
   - **Place value**: × and ÷ by 10, 100, 1000
   - **Measurement**: Converting units, Time (coming soon)
   - **Number facts**: Times tables → opens `https://davefsl.github.io/FlashFlips-Web/`
@@ -124,7 +124,8 @@ The hub reads these on load. A link with `t=` and `lvl=` fills the "Your practic
 
 | Param | Meaning | Example |
 |---|---|---|
-| `t` | topic id | `sub`, `add`, `mul`, `pv`, `conv`, `mix` |
+| `t` | topic id | `sub`, `add`, `mul`, `div`, `pv`, `conv`, `mix` |
+| `mul` | open the division multiples list | `1` |
 | `lvl` | level number | `6` |
 | `q` | questions | `5`, `8`, `10` |
 | `est` | estimate first | `1` / `0` |
@@ -177,6 +178,21 @@ A set link uses `t=set` plus `set=`. `q` may be any count from 1 to 30. Invalid 
 5. 3-digit × 2-digit
 6. Decimal × whole (3.4 × 6, 2.35 × 4)
 7. Decimal × decimal (3.4 × 0.6)
+
+### Division (short division)
+1. No regrouping (84 ÷ 4)
+2. Regrouping (72 ÷ 3)
+3. 3-digit numbers (456 ÷ 3)
+4. First digit too small (256 ÷ 4): placeholder 0 above the first digit
+5. Zero in the answer (618 ÷ 3 = 206)
+6. 4-digit numbers (5868 ÷ 6)
+7. Remainders (157 ÷ 4 = 39 r1)
+8. Remainders as fractions (157 ÷ 4 = 39¼)
+9. Remainders as decimals (157 ÷ 4 = 39.25)
+10. Decimal ÷ whole number (7.56 ÷ 3 = 2.52)
+11. Extension: 2-digit divisors (852 ÷ 12 = 71). Divisors 11, 12, 15, 20, 25. Dashed orange card. The multiples list opens by default.
+
+Levels 1–6 and 10 divide exactly. Level 7 always has a remainder. Levels 8 and 9 use divisors 2, 4, 5 and 8. A **Multiples of n** list sits beside the working and can be opened before the reveal (`mul=1` opens it for the session).
 
 ### × and ÷ by 10, 100, 1000
 1. Whole numbers × 10, 100, 1000 (45 × 100)

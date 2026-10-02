@@ -4,6 +4,7 @@ const LinkBuilder = (function () {
     { id: 'add', label: 'Addition' },
     { id: 'sub', label: 'Subtraction' },
     { id: 'mul', label: 'Multiplication' },
+    { id: 'div', label: 'Division' },
     { id: 'pv', label: '× ÷ 10, 100, 1000' },
     { id: 'conv', label: 'Converting units' },
     { id: 'mix', label: 'Daily mix' }
@@ -24,11 +25,12 @@ const LinkBuilder = (function () {
     rows: [{ topic: 'sub', level: 6, count: 8 }],
     order: 'g',
     same: false,
-    seed: ''
+    seed: '',
+    mul: false
   };
 
   function usesWritten(id) {
-    return id === 'add' || id === 'sub' || id === 'mul' || id === 'mix';
+    return id === 'add' || id === 'sub' || id === 'mul' || id === 'div' || id === 'mix';
   }
 
   function clean(raw, max) {
@@ -53,6 +55,11 @@ const LinkBuilder = (function () {
   function writtenOn() {
     if (state.mode === 'one') return usesWritten(state.topic);
     return state.rows.some(function (row) { return usesWritten(row.topic); });
+  }
+
+  function divisionOn() {
+    if (state.mode === 'one') return state.topic === 'div' || state.topic === 'mix';
+    return state.rows.some(function (row) { return row.topic === 'div'; });
   }
 
   function linkInfo() {
@@ -104,6 +111,7 @@ const LinkBuilder = (function () {
     if (state.msg.trim()) params.set('msg', state.msg.trim());
     if (state.fin.trim()) params.set('fin', state.fin.trim());
     if (state.same && state.seed) params.set('seed', state.seed);
+    if (divisionOn() && state.mul) params.set('mul', '1');
     return pageBase() + '?' + params.toString();
   }
 
@@ -325,6 +333,9 @@ const LinkBuilder = (function () {
       '<label class="check-line"><input type="checkbox" id="estOn"' + (state.est ? ' checked' : '') + '> Estimate first</label>' +
       '<label class="check-line"><input type="checkbox" id="stratOn"' + (state.strat ? ' checked' : '') + '> Show a mental strategy after the solution</label>' +
       '</div>' +
+      '<div class="field" id="mulToggle"' + (divisionOn() ? '' : ' hidden') + '>' +
+      '<label class="check-line"><input type="checkbox" id="mulOn"' + (state.mul ? ' checked' : '') + '> Open the multiples list by default</label>' +
+      '</div>' +
       '<label class="check-line"><input type="checkbox" id="sameOn"' + (state.same ? ' checked' : '') +
       '> Same questions for everyone</label>' +
       '<div class="field"><button type="button" class="btn ghost preview-toggle" id="previewToggle">Preview</button>' +
@@ -373,6 +384,8 @@ const LinkBuilder = (function () {
     if (levelField) levelField.hidden = state.topic === 'mix';
     const written = document.getElementById('writtenToggles');
     if (written) written.hidden = !writtenOn();
+    const mulToggle = document.getElementById('mulToggle');
+    if (mulToggle) mulToggle.hidden = !divisionOn();
     markSeg('mode', state.mode);
     markSeg('order', state.order);
     markSeg('q', [5, 8, 10].indexOf(state.q) >= 0 ? String(state.q) : '');
@@ -529,6 +542,8 @@ const LinkBuilder = (function () {
     if (estOn) estOn.onchange = function () { state.est = estOn.checked; refresh(); };
     const stratOn = document.getElementById('stratOn');
     if (stratOn) stratOn.onchange = function () { state.strat = stratOn.checked; refresh(); };
+    const mulOn = document.getElementById('mulOn');
+    if (mulOn) mulOn.onchange = function () { state.mul = mulOn.checked; refresh(); };
     document.getElementById('sameOn').onchange = function () {
       state.same = this.checked;
       if (state.same && !state.seed) state.seed = newSeed();
