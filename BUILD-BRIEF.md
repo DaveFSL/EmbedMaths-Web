@@ -7,6 +7,7 @@ One page where students, teachers and parents choose what to practise. It replac
 - Audience: Years 4–6 students on 1:1 iPads (main target), plus teachers on a board and parents on phones.
 - Routine stays the same: **estimate → work it out on paper or whiteboard → check step by step**. Students never type answers into columns.
 - Plain HTML, CSS and JS. No framework and no build step. It must not depend on a CDN; put small libraries in `core/vendor/`.
+- **Version line.** Home shows `VERSION` from `hub/index.html`. The same id is in `hub/about.html`. It is the short commit id, and it is what refreshes cached scripts and styles. Every commit that changes the app must update both, so the line matches what is live. `.github/workflows/version.yml` does this on each push to `main`: it writes that commit's short id into both pages, deploys the site, and pushes a "Stamp version …" commit so the repo matches the live page. A commit cannot contain its own id, so the line shows the app commit, and the stamp commit only records it.
 
 ---
 
@@ -91,7 +92,7 @@ The mockup canvas has nine screens. Build these:
   - Left: **Written methods** (Addition, Subtraction, Multiplication, Division, in a 2 × 2 grid), then **Fractions, decimals & percentages**. That group is three tiles in a row, with the icon above the words: Fractions, Percentages (Coming soon), Convert (Coming soon).
   - Right: **Place value & measurement** (× and ÷ by 10, 100, 1000, then Converting units, stacked), then **Number facts** (Times tables → `https://davefsl.github.io/FlashFlips-Web/`). The place-value icon is ×10 above ÷10, centred in the box at a size that fits.
 - Each working tile shows "Level X of Y" from saved progress, then a small bold teal example from the topic's `homeExample`. Coming soon examples are grey.
-- Footer, bottom-left: "Progress is saved on this device only." and the version number (the previous shipped commit). It stays pinned there, inside the iPhone/iPad safe area. If the page content would reach the bottom, the footer sits at the end of the page instead, and never covers a tile.
+- Footer, bottom-left: "Progress is saved on this device only." and the version number (the short id of the commit that is live). It stays pinned there, inside the iPhone/iPad safe area. If the page content would reach the bottom, the footer sits at the end of the page instead, and never covers a tile.
 - On a phone, one column: Written methods, Fractions…, Place value & measurement, Number facts. The How it works steps stack. Long tile names wrap.
 
 ### Level picker (one per topic)

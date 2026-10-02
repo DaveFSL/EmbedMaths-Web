@@ -1,0 +1,58 @@
+# Writes the short commit id into the pages, then deploys that copy.
+# A commit cannot contain its own id, so this runs after the push.
+name: Stamp version
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  stamp:
+    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, 'Stamp version')
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Write the short commit id
+        run: |
+          short="${GITHUB_SHA::7}"
+          perl -pi -e "s/var VERSION = '[^']*'/var VERSION = '${short}'/" hub/index.html hub/about.html
+          echo "Version is ${short}"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Save the id in the repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add hub/index.html hub/about.html
+          if git diff --cached --quiet; then
+            echo "Already stamped."
+            exit 0
+          fi
+          git commit -m "Stamp version ${GITHUB_SHA::7}"
+          git push
