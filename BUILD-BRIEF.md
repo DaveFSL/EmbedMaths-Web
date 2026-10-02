@@ -19,6 +19,7 @@ One page where students, teachers and parents choose what to practise. It replac
 5. **Class link builder + QR code**, and Daily mix across the topics that are ready.
 6. **Redirects (done).** Root `index.html` forwards to `/hub/` and keeps the query string. The old add/sub and multiplication pages forward to `/hub/?t=sub` and `/hub/?t=mul`; the originals are in `/archive/`. The hub was not moved.
 7. **Division (done).** Short division, 11 levels, in `topics/division.js`. Measurement on Home is Converting units only. Time is not a tile and not in Set practice.
+8. **Fractions (done).** Eight levels in `topics/fractions.js`. Home has a Fractions tile. Percentages, and Fractions–decimals–percentages, stay as Coming soon.
 
 ---
 
@@ -45,6 +46,7 @@ EmbedMaths-Web/
       place-value.js
       conversions.js
       division.js            short division, 11 levels
+      fractions.js           eight fraction levels
     index.html               links the manifest and apple-touch-icon
   archive/                   original add/sub and multiplication pages
   icons/  manifest.webmanifest   icons stay here; start_url and scope are https://embedmaths.com.au/hub/
@@ -86,6 +88,7 @@ The mockup canvas has nine screens. Build these:
   - **Place value**: × and ÷ by 10, 100, 1000
   - **Measurement**: Converting units only
   - **Number facts**: Times tables → opens `https://davefsl.github.io/FlashFlips-Web/`
+  - **Fractions, decimals & percentages**: Fractions. Percentages, and Fractions, decimals & percentages, are Coming soon tiles.
 - Each tile shows "Level X of Y" from saved progress.
 - Top right: **For teachers & parents**.
 - Footer, bottom-left: "Progress is saved on this device only." and the version number (the previous shipped commit). It stays pinned there, inside the iPhone/iPad safe area. If the page content would reach the bottom, the footer sits at the end of the page instead, and never covers a tile.
@@ -124,8 +127,8 @@ The hub reads these on load. A link with `t=` and `lvl=` fills the "Your practic
 
 | Param | Meaning | Example |
 |---|---|---|
-| `t` | topic id | `sub`, `add`, `mul`, `div`, `pv`, `conv`, `mix` |
-| `mul` | open the division multiples list | `1` |
+| `t` | topic id | `sub`, `add`, `mul`, `div`, `frac`, `pv`, `conv`, `mix` |
+| `mul` | open the multiples list (division, or fractions) | `1` |
 | `lvl` | level number | `6` |
 | `q` | questions | `5`, `8`, `10` |
 | `est` | estimate first | `1` / `0` |
@@ -202,6 +205,33 @@ Levels 1–6 and 10 divide exactly. Level 7 always has a remainder. Levels 8 and
 
 **Multiples list.** A **Multiples of n** dropdown sits in its own column beside the working, with a gap. When there isn't room it moves underneath. It can be opened before the reveal (`mul=1` opens it for the session; level 11 opens it by default). Rows are not highlighted until the working is revealed.
 
+### Fractions
+1. Equivalent fractions (3/4 = ?/12). Denominators up to 12, and sometimes 100. The missing number is the new numerator, so 9/12 stays as twelfths.
+2. Simplifying (18/24 → 3/4). Always fully, using the highest common factor.
+3. Improper ↔ mixed numbers (17/5 → 3 2/5, and 2 3/8 → 19/8). Both directions. Writing as an improper fraction keeps that improper fraction as the answer.
+4. Fraction of an amount (3/5 of 45). Whole-number answers only. Amounts up to 120, then up to 1000 in the extension questions.
+5. Add and subtract with the same denominator, including mixed numbers (2 3/8 + 1 7/8 = 4 2/8 = 4 1/4).
+6. Add and subtract where one denominator is a multiple of the other (2/3 + 5/12).
+7. Compare and order (3/4, 2/3, 5/8, smallest first). Use a common denominator.
+8. Extension: add and subtract with unrelated denominators (3/4 + 2/3). Dashed orange card.
+
+Final answers are fully simplified. An improper answer becomes a mixed number, except on level 3 when the question asks for the improper fraction.
+
+**On screen.** Fractions are stacked numbers with a horizontal line, never a slash. Working is in rows, and every fraction in a column has the same width:
+
+3/4 + 2/3
+= 9/12 + 8/12
+= 17/12
+= 1 5/12
+
+The small orange × labels (×3, ×4) sit just to the right of the numerator and the denominator and take up no layout space, so the lines, the + and = signs and the answers line up from row to row. No circles, ovals or arrows.
+
+**Fraction of an amount.** "Divide by the bottom, times by the top." A small orange × sits to the left of the numerator and a small orange ÷ to the left of the denominator. Underneath, a bar of equal parts: for 3/5 of 45, five parts labelled 9, three shaded, giving 27. No reminder caption.
+
+**Common denominator.** Write the multiples of each denominator and use the first number in both lists. The same **Multiples of n** dropdown as division. It can be opened before the reveal. Nothing is highlighted until after the reveal, then the common multiple is highlighted in each list. Skip any step that is not needed. For 3/4 + 2/3 the steps are: find the common denominator and write 12 as both denominators; "What you do to the top, you do to the bottom" (4 × 3 = 12, so 3 × 3 = 9, and 3 × 4 = 12, so 2 × 4 = 8); add the numerators (9 + 8 = 17); write 17/12; change to a mixed number (1 5/12).
+
+Self-check chips: Common denominator, Top and bottom, Adding / subtracting, Simplifying, Mixed numbers, Divide and times. A chip only shows when that step was used.
+
 ### × and ÷ by 10, 100, 1000
 1. Whole numbers × 10, 100, 1000 (45 × 100)
 2. Whole numbers ÷ with whole answers (4500 ÷ 100)
@@ -247,6 +277,13 @@ Levels 1–6 and 10 divide exactly. Level 7 always has a remainder. Levels 8 and
 - Self-check chips: Which rule, Which way, How many places, Zeros hold the place, Decimal point.
 - Level 7 uses the chart's "one measurement, five ways" idea: pick the unit that gives a number you can hold in your head.
 
+### Fractions
+- Equivalent fractions: "What you do to the top, you do to the bottom." Example: "4 × 3 = 12, so 3 × 3 = 9."
+- Simplifying uses the same sentence, dividing by the highest common factor: "24 ÷ 6 = 4, so 18 ÷ 6 = 3."
+- Fraction of an amount: "Divide by the bottom, times by the top." Example: "45 ÷ 5 = 9, 9 × 3 = 27."
+- A common denominator comes from the multiples lists: the first number that is in both lists.
+- Same-denominator subtraction that needs a whole uses **Regroup**. Never "carry", "trade" or "left over".
+
 ### Written methods
 - Student-facing text uses Australian Curriculum (ACARA v9) words in every step, level name and self-check chip: **regroup** and **remainder**. Never "carry", "trade" or "left over".
 - Keep the crossed-out digit with the new value above it. For regrouping across zeros, show every 0 becoming 9.
@@ -257,7 +294,7 @@ Levels 1–6 and 10 divide exactly. Level 7 always has a remainder. Levels 8 and
 - If the working is too wide for its column, scale the digits down to fit.
 - When there isn't room (long numbers, narrower screens), move the side panel underneath the working.
 - Shaded boxes (the answer/check box, hints, Check yourself, steps) are the full width of their column and grow with their text. Text wraps inside the box.
-- Check the longest cases at 1180×820, 1024×768 and 390 wide, with the multiples list open and closed: 4-digit ÷ 2-digit with a remainder, a decimal division, 3-digit × 2-digit, 2 dp × 1 dp, subtraction level 9, addition of three numbers, converting units with 5 amounts, and converting units multiple choice.
+- Check the longest cases at 1180×820, 1024×768 and 390 wide, with the multiples list open and closed: 4-digit ÷ 2-digit with a remainder, a decimal division, 3-digit × 2-digit, 2 dp × 1 dp, subtraction level 9, addition of three numbers, converting units with 5 amounts, converting units multiple choice, fraction of an amount with the bar, and adding fractions with two multiples lists.
 
 ---
 
@@ -325,8 +362,7 @@ Live: https://embedmaths.com.au/hub/
 
 ## Next topics
 
-Not on Home, and not in Set practice, until they are built:
+Not on Home as a working tile, and not in Set practice, until they are built. Home shows them as Coming soon:
 
-- Fractions
 - Percentages
 - Fractions–decimals–percentages

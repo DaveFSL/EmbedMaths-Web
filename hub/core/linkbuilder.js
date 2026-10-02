@@ -5,6 +5,7 @@ const LinkBuilder = (function () {
     { id: 'sub', label: 'Subtraction' },
     { id: 'mul', label: 'Multiplication' },
     { id: 'div', label: 'Division' },
+    { id: 'frac', label: 'Fractions' },
     { id: 'pv', label: '× ÷ 10, 100, 1000' },
     { id: 'conv', label: 'Converting units' },
     { id: 'mix', label: 'Daily mix' }
@@ -30,7 +31,7 @@ const LinkBuilder = (function () {
   };
 
   function usesWritten(id) {
-    return id === 'add' || id === 'sub' || id === 'mul' || id === 'div' || id === 'mix';
+    return id === 'add' || id === 'sub' || id === 'mul' || id === 'div' || id === 'frac' || id === 'mix';
   }
 
   function clean(raw, max) {
@@ -58,8 +59,8 @@ const LinkBuilder = (function () {
   }
 
   function divisionOn() {
-    if (state.mode === 'one') return state.topic === 'div' || state.topic === 'mix';
-    return state.rows.some(function (row) { return row.topic === 'div'; });
+    if (state.mode === 'one') return state.topic === 'div' || state.topic === 'frac' || state.topic === 'mix';
+    return state.rows.some(function (row) { return row.topic === 'div' || row.topic === 'frac'; });
   }
 
   function linkInfo() {

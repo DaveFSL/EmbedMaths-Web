@@ -150,6 +150,8 @@ h2 { font-size: 22px; margin: 0; }
 .panel-head p { margin: 0; color: var(--muted); font-size: 14px; }
 .tile-grid, .tile-row { display: grid; gap: 12px; }
 .tile-grid { grid-template-columns: 1fr; }
+.home-band { grid-column: 1 / -1; }
+.home-band h2 { margin-bottom: 12px; }
 .tile-row.two { grid-template-columns: 1fr; }
 .tile, .level-card {
   text-align: left;
@@ -423,8 +425,61 @@ h2 { font-size: 22px; margin: 0; }
 .share-part.on { background: var(--teal); color: #fff; }
 .share-eq { font-size: 28px; font-weight: 760; margin: 14px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; max-width: 100%; }
 .frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; font-size: 0.55em; line-height: 1; margin: 0 2px; font-weight: 760; }
+.equation .frac { font-size: 0.72em; }
+.level-ex .frac { font-size: 0.8em; }
 .frac-n { border-bottom: 2px solid currentColor; padding: 0 4px 1px; }
 .frac-d { padding: 1px 4px 0; }
+.mixed { display: inline-flex; align-items: center; gap: 0.12em; vertical-align: middle; }
+.frac-board {
+  display: grid;
+  width: max-content;
+  max-width: 100%;
+  grid-template-columns: auto max-content auto max-content;
+  column-gap: 0.95em;
+  row-gap: 0.4em;
+  align-items: center;
+  justify-content: start;
+  font-size: clamp(26px, 3vw, 40px);
+  font-weight: 760;
+  line-height: 1;
+  padding: 0.15em 1em 0.15em 0.15em;
+}
+.frac-board.order { grid-template-columns: repeat(3, max-content); column-gap: 1.2em; padding-right: 1em; }
+.frac-board.of-line { display: flex; align-items: center; flex-wrap: nowrap; gap: 0.45em; padding-left: 0.7em; }
+.frac-of { font-size: 0.62em; font-weight: 650; }
+.frac-gap { font-size: 0.7em; }
+.frac-col { display: flex; align-items: center; justify-content: flex-end; gap: 0.12em; }
+.frac-stack { width: 2.8em; display: flex; flex-direction: column; align-items: stretch; flex: none; }
+.frac-stack .frac-n, .frac-stack .frac-d { display: block; width: 100%; text-align: center; padding-left: 0; padding-right: 0; }
+.frac-fig { position: relative; display: inline-block; }
+.frac-mul, .frac-side {
+  position: absolute;
+  color: var(--orange);
+  font-size: 0.42em;
+  font-weight: 760;
+  line-height: 1;
+  white-space: nowrap;
+}
+.frac-mul { left: 100%; top: 0; margin-left: 1px; }
+.frac-side { right: 100%; top: 0.05em; margin-right: 2px; }
+.frac-eq, .frac-op { font-weight: 650; }
+.frac-amt { font-size: 1.05em; }
+.frac-calc { display: flex; flex-wrap: wrap; gap: 0.35em 1.1em; margin: 14px 0 0; font-weight: 760; font-size: clamp(18px, 2.4vw, 28px); max-width: 100%; }
+.frac-res { color: var(--teal); }
+.bar-model { max-width: 100%; margin-top: 16px; }
+.bar-cap { display: flex; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin: 0 0 6px; color: var(--muted); font-size: 14px; font-weight: 650; }
+.bar { display: flex; width: 100%; max-width: 460px; border: 2px solid var(--teal); border-radius: 12px; overflow: hidden; }
+.bar span { flex: 1; min-width: 0; text-align: center; padding: 8px 2px; background: #e7f2f1; color: var(--teal); font-weight: 760; }
+.bar span.on { background: var(--teal); color: #fff; }
+.bar span + span { border-left: 2px solid var(--teal); }
+.bar-sum { margin: 8px 0 0; font-weight: 760; }
+.div-layout.has-lists { grid-template-columns: minmax(0, 1fr) minmax(168px, 240px); }
+.div-layout.stacked.has-lists { grid-template-columns: minmax(0, 1fr); }
+.mult-wrap.multi { max-width: 240px; display: flex; flex-direction: column; gap: 10px; }
+.div-layout.stacked .mult-wrap.multi { max-width: 100%; flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
+.div-layout.stacked .mult-wrap.multi .mult-panel,
+.div-layout.stacked .mult-wrap.multi .mult-closed { width: min(220px, 100%); }
+.order-line { margin: 12px 0 0; font-weight: 760; max-width: 100%; }
 @media (max-width: 600px) {
   .bus { font-size: 26px; }
   .share-eq { font-size: 22px; }
@@ -555,6 +610,7 @@ h2 { font-size: 22px; margin: 0; }
 @media (min-width: 800px) {
   .home-grid { grid-template-columns: 1.15fr 0.85fr; align-items: start; }
   .tile-grid { grid-template-columns: 1fr 1fr; }
+  .tile-grid.three { grid-template-columns: 1fr 1fr 1fr; }
   .tile-row.two { grid-template-columns: 1fr 1fr; }
   .level-grid { grid-template-columns: 1fr 1fr 1fr; }
   .work { grid-template-columns: 1.05fr 0.95fr; align-items: start; }

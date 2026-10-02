@@ -13,6 +13,8 @@ const EM = (function () {
     place: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h4M7 12h10M7 16h7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M15 6l2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     ruler: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M7 7v3M11 7v4M15 7v3M19 7v4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
     bolt: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L6 13h6l-1 8 7-10h-6l1-8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+    frac: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7h8M6 12h12M8 17h8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+    percent: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8.5" cy="8.5" r="2.1" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="15.5" cy="15.5" r="2.1" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>',
     arrow: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     out: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7 17L17 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
     check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -71,7 +73,7 @@ const EM = (function () {
 
   const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const SHORT = { add: 'Addition', sub: 'Subtraction', mul: 'Multiplication', div: 'Division', pv: 'Place value', conv: 'Converting units' };
+  const SHORT = { add: 'Addition', sub: 'Subtraction', mul: 'Multiplication', div: 'Division', frac: 'Fractions', pv: 'Place value', conv: 'Converting units' };
 
   function formatDue(iso) {
     if (!iso) return '';
@@ -245,6 +247,7 @@ const EM = (function () {
     const conv = topics.conv;
     const convMeta = 'Level ' + Store.progressFor('conv').level + ' of ' + conv.levels.length;
     const divMeta = 'Level ' + Store.progressFor('div').level + ' of ' + topics.div.levels.length;
+    const fracMeta = 'Level ' + Store.progressFor('frac').level + ' of ' + topics.frac.levels.length;
     let strip = '';
     if (link && link.hasLink) {
       strip = teacherStrip(link, '<div class="teacher-actions"><button type="button" class="btn light" id="teacherStart">Start ' +
@@ -270,7 +273,12 @@ const EM = (function () {
       '</div></section>' +
       '<section class="panel"><h2>Number facts</h2><div class="tile-row">' +
       tile(ICONS.bolt, 'Times tables', 'Open FlashFlips', { href: 'https://davefsl.github.io/FlashFlips-Web/', warm: true }) +
-      '</div></section></div></div>' +
+      '</div></section></div>' +
+      '<section class="panel home-band"><h2>Fractions, decimals &amp; percentages</h2><div class="tile-grid three">' +
+      tile(ICONS.frac, 'Fractions', fracMeta, { action: 'frac' }) +
+      tile(ICONS.percent, 'Percentages', 'Coming soon', { soon: true }) +
+      tile(ICONS.frac, 'Fractions, decimals &amp; percentages', 'Coming soon', { soon: true }) +
+      '</div></section></div>' +
       '<div class="site-foot in-flow"><p>Progress is saved on this device only.</p>' +
       '<p>' + VERSION + '</p></div></div>';
 
@@ -286,6 +294,8 @@ const EM = (function () {
     if (pvBtn) pvBtn.onclick = function () { openLevels('pv'); };
     const convBtn = app.querySelector('[data-go="conv"]');
     if (convBtn) convBtn.onclick = function () { openLevels('conv'); };
+    const fracBtn = app.querySelector('[data-go="frac"]');
+    if (fracBtn) fracBtn.onclick = function () { openLevels('frac'); };
     document.getElementById('classLink').onclick = function () { LinkBuilder.open(); };
     const start = document.getElementById('teacherStart');
     if (start) {
@@ -401,7 +411,7 @@ const EM = (function () {
   }
 
   function buildMixQuestions(opts) {
-    const ids = ['add', 'sub', 'mul', 'div', 'pv', 'conv'];
+    const ids = ['add', 'sub', 'mul', 'div', 'frac', 'pv', 'conv'];
     let count = parseInt(opts.count, 10);
     if (!isFinite(count) || count < 1 || count > 30) count = 8;
     let trickyN = opts.tricky == null ? 1 : opts.tricky;

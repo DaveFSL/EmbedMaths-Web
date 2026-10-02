@@ -57,7 +57,7 @@ const Player = (function () {
     }
 
     let foot = '';
-    if (whole && session.est && !topic().predict && topic().id !== 'div') {
+    if (whole && session.est && !topic().predict && topic().id !== 'div' && !topic().hidesCloseness) {
       const est = topic().estimate(question);
       const answer = Math.round(question.answer * Math.pow(10, question.dp)) / Math.pow(10, question.dp);
       const shown = question.dp ? answer.toFixed(question.dp) : String(Math.round(answer));
@@ -175,12 +175,13 @@ const Player = (function () {
     if (phase === 'steps' || topic().showsPrep) {
       topic().render(question, phase === 'steps' ? (revealAll ? steps.length - 1 : step) : -1, document.getElementById('algo'));
     }
-    const multToggle = document.getElementById('multToggle');
-    if (multToggle) multToggle.onclick = function () {
-      const open = multToggle.getAttribute('aria-expanded') === 'true';
-      EM.session.multiplesOpen = !open;
-      paint(false);
-    };
+    document.querySelectorAll('.mult-closed, .mult-toggle').forEach(function (btn) {
+      btn.onclick = function () {
+        const open = btn.getAttribute('aria-expanded') === 'true';
+        EM.session.multiplesOpen = !open;
+        paint(false);
+      };
+    });
 
     function confirmLeave() {
       if (!assigned) return true;
@@ -298,25 +299,29 @@ const Player = (function () {
   }
 
   function fitDivision(layout) {
-    const bus = layout.querySelector('.bus');
+    const piece = layout.querySelector('.bus, .frac-board');
     const work = layout.querySelector('.div-work');
     if (!work) return;
     layout.classList.remove('stacked');
-    if (bus) bus.style.fontSize = '';
-    if (bus && bus.scrollWidth > work.clientWidth + 1) {
-      const preferred = parseFloat(getComputedStyle(bus).fontSize);
-      const fitted = preferred * work.clientWidth / bus.scrollWidth;
-      if (fitted < 24 || work.clientWidth < 150) layout.classList.add('stacked');
+    if (piece) piece.style.fontSize = '';
+    if (piece && piece.scrollWidth > work.clientWidth + 1) {
+      const preferred = parseFloat(getComputedStyle(piece).fontSize);
+      const fitted = preferred * work.clientWidth / piece.scrollWidth;
+      if (fitted < 22 || work.clientWidth < 150) layout.classList.add('stacked');
     }
-    if (bus) {
-      bus.style.fontSize = '';
-      fitFont(bus, work);
+    if (piece) {
+      piece.style.fontSize = '';
+      fitFont(piece, work);
     }
   }
 
   function fitLayouts() {
     const layout = document.querySelector('.div-layout');
     if (layout) fitDivision(layout);
+    document.querySelectorAll('.frac-board').forEach(function (el) {
+      if (el.closest('.div-layout')) return;
+      fitFont(el, el.parentElement);
+    });
     document.querySelectorAll('.algo-grid-wrap').forEach(function (el) {
       fitFont(el, el.parentElement);
     });
