@@ -186,6 +186,8 @@ A set link uses `t=set` plus `set=`. `q` may be any count from 1 to 30. Invalid 
 6. Decimal × whole (3.4 × 6, 2.35 × 4)
 7. Decimal × decimal (3.4 × 0.6)
 
+The estimate rounds one number to one significant figure and leaves the other, then keeps whichever product is closer. 84 × 12 is estimated as 80 × 12 = 960. It stays a sum a Year 6 student can do in their head.
+
 ### Division (short division)
 1. No regrouping (84 ÷ 4)
 2. Regrouping (72 ÷ 3)
@@ -297,15 +299,15 @@ Self-check chips: Common denominator, Top and bottom, Adding / subtracting, Simp
 - Same-denominator subtraction that needs a whole uses **Regroup**. Never "carry", "trade" or "left over".
 
 ### Percentages
-- Six levels in `topics/percentages.js` (`?t=pct`). Answers are whole numbers or have at most 2 decimal places. Money is always 2 decimal places (`$51.00`).
+- Six levels in `topics/percentages.js` (`?t=pct`). Answers are whole numbers or have at most 2 decimal places. A discount's sale price is always 2 decimal places (`$51.00`). Other amounts are written as they appear (`$60`, `$6`).
 - A bold instruction sits above the question: Find the percentage of the amount. / Work it out. / Find the sale price. / Write as a percentage.
 - The line under the question is **Tip:**. Level 1: "50% is half. 10% is divide by 10" Level 2: "Build it up from 10%, 5% and 1%." Level 3: "Find the nearest easy percentage, then add or take away." Level 4: "Change the percentage to a decimal first." Level 5: "Find the discount, then take it off." Level 6: "Make the denominator 100"
 - After the reveal, percent-of-amount questions can show method tabs: **Build up**, **Near a benchmark**, **Decimal × amount**. Level 1 has one method only, so it has no tabs. Levels 1–2 open on Build up, level 3 on Near a benchmark, level 4 on Decimal × amount. A tab is shown only when that method makes sense for the question.
 - Wording: 50% is "halve it." 25% is "halve it, then halve it again." 10% is "divide by 10" 5% is "half of 10%." 1% is "divide by 100"
 - Build up writes one line per part, then adds them. 35% of 80 is 10% = 8, 30% = 24, 5% = 4, then 35% = 24 + 4 = 28.
 - Near a benchmark writes each part on its own line, then the whole comparison on one line that does not wrap. A gap of 2 is 2%, not 1% + 1%. 48% of 75 is 50% − 2% = 37.5 − 1.5 = 36.
-- Decimal × amount changes the percentage to a decimal (35% = 0.35), then uses the multiplication written layout, with the decimal point placed in the answer. If the written product has a zero on the end (31.20), the last line is 31.20 = 31.2, with the note "The zero on the end isn't needed." The check is an estimate (52% is about half), never the same sum again. A full stop never sits straight after a number in the working, the steps, or the answer box.
-- A discount is two steps: find the discount, then take it off the price. Also show "Another way: 15% off means you pay 85%."
+- Decimal × amount is level 4. It uses percentages that are awkward to build up (8%, 17%, 35%, 52%, 64%), not 50%, 25% or 10%. The percentage becomes a decimal (35% = 0.35), then the shared multiplication layout. The number with more digits goes on top. A one-digit multiplier is one row, and a row that would be only 0 is left out. Multiplying by a tens digit is said with its place: "5 × 4 tens = 20 tens. Write 200." Under the answer, the decimal places are counted in from the right with a small orange mark: "0.2 has 1 decimal place, so the answer has 1 decimal place: 160 → 16.0". If the written product has a zero on the end (31.20), the last line is 31.20 = 31.2, with the note "The zero on the end isn't needed." The check uses the nearest of a tenth, a quarter, half, three quarters or the whole amount. 52% is about half. A full stop never sits straight after a number in the working, the steps, or the answer box.
+- A discount is two steps: find the discount, then take it off the price. The question is smaller than a short sum, so it fits on about two lines. Working amounts are written as they appear ($60, $6, $12). Only the sale price uses .00 ($48.00). Every working line uses the same style. The check uses the other method: "20% off means you pay 80%. 80% of $60 = $48". Also show "Another way: 15% off means you pay 85%."
 - One amount as a percentage of another is written as a fraction, then the denominator is made 100. "What you do to the top, you do to the bottom." The fraction is the same stacked drawing as Fractions, with the small orange × labels. 18/25 ×4 = 72/100 = 72%.
 - Self-check chips, only the ones that question used: Finding 10%, Finding 1%, Adding the parts, Decimal point, Taking off the discount, Making it out of 100.
 

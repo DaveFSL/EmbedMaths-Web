@@ -175,7 +175,7 @@ const Player = (function () {
       '<div class="progress" aria-hidden="true">' + segments +
       '</div></div>' + (question.tricky ? '<span class="tricky-tag">Tricky one</span>' : '<span></span>') + '</header>' +
       '<div class="work' + (roomy ? ' frac-work' : '') + '"><section class="paper' + (roomy ? ' roomy' : '') + (pctPaper ? ' pct-paper' : '') + '">' +
-      instructionHtml + '<p class="equation">' +
+      instructionHtml + '<p class="equation' + (question.kind === 'discount' ? ' eq-prose' : '') + '">' +
       ((revealed && question.solvedEquation) ? question.solvedEquation : (question.equation || (question.textA + ' − ' + question.textB))) + '</p>' +
       estimateHtml + '<div id="algo"></div>' + foot + '</section><section class="steps-col">' +
       (revealed ? stepHtml : '<p class="wait-note">The working stays hidden until you are ready.</p>') +

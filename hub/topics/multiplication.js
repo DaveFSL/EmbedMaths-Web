@@ -184,9 +184,17 @@
       const incoming = carry;
       const at = i + shift;
       if (incoming > 0) state.used[at] = true;
-      let calc = named
-        ? 'The ' + digs[i] + ' in the ' + place + ' place × ' + digit + ' = ' + prod
-        : titleCase(place) + ': ' + digs[i] + ' × ' + digit + ' = ' + prod;
+      let calc;
+      if (shift > 0) {
+        const unit = colName(shift);
+        const prodUnit = colName(i + shift);
+        calc = 'The ' + digs[i] + ' in the ' + place + ' place × ' + digit + ' ' + singular(unit, digit) +
+          ' = ' + prod + ' ' + singular(prodUnit, prod);
+      } else if (named) {
+        calc = 'The ' + digs[i] + ' in the ' + place + ' place × ' + digit + ' = ' + prod;
+      } else {
+        calc = titleCase(place) + ': ' + digs[i] + ' × ' + digit + ' = ' + prod;
+      }
       if (incoming > 0) calc += ', plus the ' + incoming + ' regrouped = ' + sum;
       row[at] = write;
       carry = nc;
@@ -334,12 +342,89 @@
     };
   }
 
+  function sigFig1(n) {
+    if (!n) return 0;
+    const sign = n < 0 ? -1 : 1;
+    const abs = Math.abs(n);
+    const mag = Math.pow(10, Math.floor(Math.log10(abs)));
+    return sign * Math.round(abs / mag) * mag;
+  }
+
+  function cleanNum(n) {
+    if (Math.abs(n - Math.round(n)) < 1e-9) return String(Math.round(n));
+    return String(Math.round(n * 1000) / 1000);
+  }
+
+  function closerEstimate(a, b) {
+    const exact = a * b;
+    const opts = [];
+    const ra = sigFig1(a);
+    const rb = sigFig1(b);
+    if (Math.abs(ra - a) > 1e-9) opts.push({ left: ra, right: b });
+    if (Math.abs(rb - b) > 1e-9) opts.push({ left: a, right: rb });
+    if (!opts.length) opts.push({ left: a, right: b });
+    opts.sort(function (x, y) {
+      return Math.abs(x.left * x.right - exact) - Math.abs(y.left * y.right - exact);
+    });
+    const pick = opts[0];
+    return {
+      left: cleanNum(pick.left),
+      right: cleanNum(pick.right),
+      product: Math.round(pick.left * pick.right * 1000) / 1000
+    };
+  }
+
+  function nonZeroPlaces(n) {
+    const out = [];
+    digitsOf(n).forEach(function (digit, shift) {
+      if (digit) out.push({ digit: digit, shift: shift });
+    });
+    return out;
+  }
+
+  function placeProduct(top, digit, shift) {
+    const unit = colName(shift);
+    const mid = top * digit;
+    const written = mid * Math.pow(10, shift);
+    if (!shift) return top + ' × ' + digit + ' = ' + written;
+    return top + ' × ' + digit + ' ' + singular(unit, digit) + ' = ' + mid + ' ' + singular(unit, mid) + '. Write ' + written;
+  }
+
+  function orderFactors(q) {
+    if (String(q.aInt).length >= String(q.bInt).length) return;
+    const top = q.aInt;
+    q.aInt = q.bInt;
+    q.bInt = top;
+    const dp = q.dpA;
+    q.dpA = q.dpB;
+    q.dpB = dp;
+  }
+
+  function decimalBits(q) {
+    const bits = [];
+    if (q.dpA > 0 && q.textA) bits.push({ text: q.textA, dp: q.dpA });
+    if (q.dpB > 0 && q.textB) bits.push({ text: q.textB, dp: q.dpB });
+    if (!bits.length) {
+      if (q.dpA > 0) bits.push({ text: fmtDp(q.a, q.dpA), dp: q.dpA });
+      if (q.dpB > 0) bits.push({ text: fmtDp(q.b, q.dpB), dp: q.dpB });
+    }
+    return bits;
+  }
+
+  function decimalSentence(bits, dpTotal, intProduct, answerShown) {
+    function place(n) { return n === 1 ? '1 decimal place' : n + ' decimal places'; }
+    const who = bits.map(function (bit) { return bit.text + ' has ' + place(bit.dp); }).join(' and ');
+    return who + ', so the answer has ' + place(dpTotal) + ': ' + intProduct + ' → ' + answerShown;
+  }
+
   function buildSteps(q) {
+    const saved = decimalBits(q);
+    orderFactors(q);
+    const places = nonZeroPlaces(q.bInt);
+    q.long = places.length > 1;
     const width = String(q.aInt * q.bInt).length + 2;
     const state = blankState(width);
     const steps = [];
-    const ones = q.bInt % 10;
-    const tens = Math.floor(q.bInt / 10);
 
     if (q.dpTotal > 0) {
       steps.push({
@@ -354,31 +439,38 @@
       });
     }
 
-    const row1cols = multiplyByDigit(state, q.aInt, q.long ? ones : q.bInt, 0, 'Times fact', false);
-    const row1prod = q.aInt * (q.long ? ones : q.bInt);
-    steps.push(rowStep('Row 1', 'Row 1: ' + q.aInt + ' × ' + (q.long ? ones : q.bInt) + ' = ' + row1prod, row1cols, clone(state), 'Times fact'));
+    function partial(part, which) {
+      const row = which === 1 ? state.p1 : state.p2;
+      const cols = multiplyByDigit(state, q.aInt, part.digit, part.shift, 'Times fact', part.shift > 0);
+      for (let z = 0; z < part.shift; z++) row[z] = 0;
+      if (part.shift > 0) {
+        state.phOnes = true;
+        state.phCount = part.shift;
+      }
+      return cols;
+    }
 
-    if (q.long) {
+    const first = places[0];
+    const row1cols = partial(first, 1);
+    const row1written = q.aInt * first.digit * Math.pow(10, first.shift);
+    const row1text = places.length === 1 && first.shift > 0
+      ? placeProduct(q.aInt, first.digit, first.shift)
+      : 'Row 1: ' + placeProduct(q.aInt, first.digit, first.shift);
+    steps.push(rowStep('Row 1', row1text, row1cols, clone(state), 'Times fact', first.shift > 0 ? ['Placeholder zero'] : []));
+
+    if (places.length > 1) {
       state.p1Carries = state.carries.slice();
       state.p1Used = state.carries.map(function (c) { return c ? true : null; });
       state.phase = 2;
       state.showP2 = true;
       state.carries = fresh(width);
       state.used = fresh(width);
-      state.p2[0] = 0;
-      state.phOnes = true;
-      const row2cols = multiplyByDigit(state, q.aInt, tens, 1, 'Times fact', true);
-      const shifted = q.aInt * tens * 10;
-      steps.push(rowStep(
-        'Row 2',
-        'Row 2: write the placeholder 0, then ' + q.aInt + ' × ' + tens + ' = ' + shifted,
-        row2cols,
-        clone(state),
-        'Times fact',
-        ['Placeholder zero']
-      ));
-      const p1 = q.aInt * ones;
-      const p2 = shifted;
+      const second = places[1];
+      const row2cols = partial(second, 2);
+      const p1 = q.aInt * first.digit * Math.pow(10, first.shift);
+      const p2 = q.aInt * second.digit * Math.pow(10, second.shift);
+      const row2text = 'Row 2: write the placeholder 0, then ' + placeProduct(q.aInt, second.digit, second.shift);
+      steps.push(rowStep('Row 2', row2text, row2cols, clone(state), 'Times fact', ['Placeholder zero']));
       for (let i = 0; i < state.used.length; i++) if (state.carries[i]) state.used[i] = true;
       const addCols = addRows(state, p1, p2);
       steps.push(rowStep(
@@ -390,30 +482,26 @@
       ));
     }
 
+    const intProduct = q.aInt * q.bInt;
     if (q.dpTotal > 0) {
       state.showDecimal = true;
-      const answerShown = ((q.aInt * q.bInt) / Math.pow(10, q.dpTotal)).toFixed(q.dpTotal);
-      const placeWord = q.dpTotal === 1 ? 'place' : 'places';
+      const answerShown = (intProduct / Math.pow(10, q.dpTotal)).toFixed(q.dpTotal);
+      q.decimalLine = decimalSentence(saved, q.dpTotal, intProduct, answerShown);
       steps.push({
         label: 'Decimal point',
         title: 'Decimal point',
-        text: 'Count the decimal places: ' + q.dpA + ' + ' + q.dpB + ' = ' + q.dpTotal + ' ' + placeWord + '. The answer is ' + answerShown,
+        text: q.decimalLine,
         stepTag: 'Decimal point',
         tags: ['Decimal point'],
         kind: 'calc',
         columns: [],
         algo: clone(state)
       });
-      let ra = q.a >= 1 ? Math.round(q.a) : Math.round(q.a * 2) / 2;
-      let rb = q.b < 1 ? Math.round(q.b * 2) / 2 : Math.round(q.b);
-      if (Math.abs(ra - q.a) < 1e-9) ra = q.a >= 1 ? Math.round(q.a / 10) * 10 || (q.a + 1) : Math.round((q.a + 0.1) * 10) / 10;
-      if (Math.abs(rb - q.b) < 1e-9) rb = q.b >= 1 ? Math.round(q.b / 10) * 10 || (q.b + 1) : Math.round((q.b + 0.1) * 10) / 10;
-      const right = rb < 1 || String(rb).indexOf('.') >= 0 ? String(rb) : String(rb);
-      const product = Math.round(ra * rb * 1000) / 1000;
+      const est = closerEstimate(q.a, q.b);
       steps.push({
         label: 'Check',
         title: 'Check',
-        text: 'Check: ' + q.textA + ' × ' + q.textB + ' is about ' + ra + ' × ' + right + ' = ' + product + ', and ' + answerShown + ' is close to that, so it makes sense.',
+        text: 'Check: ' + q.textA + ' × ' + q.textB + ' is about ' + est.left + ' × ' + est.right + ' = ' + cleanNum(est.product) + ', and ' + answerShown + ' is close to that, so it makes sense.',
         stepTag: 'Decimal point',
         kind: 'calc',
         columns: [],
@@ -421,7 +509,7 @@
       });
     }
 
-    q.answer = (q.aInt * q.bInt) / Math.pow(10, q.dpTotal);
+    q.answer = intProduct / Math.pow(10, q.dpTotal || 0);
     q.finalAlgo = clone(state);
     return steps;
   }
@@ -438,13 +526,18 @@
     const aDigs = digitsOf(q.aInt);
     const bDigs = digitsOf(q.bInt);
     const productLen = String(q.aInt * q.bInt).length;
-    const cols = Math.max(aDigs.length, bDigs.length, productLen);
+    const showDp = !!(snap && snap.showDecimal && q.dpTotal > 0);
+    const cols = Math.max(aDigs.length, bDigs.length, productLen, showDp ? q.dpTotal + 1 : 0);
     const hi = {};
     ((step && step.hiCols) || []).forEach(function (c) { hi[c] = true; });
 
-    function digitCell(fromRight, value, cls) {
+    function digitCell(fromRight, value, cls, answerRow) {
       const active = hi[fromRight] ? ' on' : '';
-      return '<div class="dc' + active + '"><span class="d' + (cls || '') + '">' + (value === '' || value == null ? '' : value) + '</span></div>';
+      const counted = answerRow && showDp && value !== '' && value != null && fromRight < q.dpTotal ? ' counted' : '';
+      if (answerRow && showDp && fromRight === q.dpTotal && (value === '' || value == null)) {
+        return '<div class="dc dot dp-arrow">.</div>';
+      }
+      return '<div class="dc' + active + counted + '"><span class="d' + (cls || '') + '">' + (value === '' || value == null ? '' : value) + '</span></div>';
     }
 
     function carryRow(arr, used) {
@@ -459,7 +552,7 @@
       return html;
     }
 
-    let html = '<div class="algo-grid-wrap">';
+    let html = '<div class="algo-grid-wrap' + (showDp ? ' has-dp' : '') + '">';
     if (snap && snap.phase === 1) html += carryRow(snap.carries, snap.used);
     else if (snap && snap.p1Carries) html += carryRow(snap.p1Carries, snap.p1Used);
     html += rowHtml('', cols, function (fromRight) {
@@ -477,8 +570,10 @@
         const rv = snap && snap.p1 ? snap.p1[fromRight] : null;
         const shown = rv !== null && rv !== undefined;
         let extra = '';
-        if (snap && snap.showDecimal && q.dpTotal > 0 && fromRight === q.dpTotal) extra = '<div class="dc dot">.</div>';
-        return digitCell(fromRight, shown ? rv : '', shown ? ' res' : '') + extra;
+        if (showDp && fromRight === q.dpTotal && shown) extra = '<div class="dc dot dp-arrow">.</div>';
+        const phN = snap && snap.phOnes ? (snap.phCount || 1) : 0;
+        const ph = phN && fromRight < phN && shown && rv === 0;
+        return digitCell(fromRight, shown ? rv : '', ph ? ' ph' : (shown ? ' res' : ''), true) + extra;
       });
     } else if (snap) {
       html += rowHtml('', cols, function (fromRight) {
@@ -491,7 +586,8 @@
         html += rowHtml('', cols, function (fromRight) {
           const rv = snap.p2[fromRight];
           const shown = rv !== null && rv !== undefined;
-          const ph = fromRight === 0 && snap.phOnes && shown;
+          const phN = snap.phOnes ? (snap.phCount || 1) : 0;
+          const ph = phN && fromRight < phN && shown && rv === 0;
           return digitCell(fromRight, shown ? rv : '', ph ? ' ph' : (shown ? ' res' : ''));
         });
       }
@@ -504,26 +600,19 @@
           const rv = snap.total[fromRight];
           const shown = rv !== null && rv !== undefined;
           let extra = '';
-          if (snap.showDecimal && q.dpTotal > 0 && fromRight === q.dpTotal) extra = '<div class="dc dot">.</div>';
-          return digitCell(fromRight, shown ? rv : '', shown ? ' res' : '') + extra;
+          if (showDp && fromRight === q.dpTotal && shown) extra = '<div class="dc dot dp-arrow">.</div>';
+          return digitCell(fromRight, shown ? rv : '', shown ? ' res' : '', true) + extra;
         });
       }
     }
     html += '</div>';
+    if (showDp && q.decimalLine) html += '<p class="algo-dp-note">' + q.decimalLine + '</p>';
     return html;
   }
 
   function estimate(q) {
-    if (q.dpTotal > 0) {
-      const ra = q.a >= 1 ? Math.round(q.a) : q.a;
-      const rb = q.b < 1 ? q.b : Math.round(q.b);
-      const left = fmtDp(ra, q.a >= 1 ? 0 : q.dpA);
-      const right = q.b < 1 ? q.textB : fmtDp(rb, 0);
-      return { prompt: left + ' × ' + right, answer: ra * rb };
-    }
-    const rb = Math.round(q.b / 10) * 10 || q.b;
-    if (rb !== q.b) return { prompt: q.a + ' × ' + rb, answer: q.a * rb };
-    return { prompt: (Math.round(q.a / 10) * 10) + ' × ' + q.b, answer: (Math.round(q.a / 10) * 10) * q.b };
+    const est = closerEstimate(q.a, q.b);
+    return { prompt: est.left + ' × ' + est.right, answer: est.product };
   }
 
   function strategy(q) {

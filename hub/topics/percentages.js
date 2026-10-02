@@ -30,6 +30,11 @@
   function money(n) {
     return '$' + (Math.round(n * 100) / 100).toFixed(2);
   }
+  function cash(n) {
+    const r = Math.round(n * 100) / 100;
+    if (Math.abs(r - Math.round(r)) < 1e-9) return '$' + Math.round(r);
+    return '$' + r.toFixed(2);
+  }
   function decText(pct) {
     return num(pct / 100);
   }
@@ -40,10 +45,10 @@
     return { kind: 'teach', title: title, text: text, stepTag: tag || null, tags: tag ? [tag] : [] };
   }
   function shown(q, n) {
-    return q.money ? money(n) : num(n);
+    return q.money ? cash(n) : num(n);
   }
   function amt(q) {
-    return q.money ? money(q.amount) : String(q.amount);
+    return q.money ? cash(q.amount) : String(q.amount);
   }
 
   function benchmark(pct) {
@@ -119,36 +124,22 @@
   function estimateCheck(q) {
     const pct = q.pct;
     const amount = q.amount;
-    const answer = q.answer;
     const benches = [
-      { dist: Math.abs(pct - 50), about: 'about half', label: 'Half', value: amount / 2 },
-      { dist: Math.abs(pct - 25), about: 'about a quarter', label: 'A quarter', value: amount / 4 },
-      { dist: Math.abs(pct - 10), about: 'about 10%', label: '10%', value: amount / 10 }
+      { at: 10, name: 'a tenth', label: 'A tenth', value: amount / 10 },
+      { at: 25, name: 'a quarter', label: 'A quarter', value: amount / 4 },
+      { at: 50, name: 'half', label: 'Half', value: amount / 2 },
+      { at: 75, name: 'three quarters', label: 'Three quarters', value: amount * 3 / 4 },
+      { at: 100, name: 'the whole amount', label: 'The whole amount', value: amount }
     ];
-    const ten = Math.round(pct / 10) * 10;
-    if (ten >= 10 && ten !== 50 && ten !== 25 && ten !== 10) {
-      benches.push({ dist: Math.abs(pct - ten), about: 'about ' + ten + '%', label: ten + '%', value: amount * ten / 100 });
-    }
-    benches.sort(function (a, b) { return a.dist - b.dist; });
-    let pick = null;
-    for (let i = 0; i < benches.length; i++) {
-      const value = Math.round(benches[i].value * 100) / 100;
-      if (Math.abs(value - answer) > 0.05) {
-        pick = benches[i];
-        pick.value = value;
-        break;
-      }
-    }
-    if (!pick) {
-      const other = pct >= 50 ? Math.max(10, pct - 10) : pct + 10;
-      const more = other < pct;
-      pick = {
-        about: (more ? 'a bit more than ' : 'a bit less than ') + other + '%',
-        label: other + '%',
-        value: Math.round(amount * other) / 100
-      };
-    }
-    return 'Check: ' + pct + '% is ' + pick.about + '. ' + pick.label + ' of ' + amount + ' is ' + num(pick.value) + ', so ' + num(answer) + ' makes sense.';
+    benches.sort(function (a, b) { return Math.abs(pct - a.at) - Math.abs(pct - b.at); });
+    const pick = benches[0];
+    const exact = pct === pick.at;
+    const about = exact ? pick.name : (pick.at === 100 ? 'about the whole amount' : 'about ' + pick.name);
+    const value = Math.round(pick.value * 100) / 100;
+    const ofAmount = q.money ? cash(amount) : String(amount);
+    const valueText = q.money ? cash(value) : num(value);
+    const answerText = q.money ? cash(q.answer) : num(q.answer);
+    return 'Check: ' + pct + '% is ' + about + '. ' + pick.label + ' of ' + ofAmount + ' is ' + valueText + ', so ' + answerText + ' makes sense.';
   }
 
   function ofQuestion(pct, amount, tricky) {
@@ -184,10 +175,10 @@
       pay: 100 - pct,
       answer: sale,
       answerText: money(sale),
-      equation: 'A ' + money(price).replace(/\.00$/, '') + ' ' + item + ' is ' + pct + '% off. What is the sale price?',
+      equation: 'A ' + cash(price) + ' ' + item + ' is ' + pct + '% off. What is the sale price?',
       money: true,
       tricky: !!tricky,
-      check: 'Check: ' + money(price) + ' \u2212 ' + money(discount) + ' = ' + money(sale) + '\u00a0\u2713'
+      check: 'Check: ' + pct + '% off means you pay ' + (100 - pct) + '%. ' + (100 - pct) + '% of ' + cash(price) + ' = ' + cash(sale) + '\u00a0\u2713'
     };
   }
 
@@ -222,7 +213,7 @@
       return ofQuestion(pick([8, 9, 11, 12, 23, 24, 26, 27, 48, 49, 51, 52]), pick([40, 60, 75, 80, 90, 100, 120, 200]), false);
     }
     if (level === 4) {
-      return decimalQuestion(pick([20, 25, 35, 40, 50]), pick([20, 40, 60, 80]), false);
+      return decimalQuestion(pick([8, 12, 17, 18, 33, 35, 36, 47, 52, 63, 64, 68, 73, 84]), pick([20, 40, 60, 75, 80, 120]), false);
     }
     if (level === 5) {
       return discountQuestion(pick([5, 10, 15, 20, 25, 50]), pick([20, 40, 60, 80, 100]), pick(ITEMS), false);
@@ -394,12 +385,12 @@
 
   function discountWorking(q) {
     const built = buildWorking(q);
-    const take = amt(q) + ' \u2212 ' + money(q.discount) + ' = ' + q.answerText;
+    const take = amt(q) + ' \u2212 ' + cash(q.discount) + ' = ' + q.answerText;
     const steps = built.steps.map(function (s, i) {
       if (i > 0) return s;
-      return teach('Find the discount', 'Step 1: find the discount. ' + s.text, s.stepTag);
+      return teach('Find the discount', s.text, s.stepTag);
     });
-    steps.push(teach('Take it off the price', 'Step 2: take it off the price. ' + take, 'Taking off the discount'));
+    steps.push(teach('Take it off the price', take, 'Taking off the discount'));
     return {
       discount: true,
       rule: '',
@@ -482,9 +473,12 @@
         html += '<p class="pct-note">The zero on the end isn\u2019t needed.</p>';
       }
     } else if (pack.discount) {
-      html += '<p class="pct-kicker">Step 1: find the discount.</p>' + gridHtml(pack.rows) +
-        (pack.sum ? '<p class="pct-line">' + pack.sum + '</p>' : '') +
-        '<p class="pct-kicker">Step 2: take it off the price.</p>' +
+      html += '<p class="pct-kicker">Find the discount.</p>';
+      (pack.rows || []).forEach(function (row) {
+        html += '<p class="pct-line">' + row.left + ' = ' + row.right + '</p>';
+      });
+      if (pack.sum) html += '<p class="pct-line">' + pack.sum + '</p>';
+      html += '<p class="pct-kicker">Take it off the price.</p>' +
         '<p class="pct-final">' + pack.final + '</p>' +
         '<p class="pct-note">' + pack.note + '</p>';
     } else {
