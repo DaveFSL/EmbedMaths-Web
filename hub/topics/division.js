@@ -81,7 +81,7 @@ const Division = (function () {
     return Number(rounded.toFixed(digits + 8));
   }
 
-  function run(digits, divisor, decimalAt, keepGoing) {
+  function run(digits, divisor, decimalAt, extraLimit, alwaysExtra) {
     const cols = [];
     let rem = 0;
     let started = false;
@@ -100,7 +100,7 @@ const Division = (function () {
         placeholder: q === 0,
         inAnswer: !leading,
         added: !!added,
-        pointBefore: index === decimalAt && decimalAt < (keepGoing ? 99 : digits.length + (keepGoing ? 3 : 0))
+        pointBefore: false
       });
       if (q !== 0) started = true;
       rem = r;
@@ -108,8 +108,8 @@ const Division = (function () {
     for (let i = 0; i < digits.length; i++) pushDigit(digits[i], i, false);
     const wholeRem = rem;
     let extra = 0;
-    if (keepGoing) {
-      while (rem > 0 && extra < 3) {
+    if (extraLimit) {
+      while (extra < extraLimit && (alwaysExtra || rem > 0)) {
         pushDigit(0, digits.length + extra, true);
         extra += 1;
       }
@@ -175,14 +175,46 @@ const Division = (function () {
     return n;
   }
 
+  function recurDigit(digit) {
+    return '<span class="recur">' + digit + '<span class="recur-dot" aria-hidden="true"></span></span>';
+  }
+  function recurNumber(text, digit) {
+    const bits = String(text).split('.');
+    return bits[0] + '.' + recurDigit(digit);
+  }
+  function round2Text(text) {
+    const bits = String(text).split('.');
+    const frac = (bits[1] || '').padEnd(3, '0');
+    let whole = parseInt(bits[0], 10);
+    if (!isFinite(whole)) whole = 0;
+    let tenths = parseInt(frac.charAt(0), 10) || 0;
+    let hundredths = parseInt(frac.charAt(1), 10) || 0;
+    const thou = parseInt(frac.charAt(2), 10) || 0;
+    if (thou >= 5) {
+      hundredths += 1;
+      if (hundredths > 9) { hundredths = 0; tenths += 1; }
+      if (tenths > 9) { tenths = 0; whole += 1; }
+    }
+    return { text: whole + '.' + tenths + hundredths, thou: thou };
+  }
+  function centsOf(text) {
+    const bits = String(text).split('.');
+    return parseInt(bits[0], 10) * 100 + parseInt((bits[1] || '0').padEnd(2, '0').slice(0, 2), 10);
+  }
+  function fromCents(cents) {
+    const sign = cents < 0 ? '-' : '';
+    const n = Math.abs(cents);
+    return sign + Math.floor(n / 100) + '.' + String(n % 100).padStart(2, '0');
+  }
+
   function buildRecord(text, divisor, level, mode) {
     const bits = String(text).split('.');
     const whole = bits[0];
     const frac = bits[1] || '';
     const digits = (whole + frac).split('').map(Number);
     const decimalAt = whole.length;
-    const keep = mode === 'decimal';
-    const ran = run(digits, divisor, decimalAt, keep);
+    const extraLimit = mode === 'recurring' ? 3 : mode === 'decimal' ? 2 : 0;
+    const ran = run(digits, divisor, decimalAt, extraLimit, mode === 'recurring');
     const cols = ran.cols;
     const answerText = shownAnswer(cols);
     const wholeAns = wholePart(cols);
@@ -213,6 +245,19 @@ const Division = (function () {
       rawN: rem,
       rawD: divisor
     };
+    if (mode === 'recurring') {
+      const decCols = cols.filter(function (col) { return col.added; });
+      const head = decCols[0];
+      const same = decCols.length === 3 && decCols.every(function (col) {
+        return col.q === head.q && col.r === head.r && col.r > 0;
+      });
+      record.repeatDigit = same ? head.q : null;
+      record.repeatRem = same ? head.r : null;
+      const rounded = round2Text(answerText);
+      record.roundedText = rounded.text;
+      record.thouDigit = rounded.thou;
+      record.recurHtml = same ? recurNumber(answerText, head.q) : '';
+    }
     record.decimalText = decimalString(record);
     record.equation = record.dividendText + ' \u00f7 ' + divisor + ' = ?';
     record.solvedEquation = record.dividendText + ' \u00f7 ' + divisor;
@@ -271,7 +316,9 @@ const Division = (function () {
     const lines = [];
     if (col.q === 0) {
       lines.push(heading + ' \u00f7 ' + d + " won't go, so write a placeholder 0");
-      if (next && col.r > 0) lines.push(regroupLine(col, next));
+      if (next && next.added && col.r > 0 && (q.mode === 'decimal' || q.mode === 'recurring')) {
+        /* The regroup is told in the "keep going" step. */
+      } else if (next && col.r > 0) lines.push(regroupLine(col, next));
       else if (q.mode === 'remainder' && col.r > 0) lines.push(remainderLine(q));
       else if (col.r > 0) lines.push('The remainder is ' + col.r);
       return lines.join('<br>');
@@ -290,11 +337,8 @@ const Division = (function () {
     if (col.r > 0) line += ', remainder ' + col.r;
     line += '. Write ' + col.q;
     lines.push(line);
-    if (next && next.added && col.r > 0 && q.mode === 'decimal' && !col.added) {
+    if (next && next.added && col.r > 0 && (q.mode === 'decimal' || q.mode === 'recurring')) {
       /* The regroup is told in the "keep going" step. */
-    } else if (col.added && next && next.added && col.r > 0) {
-      lines.push('Add another 0');
-      lines.push(regroupLine(col, next));
     } else if (next && col.r > 0) {
       lines.push(regroupLine(col, next));
     }
@@ -317,13 +361,16 @@ const Division = (function () {
       steps.push(teach('Start a list', 'Write the multiples of ' + q.divisor + ' down the side: ' +
         list.slice(0, 3).join(', ') + ' \u2026 ' + list[9], ['Times fact']));
     }
-    let jumped = false;
     cols.forEach(function (col, i) {
-      if (q.mode === 'decimal' && col.added && !jumped) {
-        steps.push(teach('Keep going past the remainder',
-          'Write the decimal point and a placeholder 0<br>' + regroupLine(q.cols[i - 1], col),
-          ['Decimal point', 'Placeholder zero', 'Regrouping']));
-        jumped = true;
+      if ((q.mode === 'decimal' || q.mode === 'recurring') && col.added) {
+        const prev = q.cols[i - 1];
+        const firstExtra = !prev.added;
+        const going = teach('Keep going past the remainder',
+          (firstExtra ? 'Write the decimal point and a placeholder 0' : 'Write a placeholder 0') +
+          '<br>' + regroupLine(prev, col),
+          ['Decimal point', 'Placeholder zero', 'Regrouping']);
+        going.showThrough = i - 1;
+        steps.push(going);
       }
       if (col.pointBefore && !col.added) {
         steps.push(teach('Decimal point',
@@ -335,9 +382,27 @@ const Division = (function () {
       if (col.remIn > 0 || (col.r > 0 && i < cols.length - 1)) tags.push('Regrouping');
       if (col.r > 0 && !nextCol(cols, i)) tags.push('Remainder');
       if (col.pointBefore || col.added) tags.push('Decimal point');
-      const title = col.added && !jumped ? cap(col.place) : cap(col.place);
-      steps.push(teach(title, columnText(col, q, i), tags));
+      steps.push(teach(cap(col.place), columnText(col, q, i), tags));
     });
+    if (q.mode === 'recurring' && q.repeatDigit != null) {
+      const again = teach('It repeats',
+        'Remainder ' + q.repeatRem + ' again. The same thing will keep happening, so the ' +
+        q.repeatDigit + ' repeats forever.',
+        ['Remainder']);
+      const dot = teach('The dot',
+        'Write it with a dot over the digit that repeats: ' + q.recurHtml,
+        ['Decimal point']);
+      const roundLine = q.thouDigit >= 5
+        ? 'Round to 2 decimal places. Look at the thousandths digit: ' + q.thouDigit +
+          '. It\u2019s 5 or more, so round the hundredths up: ' + q.roundedText
+        : 'Round to 2 decimal places. Look at the thousandths digit: ' + q.thouDigit +
+          '. It\u2019s less than 5, so the hundredths digit stays the same: ' + q.roundedText;
+      const round = teach('Round to 2 decimal places', roundLine, ['Decimal point']);
+      again.showThrough = cols.length;
+      dot.showThrough = cols.length;
+      round.showThrough = cols.length;
+      steps.push(again, dot, round);
+    }
     return steps;
   }
 
@@ -369,9 +434,15 @@ const Division = (function () {
   function answerLabel(q) {
     if (q.mode === 'remainder') return q.wholeAns + ' r' + q.rem;
     if (q.mode === 'fraction') return q.wholeAns + ' ' + fracHtml(q.fracN, q.fracD);
+    if (q.mode === 'recurring') return q.recurHtml + ' \u2248 ' + q.roundedText;
     return q.answerText;
   }
   function checkLine(q) {
+    if (q.mode === 'recurring') {
+      const prod = fromCents(centsOf(q.roundedText) * q.divisor);
+      return 'Check: ' + q.roundedText + ' \u00d7 ' + q.divisor + ' = ' + prod +
+        ', very close to ' + q.dividendText + '\u00a0\u2713<br>It isn\u2019t exact because we rounded.';
+    }
     if (q.mode === 'remainder' || q.mode === 'fraction') {
       const prod = q.wholeAns * q.divisor;
       return 'Check: ' + q.wholeAns + ' \u00d7 ' + q.divisor + ' = ' + prod +
@@ -455,7 +526,7 @@ const Division = (function () {
   function legendHtml(q) {
     const bits = ['<span><sup class="bus-rem">1</sup> Remainder, regrouped</span>',
       '<span><span class="ph-key">0</span> Placeholder zero</span>'];
-    if (q.answerText.indexOf('.') >= 0 || q.mode === 'decimal') {
+    if (q.answerText.indexOf('.') >= 0 || q.mode === 'decimal' || q.mode === 'recurring') {
       bits.push('<span>Decimal points line up</span>');
     }
     return '<p class="bus-key">' + bits.join('') + '</p>';
@@ -466,9 +537,11 @@ const Division = (function () {
     const last = !steps.length || stepIndex >= steps.length - 1;
     let through = q.cols.length;
     if (stepIndex >= 0 && stepIndex < steps.length - 1) {
-      const title = steps[stepIndex].title;
+      const row = steps[stepIndex];
+      const title = row.title;
       const isPlace = q.cols.some(function (col) { return cap(col.place) === title; });
-      if (title === 'Start a list') through = -1;
+      if (row.showThrough != null) through = row.showThrough;
+      else if (title === 'Start a list') through = -1;
       else if (title === 'Keep going past the remainder') {
         through = -1;
         q.cols.forEach(function (col, i) { if (!col.added && i > through) through = i; });
@@ -494,7 +567,8 @@ const Division = (function () {
       work += '<p class="div-answer"><strong>Answer: ' + answerLabel(q) + '</strong><span class="div-check">' + checkLine(q) + '</span></p>';
       if (EM.session && EM.session.est !== false) {
         const est = estimate(q);
-        const shown = (q.mode === 'remainder' || q.mode === 'fraction') ? String(q.wholeAns) : q.answerText;
+        const shown = (q.mode === 'remainder' || q.mode === 'fraction') ? String(q.wholeAns)
+          : (q.mode === 'recurring' ? q.roundedText : q.answerText);
         work += '<p class="closeness">' + shown + ' is close to the estimate of ' + est.answer + ' \u2713</p>';
       }
       if (q.leadingPh && q.mode !== 'remainder' && q.mode !== 'fraction') {
@@ -538,6 +612,7 @@ const Division = (function () {
     if (level === 8) return 'fraction';
     if (level === 9) return 'decimal';
     if (level === 10) return 'exact';
+    if (level === 12) return 'recurring';
     return 'exact';
   }
 
@@ -559,8 +634,15 @@ const Division = (function () {
     if (level === 6) return q.len === 4 && q.exact && !q.dp;
     if (level === 7) return q.rem > 0 && !q.dp && q.len >= 2 && q.len <= 3 && q.mode === 'remainder';
     if (level === 8) return TERM_DIVS.indexOf(q.divisor) >= 0 && q.rem > 0 && !q.dp && q.len >= 2 && q.len <= 3;
-    if (level === 9) return TERM_DIVS.indexOf(q.divisor) >= 0 && q.wholeRem > 0 && q.exact && q.extra > 0 && q.dp > 0 && q.len >= 2 && q.len <= 3;
+    if (level === 9) {
+      return (q.divisor === 2 || q.divisor === 4 || q.divisor === 5) && q.wholeRem > 0 && q.exact &&
+        q.extra >= 1 && q.extra <= 2 && q.dp === q.extra && q.len >= 2 && q.len <= 3;
+    }
     if (level === 10) return q.dp > 0 && q.exact && q.rem === 0 && q.extra === 0;
+    if (level === 12) {
+      return (q.divisor === 3 || q.divisor === 6 || q.divisor === 9) && q.mode === 'recurring' &&
+        q.repeatDigit != null && q.extra === 3 && q.len >= 2 && q.len <= 3;
+    }
     return false;
   }
 
@@ -610,10 +692,44 @@ const Division = (function () {
       if (String(dividend).length !== len) return null;
       return makeFrom(String(dividend), d, 11, rem ? 'remainder' : 'exact');
     }
-    let d = pick(level === 8 || level === 9 ? TERM_DIVS : DIGIT_DIVS);
+    if (level === 9) {
+      const twoDp = Math.random() < 0.5;
+      let d;
+      let rem;
+      if (twoDp) {
+        d = 4;
+        rem = Math.random() < 0.5 ? 1 : 3;
+      } else {
+        d = pick([2, 4, 5]);
+        if (d === 2) rem = 1;
+        else if (d === 4) rem = 2;
+        else rem = irand(1, 4);
+      }
+      const len = Math.random() < 0.35 ? 2 : 3;
+      const min = len === 2 ? 10 : 100;
+      const max = len === 2 ? 99 : 999;
+      const quot = irand(Math.max(1, Math.ceil(min / d)), Math.floor((max - rem) / d));
+      if (!quot || quot < 1) return null;
+      const dividend = quot * d + rem;
+      if (String(dividend).length !== len) return null;
+      return makeFrom(String(dividend), d, 9, 'decimal');
+    }
+    if (level === 12) {
+      const d = pick([3, 6, 9]);
+      const rem = d === 3 ? pick([1, 2]) : d === 6 ? pick([2, 4]) : irand(1, 8);
+      const len = Math.random() < 0.4 ? 2 : 3;
+      const min = len === 2 ? 10 : 100;
+      const max = len === 2 ? 99 : 999;
+      const quot = irand(Math.max(1, Math.ceil(min / d)), Math.floor((max - rem) / d));
+      if (!quot || quot < 1) return null;
+      const dividend = quot * d + rem;
+      if (String(dividend).length !== len) return null;
+      return makeFrom(String(dividend), d, 12, 'recurring');
+    }
+    let d = pick(level === 8 ? TERM_DIVS : DIGIT_DIVS);
     let q;
     let rem = 0;
-    if (level === 7 || level === 8 || level === 9) {
+    if (level === 7 || level === 8) {
       const len = Math.random() < 0.35 ? 2 : 3;
       const min = len === 2 ? 10 : 100;
       const max = len === 2 ? 99 : 999;
@@ -646,7 +762,7 @@ const Division = (function () {
   }
 
   function normal(level) {
-    const wantZero = level >= 5 && level !== 8 && level !== 9 && Math.random() < 0.45;
+    const wantZero = level >= 5 && level !== 8 && level !== 9 && level !== 12 && Math.random() < 0.45;
     for (let i = 0; i < 80; i++) {
       const q = candidate(level, wantZero && i < 50);
       if (fits(level, q)) return q;
@@ -731,12 +847,14 @@ const Division = (function () {
       { id: 8, name: 'Remainders as fractions', example: '157 \u00f7 4 = 39\u00bc' },
       { id: 9, name: 'Remainders as decimals', example: '157 \u00f7 4 = 39.25' },
       { id: 10, name: 'Decimal \u00f7 whole number', example: '7.56 \u00f7 3' },
-      { id: 11, name: 'Extension: 2-digit divisors', example: '1534 \u00f7 13', extension: true }
+      { id: 11, name: 'Extension: 2-digit divisors', example: '1534 \u00f7 13', extension: true },
+      { id: 12, name: 'Recurring decimals (extension)', example: '457 \u00f7 3 = 152.' + recurDigit(3), extension: true }
     ],
     tricky: [
       { id: 'zero', tags: ['Placeholder zero'], levels: [4, 5, 6] },
       { id: 'remainder', tags: ['Remainder'], levels: [7, 8, 9] },
-      { id: 'decimal', tags: ['Decimal point'], levels: [9, 10] }
+      { id: 'decimal', tags: ['Decimal point'], levels: [9, 10, 12] },
+      { id: 'recurring', tags: ['Decimal point', 'Remainder'], levels: [12] }
     ],
     errorTags: ['Times fact', 'Regrouping', 'Placeholder zero', 'Remainder', 'Decimal point'],
     tips: TIPS,
@@ -748,7 +866,7 @@ const Division = (function () {
         q.tricky = !!opts.tricky;
         return q;
       }
-      const q = normal(level) || makeFrom('84', 4, 1, 'exact');
+      const q = normal(level) || (level === 12 ? makeFrom('457', 3, 12, 'recurring') : level === 9 ? makeFrom('87', 4, 9, 'decimal') : makeFrom('84', 4, 1, 'exact'));
       q.level = level;
       q.tricky = !!opts.tricky;
       q.steps = buildSteps(q);
@@ -759,6 +877,7 @@ const Division = (function () {
       if (q.mode === 'remainder') return 'Give the remainder as a remainder.';
       if (q.mode === 'fraction') return 'Write the remainder as a fraction.';
       if (q.mode === 'decimal') return 'Write the answer as a decimal.';
+      if (q.mode === 'recurring') return 'Write the answer as a decimal. Round to 2 decimal places.';
       return '';
     },
     estimateCue: function (q) {
