@@ -393,7 +393,7 @@ const Conversions = (function () {
       q.choiceKind = 'builder';
       q.equation = 'Which unit would a builder use for ' + metresText + '?' + choiceRow(options);
       q.revealLines = options.map(function (opt) {
-        return opt.letter + ' ' + opt.label + ' → ' + opt.shown + (opt.ok ? ' ✓' : '');
+        return opt.letter + ' ' + opt.label + ' → ' + opt.shown + (opt.ok ? '\u00a0\u2713' : '');
       }).concat(['A builder would use metres. ' + fmt(metresMilli) + ' is easy to hold in your head.']);
       q.answerText = 'm';
       return finishChoice(q, options);
@@ -414,7 +414,7 @@ const Conversions = (function () {
     q.choiceKind = 'notequal';
     q.equation = 'Which is NOT equal to ' + metresText + '?' + choiceRow(options);
     q.revealLines = options.map(function (opt) {
-      return opt.letter + ' ' + opt.label + ' = ' + nb(fmt(opt.mm), 'm') + ' ' + (opt.ok ? '✓' : '✗');
+      return opt.letter + ' ' + opt.label + ' = ' + nb(fmt(opt.mm), 'm') + '\u00a0' + (opt.ok ? '\u2713' : '\u2717');
     });
     const odd = options.filter(function (opt) { return !opt.ok; })[0];
     q.revealLines.push('The odd one out is ' + odd.letter + ', ' + odd.label + '.');

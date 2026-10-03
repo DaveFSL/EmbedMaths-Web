@@ -481,6 +481,7 @@ const Division = (function () {
     let ans = '';
     let digs = '';
     let gi = 1;
+    let lastDigitCol = 0;
     let bracketed = false;
     q.cols.forEach(function (col, i) {
       const reached = showAll || i <= through;
@@ -490,6 +491,7 @@ const Division = (function () {
         template += (template ? ' ' : '') + '0.42em';
         ans += '<span class="bus-ans" style="grid-column:' + gi + '">' + (reached ? '.' : '') + '</span>';
         digs += '<span class="bus-slot" style="grid-column:' + gi + '">.</span>';
+        lastDigitCol = gi;
         gi += 1;
       }
       template += (template ? ' ' : '') + '1.6em';
@@ -501,6 +503,7 @@ const Division = (function () {
       bracketed = true;
       digs += '<span class="bus-slot' + bracket + '" style="grid-column:' + gi + '"><span class="bus-figwrap">' +
         rem + '<span class="bus-fig' + digCls + '">' + col.digit + '</span></span></span>';
+      lastDigitCol = gi;
       gi += 1;
     });
     if (showAll && (q.mode === 'remainder' || q.mode === 'fraction') && q.rem > 0) {
@@ -508,8 +511,9 @@ const Division = (function () {
       ans += '<span class="bus-ans bus-r" style="grid-column:' + gi + '">r ' + q.rem + '</span>';
       digs += '<span class="bus-slot" style="grid-column:' + gi + '"></span>';
     }
+    const rule = lastDigitCol ? '<span class="bus-rule" style="grid-column:1 / ' + (lastDigitCol + 1) + '"></span>' : '';
     return '<div class="bus" aria-hidden="true"><div class="bus-divisor">' + q.divisor + '</div>' +
-      '<div class="bus-board" style="grid-template-columns:' + template + '">' + ans + digs + '</div></div>';
+      '<div class="bus-board" style="grid-template-columns:' + template + '">' + rule + ans + digs + '</div></div>';
   }
 
   function shareHtml(q) {
@@ -569,10 +573,11 @@ const Division = (function () {
         const est = estimate(q);
         const shown = (q.mode === 'remainder' || q.mode === 'fraction') ? String(q.wholeAns)
           : (q.mode === 'recurring' ? q.roundedText : q.answerText);
-        work += '<p class="closeness">' + shown + ' is close to the estimate of ' + est.answer + ' \u2713</p>';
+        work += '<p class="closeness">' + shown + ' is close to the estimate of ' + est.answer + '\u00a0\u2713</p>';
       }
       if (q.leadingPh && q.mode !== 'remainder' && q.mode !== 'fraction') {
-        work += '<p class="mult-note">The placeholder 0 at the front isn\u2019t needed when we write the answer: ' + q.answerText + '</p>';
+        const written = q.mode === 'recurring' ? q.recurHtml : answerLabel(q);
+        work += '<p class="mult-note">The placeholder 0 at the front isn\u2019t needed when we write the answer: ' + written + '</p>';
       }
       work += legendHtml(q);
     }
