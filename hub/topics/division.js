@@ -377,7 +377,7 @@ const Division = (function () {
       }
       if (col.pointBefore && !col.added) {
         steps.push(teach('Decimal point',
-          'Write the decimal point in the answer, straight above the one in ' + q.dividendText,
+          'Write the decimal point in the answer, straight above the decimal point in ' + q.dividendText,
           ['Decimal point']));
       }
       const tags = ['Times fact'];
@@ -491,15 +491,16 @@ const Division = (function () {
       const born = showAll || i <= through + 1;
       if (col.added && !born) return;
       if (col.pointBefore) {
-        template += (template ? ' ' : '') + '0.42em';
-        ans += '<span class="bus-ans" style="grid-column:' + gi + '">' + (reached ? '.' : '') + '</span>';
-        digs += '<span class="bus-slot" style="grid-column:' + gi + '">.</span>';
+        template += (template ? ' ' : '') + '0.62em';
+        ans += '<span class="bus-ans bus-point" style="grid-column:' + gi + '">' + (reached ? '.' : '') + '</span>';
+        digs += '<span class="bus-slot bus-point" style="grid-column:' + gi + '">.</span>';
         lastDigitCol = gi;
         gi += 1;
       }
       template += (template ? ' ' : '') + '1.6em';
       const fig = reached ? String(col.q) : '';
-      ans += '<span class="bus-ans' + (reached && col.placeholder ? ' ph' : '') + '" style="grid-column:' + gi + '">' + fig + '</span>';
+      const boxed = reached && col.placeholder ? '<span class="bus-ph">' + fig + '</span>' : fig;
+      ans += '<span class="bus-ans" style="grid-column:' + gi + '">' + boxed + '</span>';
       const rem = born && col.remIn > 0 ? '<sup class="bus-rem">' + col.remIn + '</sup>' : '';
       const digCls = col.added ? ' ph' : '';
       const bracket = !bracketed ? ' bracket' : '';

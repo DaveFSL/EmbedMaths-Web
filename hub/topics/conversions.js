@@ -89,25 +89,28 @@ const Conversions = (function () {
       named.push(digit + ' ' + sourceName(pos, digit) + ' jumps to the ' + PLACE[pos + q.delta]);
     }
     if (named.length > 3) {
-      return 'Do the jumps. Every digit jumps ' + q.places + ' place' + (q.places === 1 ? '' : 's') + ' ' + q.dir + '.';
+      return 'Every digit jumps ' + q.places + ' place' + (q.places === 1 ? '' : 's') + ' ' + q.dir + '.';
     }
-    return 'Do the jumps. ' + named.join(', ') + ': ' + q.amount;
+    return named.join(', ') + ': ' + q.amount;
   }
   function zerosLine(q) {
     if (!q.gaps.length) return '';
     if (q.resultMilli < 1000) {
       const extras = q.gaps.filter(function (pos) { return pos !== 0; });
-      let line = 'Zeros hold the place. There are no ones, so a 0 holds the ones place';
+      let line = 'There are no ones, so a 0 holds the ones place';
       if (!extras.length) return line + ': ' + q.amount;
       const names = extras.map(function (pos) { return 'the ' + PLACE[pos]; });
       return line + '. ' + names.join(' and ').replace(/^the/, 'The') + (extras.length === 1 ? ' is' : ' are') +
         ' empty, so a 0 holds ' + (extras.length === 1 ? 'it' : 'each') + ': ' + q.amount;
     }
     if (q.gaps.length === 1) {
-      return 'Zeros hold the place. The ' + PLACE[q.gaps[0]] + ' place is empty, so a 0 holds it: ' + q.amount;
+      return 'The ' + PLACE[q.gaps[0]] + ' place is empty, so a 0 holds it: ' + q.amount;
     }
     const names = q.gaps.map(function (pos) { return 'the ' + PLACE[pos]; });
-    return 'Zeros hold the place. ' + names.join(' and ').replace(/^the/, 'The') + ' are empty, so a 0 holds each: ' + q.amount;
+    return names.join(' and ').replace(/^the/, 'The') + ' are empty, so a 0 holds each: ' + q.amount;
+  }
+  function teach(title, text, tag) {
+    return { kind: 'teach', title: title, text: text, stepTag: tag || null, tags: tag ? [tag] : [] };
   }
   const UNIT_WORDS = {
     km: 'kilometres', m: 'metres', cm: 'centimetres', mm: 'millimetres',
@@ -172,21 +175,20 @@ const Conversions = (function () {
       : 'Going to a BIGGER unit? Then my number gets SMALLER.';
     const op = base.down ? '×' : '÷';
     const placeWord = q.places === 1 ? 'place' : 'places';
-    q.revealLines = [
-      'Which rule? ' + q.fromUnit + ' → ' + q.toUnit + ' means ' + op + ' ' + q.factor,
-      'Which way? ' + (base.down ? 'Left' : 'Right') + ' — ' + (base.down ? '× makes it bigger.' : '÷ makes it smaller.'),
-      'How many places? ' + q.places + ' — ' + op + ' ' + q.factor + ' is ' + q.places + ' ' + placeWord + '.',
-      jumpsLine(q)
+    q.another = base.another || anotherWay(q.fromText, q.resultText, base.down ? q.resultMilli : q.fromMilli, q.factor, q.big, q.small);
+    q.steps = [
+      teach('Which rule?', q.fromUnit + ' → ' + q.toUnit + ' means ' + op + ' ' + q.factor, 'Which rule'),
+      teach('Which way?', (base.down ? 'Left' : 'Right') + ' — ' + (base.down ? '× makes it bigger.' : '÷ makes it smaller.'), 'Which way'),
+      teach('How many places?', q.places + ' — ' + op + ' ' + q.factor + ' is ' + q.places + ' ' + placeWord + '.', 'How many places'),
+      teach('Do the jumps', jumpsLine(q), 'Which way')
     ];
     const zeros = zerosLine(q);
-    if (zeros) q.revealLines.push(zeros);
-    q.another = base.another || anotherWay(q.fromText, q.resultText, base.down ? q.resultMilli : q.fromMilli, q.factor, q.big, q.small);
-    q.revealLines.push('Say it another way: ' + q.another + '.');
-    if (base.extraLine) q.revealLines.push(base.extraLine);
+    if (zeros) q.steps.push(teach('Zeros hold the place', zeros, 'Zeros hold the place'));
+    q.steps.push(teach('Say it another way', q.another + '.', 'Which rule'));
+    if (base.extraLine) q.steps.push(teach('Another way', base.extraLine, 'Which rule'));
     q.equation = base.equation;
     q.solvedEquation = base.solved || (q.fromText + ' = ' + q.resultText);
     q.hasDecimal = dpOf(q.fromMilli) > 0 || dpOf(q.resultMilli) > 0 || String(q.fromText).indexOf('.') >= 0;
-    q.steps = q.revealLines.map(function (text) { return { text: text }; });
     return q;
   }
 
@@ -290,7 +292,7 @@ const Conversions = (function () {
       q.equation = metres + ' m ' + cm + ' cm = ? cm';
       q.solvedEquation = metres + ' m ' + cm + ' cm = ' + q.resultText;
       q.another = metres + ' m ' + cm + ' cm = ' + q.resultText;
-      q.revealLines[q.revealLines.length - 1] = 'Say it another way: ' + q.another + '.';
+      q.steps[q.steps.length - 1].text = q.another + '.';
       return q;
     }
     const km = ri(1, 9);
@@ -301,7 +303,7 @@ const Conversions = (function () {
     q.equation = (km * 1000 + m) + ' m = ? km ? m';
     q.solvedEquation = (km * 1000 + m) + ' m = ' + km + ' km ' + m + ' m';
     q.another = (km * 1000 + m) + ' m = ' + fmt(q.resultMilli) + ' km = ' + km + ' km ' + m + ' m';
-    q.revealLines[q.revealLines.length - 1] = 'Say it another way: ' + q.another + '.';
+    q.steps[q.steps.length - 1].text = q.another + '.';
     return q;
   }
   function shuffle(list) {
@@ -349,10 +351,11 @@ const Conversions = (function () {
     q.mix = category(q);
     q.equation = heading + '<span class="eq-amounts">' + amounts + '</span>';
     q.solvedEquation = q.equation;
-    q.revealLines = ['Change them all to ' + pair.small + '.'].concat(items.map(function (item) {
-      return item.text + ' = ' + item.small + ' ' + pair.small;
-    })).concat([(descending ? 'Largest to smallest: ' : 'Smallest to largest: ') + sorted.map(function (item) { return item.text; }).join(' · ')]);
-    q.steps = q.revealLines.map(function (text) { return { text: text }; });
+    q.steps = [teach('Change the unit', 'Change them all to ' + pair.small + '.', 'Which rule')];
+    items.forEach(function (item) {
+      q.steps.push(teach(item.text, item.text + ' = ' + item.small + ' ' + pair.small, 'Which rule'));
+    });
+    q.steps.push(teach('Put them in order', (descending ? 'Largest to smallest: ' : 'Smallest to largest: ') + sorted.map(function (item) { return item.text; }).join(' · '), 'Which rule'));
     q.hasDecimal = items.some(function (item) { return item.text.indexOf('.') >= 0; });
     q.answer = sorted[0].small;
     return q;
@@ -368,7 +371,6 @@ const Conversions = (function () {
     q.kind = 'choice';
     q.options = options;
     q.solvedEquation = q.equation;
-    q.steps = q.revealLines.map(function (text) { return { text: text }; });
     q.hasDecimal = true;
     return q;
   }
@@ -392,9 +394,9 @@ const Conversions = (function () {
       ]);
       q.choiceKind = 'builder';
       q.equation = 'Which unit would a builder use for ' + metresText + '?' + choiceRow(options);
-      q.revealLines = options.map(function (opt) {
-        return opt.letter + ' ' + opt.label + ' → ' + opt.shown + (opt.ok ? '\u00a0\u2713' : '');
-      }).concat(['A builder would use metres. ' + fmt(metresMilli) + ' is easy to hold in your head.']);
+      q.steps = options.map(function (opt) {
+        return teach(opt.letter, opt.label + ' → ' + opt.shown + (opt.ok ? '\u00a0\u2713' : ''), 'Which rule');
+      }).concat([teach('A builder would use metres', fmt(metresMilli) + ' is easy to hold in your head.', 'Which rule')]);
       q.answerText = 'm';
       return finishChoice(q, options);
     }
@@ -413,17 +415,32 @@ const Conversions = (function () {
     ]);
     q.choiceKind = 'notequal';
     q.equation = 'Which is NOT equal to ' + metresText + '?' + choiceRow(options);
-    q.revealLines = options.map(function (opt) {
-      return opt.letter + ' ' + opt.label + ' = ' + nb(fmt(opt.mm), 'm') + '\u00a0' + (opt.ok ? '\u2713' : '\u2717');
+    q.steps = options.map(function (opt) {
+      return teach(opt.letter, opt.label + ' = ' + nb(fmt(opt.mm), 'm') + '\u00a0' + (opt.ok ? '\u2713' : '\u2717'), 'Which rule');
     });
     const odd = options.filter(function (opt) { return !opt.ok; })[0];
-    q.revealLines.push('The odd one out is ' + odd.letter + ', ' + odd.label + '.');
+    q.steps.push(teach('The odd one out', 'The odd one out is ' + odd.letter + ', ' + odd.label + '.', 'Which rule'));
     q.answerText = odd.label;
     return finishChoice(q, options);
   }
 
   const GENS = { 1: gen1, 2: gen2, 3: gen3, 4: gen4, 5: gen5, 6: gen6, 7: gen7 };
   function normal(level) { return GENS[level](); }
+
+  function chartStage(q, stepIndex) {
+    const view = q.view || {};
+    const walking = !!(view.walking && !view.reveal);
+    if (!walking) return { moved: true, gaps: true };
+    let jumpAt = -1;
+    let zeroAt = -1;
+    (q.steps || []).forEach(function (step, i) {
+      if (step.title === 'Do the jumps') jumpAt = i;
+      if (step.title === 'Zeros hold the place') zeroAt = i;
+    });
+    if (jumpAt < 0) return { moved: true, gaps: true };
+    const moved = stepIndex >= jumpAt;
+    return { moved: moved, gaps: moved && (zeroAt < 0 || stepIndex >= zeroAt) };
+  }
 
   function render(q, stepIndex, el) {
     const tabs = ['length', 'mass', 'capacity'].map(function (id) {
@@ -439,17 +456,20 @@ const Conversions = (function () {
         ( !q.down && on ? '<b>÷ ' + row.factor + '</b>' : '÷ ' + row.factor) + '</span>' +
         '<span class="unit-pill">' + row.small + '</span></div>';
     }).join('');
+    const stage = chartStage(q, stepIndex);
     const start = {};
     Object.keys(q.parsed.map).forEach(function (key) {
       const digit = q.parsed.map[key];
-      const highlight = Number(key) >= q.parsed.sigMin && Number(key) <= q.parsed.sigMax && digit;
+      const highlight = stage.moved && Number(key) >= q.parsed.sigMin && Number(key) <= q.parsed.sigMax && digit;
       start[key] = { text: String(digit), kind: highlight ? 'move' : '' };
     });
     const answer = {};
-    Object.keys(q.moved).forEach(function (key) {
-      answer[key] = { text: String(q.moved[key]), kind: 'move' };
-    });
-    q.gaps.forEach(function (pos) { answer[String(pos)] = { text: '0', kind: 'ph' }; });
+    if (stage.moved) {
+      Object.keys(q.moved).forEach(function (key) {
+        answer[key] = { text: String(q.moved[key]), kind: 'move' };
+      });
+      if (stage.gaps) q.gaps.forEach(function (pos) { answer[String(pos)] = { text: '0', kind: 'ph' }; });
+    }
     const answerMap = {};
     Object.keys(q.moved).forEach(function (key) { answerMap[key] = q.moved[key]; });
     q.gaps.forEach(function (pos) { answerMap[pos] = 0; });
@@ -477,13 +497,13 @@ const Conversions = (function () {
         })(),
         startLabel: q.fromUnit,
         start: start,
-        answer: answer,
+        answer: stage.moved ? answer : null,
         answerLabel: q.toUnit,
-        arrow: {
+        arrow: stage.moved ? {
           from: String(q.parsed.sigMax),
           to: String(q.parsed.sigMax + q.delta),
           label: q.places + ' place' + (q.places === 1 ? '' : 's') + ' ' + q.dir
-        }
+        } : null
       });
   }
 

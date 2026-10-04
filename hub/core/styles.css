@@ -500,15 +500,18 @@ h2 { font-size: 22px; margin: 0; }
   border-radius: 12px 0 0 0;
 }
 .bus-figwrap { position: relative; display: inline-flex; align-items: flex-end; justify-content: center; }
-.bus-ans.ph, .bus-fig.ph {
+.bus-ph, .bus-fig.ph {
   color: var(--orange);
   border: 1.5px dashed var(--orange);
   border-radius: 6px;
-  min-width: 0.85em;
-  padding: 1px 3px 0;
+  box-sizing: border-box;
+  min-width: 0.72em;
+  max-width: 1.15em;
+  padding: 0 2px;
   line-height: 1.05;
   justify-content: center;
 }
+.bus-point { padding: 0 0.12em; }
 .bus-fig.ph {
   min-width: 0.72em;
   padding: 0 2px;

@@ -42,6 +42,9 @@ const Player = (function () {
 
     let estimateHtml = '';
     const plain = !!(topic().plain);
+    const numberedPlain = plain && steps && steps.some(function (s) {
+      return s.kind === 'teach' || s.kind === 'trade' || s.kind === 'lineup';
+    });
     if (topic().predict && !revealed) {
       const pred = topic().predict(question);
       const lines = pred.lines || [pred.before];
@@ -95,7 +98,7 @@ const Player = (function () {
         '><summary>Show the steps</summary>' + inner + '</details>';
     }
     let stepHtml = '';
-    if (plain && revealed) {
+    if (plain && revealed && !numberedPlain) {
       const lines = (question.revealLines || []).map(function (text) {
         return '<p class="reveal-line">' + text + '</p>';
       }).join('');
@@ -117,7 +120,7 @@ const Player = (function () {
       });
       stepHtml = fold('<ol class="steps digit-steps">' + lines.join('') + '</ol>', true);
     } else if (revealed && steps && steps.length) {
-      if (walking) {
+      if (walking && !numberedPlain) {
         const lines = [];
         steps.forEach(function (s, i) {
           if (i > step) return;
@@ -141,9 +144,14 @@ const Player = (function () {
         stepHtml = fold('<ol class="steps">' + lines.join('') + '</ol>', true);
       } else {
         const lines = steps.map(function (s, i) {
-          return '<li class="step"><span class="n">' + (i + 1) + '</span><div>' + stepBody(s) + '</div></li>';
+          let cls = 'step';
+          if (walking && numberedPlain) {
+            if (i === step) cls += ' current';
+            else if (i > step) cls += ' later';
+          }
+          return '<li class="' + cls + '"><span class="n">' + (i + 1) + '</span><div>' + stepBody(s) + '</div></li>';
         }).join('');
-        stepHtml = fold('<ol class="steps">' + lines + '</ol>', false);
+        stepHtml = fold('<ol class="steps">' + lines + '</ol>', !!walking);
       }
     }
 
@@ -175,7 +183,7 @@ const Player = (function () {
         ? '<button type="button" class="btn ghost" id="prevStep">Back</button>' +
           '<button type="button" class="btn ghost" id="nextStep">Next step ' + EM.icons.arrow + '</button>'
         : '<button type="button" class="btn ghost" id="prevStep">Back</button>' +
-          (plain ? '' : '<button type="button" class="btn ghost" id="eachStep">Show me each step ' + EM.icons.arrow + '</button>'));
+          (plain && !numberedPlain ? '' : '<button type="button" class="btn ghost" id="eachStep">Show me each step ' + EM.icons.arrow + '</button>'));
 
     const assigned = !!(session.set || session.mix || session.assigned);
     const leaveLabel = assigned ? '\u2190 Exit' : '\u2190 Levels';

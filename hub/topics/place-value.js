@@ -117,16 +117,16 @@ const PlaceValue = (function () {
       named.push(digit + ' ' + sourceName(pos, digit) + ' jumps to the ' + PLACE[pos + q.delta]);
     }
     if (named.length > 3) {
-      return 'Do the jumps. Every digit jumps ' + q.places + ' place' + (q.places === 1 ? '' : 's') + ' ' + q.dir + '.';
+      return 'Every digit jumps ' + q.places + ' place' + (q.places === 1 ? '' : 's') + ' ' + q.dir + '.';
     }
-    return 'Do the jumps. ' + named.join(', ') + ': ' + q.resultText;
+    return named.join(', ') + ': ' + q.resultText;
   }
 
   function zerosLine(q) {
     if (!q.gaps.length) return '';
     if (q.resultMilli < 1000) {
       const extras = q.gaps.filter(function (pos) { return pos !== 0; });
-      let line = 'Zeros hold the place. There are no ones, so a 0 holds the ones place';
+      let line = 'There are no ones, so a 0 holds the ones place';
       if (!extras.length) return line + ': ' + q.resultText;
       const names = extras.map(function (pos) { return 'the ' + PLACE[pos]; });
       const be = extras.length === 1 ? ' is' : ' are';
@@ -134,24 +134,27 @@ const PlaceValue = (function () {
       return line + '. ' + names.join(' and ').replace(/^the/, 'The') + be + ' empty, so a 0 holds ' + hold + ': ' + q.resultText;
     }
     if (q.gaps.length === 1) {
-      return 'Zeros hold the place. The ' + PLACE[q.gaps[0]] + ' place is empty, so a 0 holds it: ' + q.resultText;
+      return 'The ' + PLACE[q.gaps[0]] + ' place is empty, so a 0 holds it: ' + q.resultText;
     }
     const names = q.gaps.map(function (pos) { return 'the ' + PLACE[pos]; });
-    return 'Zeros hold the place. ' + names.join(' and ').replace(/^the/, 'The') + ' are empty, so a 0 holds each: ' + q.resultText;
+    return names.join(' and ').replace(/^the/, 'The') + ' are empty, so a 0 holds each: ' + q.resultText;
   }
 
-  function revealLines(q) {
+  function teach(title, text, tag) {
+    return { kind: 'teach', title: title, text: text, stepTag: tag || null, tags: tag ? [tag] : [] };
+  }
+  function buildSlideSteps(q) {
     const side = q.dir === 'left' ? 'Left' : 'Right';
     const why = q.op === '×' ? '× makes it bigger' : '÷ makes it smaller';
     const placeWord = q.places === 1 ? 'place' : 'places';
-    const lines = [
-      'Which way? ' + side + ' — ' + why + '.',
-      'How many places? ' + q.places + ' — ' + q.op + ' ' + q.power + ' is ' + q.places + ' ' + placeWord + '.',
-      jumpsLine(q)
+    const steps = [
+      teach('Which way?', side + ' — ' + why + '.', 'Which way'),
+      teach('How many places?', q.places + ' — ' + q.op + ' ' + q.power + ' is ' + q.places + ' ' + placeWord + '.', 'How many places'),
+      teach('Do the jumps', jumpsLine(q), 'The jumps')
     ];
     const zeros = zerosLine(q);
-    if (zeros) lines.push(zeros);
-    return lines;
+    if (zeros) steps.push(teach('Zeros hold the place', zeros, 'Zeros hold the place'));
+    return steps;
   }
 
   function make(spec) {
@@ -194,8 +197,7 @@ const PlaceValue = (function () {
       q.equation = startText + ' ' + spec.op + ' ' + spec.power + ' = ?';
       q.solvedEquation = startText + ' ' + spec.op + ' ' + spec.power + ' = ' + resultText;
     }
-    q.revealLines = revealLines(q);
-    q.steps = q.revealLines.map(function (text) { return { text: text }; });
+    q.steps = buildSlideSteps(q);
     return q;
   }
 
@@ -207,9 +209,25 @@ const PlaceValue = (function () {
     return cells;
   }
 
+  function chartStage(q, stepIndex) {
+    const view = q.view || {};
+    const walking = !!(view.walking && !view.reveal);
+    if (!walking) return { moved: true, gaps: true };
+    let jumpAt = -1;
+    let zeroAt = -1;
+    (q.steps || []).forEach(function (step, i) {
+      if (step.title === 'Do the jumps') jumpAt = i;
+      if (step.title === 'Zeros hold the place') zeroAt = i;
+    });
+    if (jumpAt < 0) return { moved: true, gaps: true };
+    const moved = stepIndex >= jumpAt;
+    return { moved: moved, gaps: moved && (zeroAt < 0 || stepIndex >= zeroAt) };
+  }
+
   function render(q, stepIndex, el) {
-    const showAnswer = true;
-    const showGaps = true;
+    const stage = chartStage(q, stepIndex);
+    const showAnswer = stage.moved;
+    const showGaps = stage.gaps;
     const startHighlight = {};
     for (let pos = q.parsed.sigMin; pos <= q.parsed.sigMax; pos++) {
       if (q.parsed.map[pos]) startHighlight[String(pos)] = true;
@@ -229,10 +247,10 @@ const PlaceValue = (function () {
     if (q.startMilli < 1000 && !start['0']) start['0'] = { text: '0', kind: '' };
     const answerMap = {};
     Object.keys(q.moved).forEach(function (key) { answerMap[key] = q.moved[key]; });
-    if (showGaps) q.gaps.forEach(function (pos) { answerMap[pos] = 0; });
+    q.gaps.forEach(function (pos) { answerMap[pos] = 0; });
     const placesWord = q.places + ' place' + (q.places === 1 ? '' : 's') + ' ' + q.dir;
     el.innerHTML = PlaceChart.render({
-      columns: columnsFor([q.parsed.map, showAnswer ? answerMap : { 0: 0 }]),
+      columns: columnsFor([q.parsed.map, answerMap]),
       start: start,
       answer: showAnswer ? answer : null,
       answerLabel: q.op + ' ' + (q.missing && stepIndex < 1 ? '?' : q.power),
