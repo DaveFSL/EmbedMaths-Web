@@ -106,6 +106,7 @@ The mockup canvas has nine screens. Build these:
 
 ### Question + self-check
 - Top: **← Levels** (back to that topic's level page) and a Home icon (main menu). For a teacher set, homework link or Daily mix, which have no level page, the button is **← Exit**. Both Exit and Home then ask "Leave this practice? Your answers so far won't be saved." A level the student picked does not ask. Beside that: the topic and level name, e.g. "Fractions · Level 2, Simplifying · Question 1 of 5", on every topic (a mix uses the current question's topic and level). Then a progress strip of coloured segments (teal = right, orange = error, grey = to do), and a "Tricky one" tag when relevant. Back / Next step stay at the bottom for moving between steps.
+- A teacher link with a title, a message or a due date shows a start card before question 1. The card has the title (large), "Due Friday 23 October" when a date was set, the teacher's message, the practice line ("Multiplication · Level 5, 3-digit × 2-digit · 8 questions"), "When you finish:" with the finish message, and a large **Start** button. **← Exit** and Home stay. A link with none of those starts on question 1. After Start, the teacher's message stays under the header.
 - Above the question, a short bold instruction when the task is not obvious. The topic sets it with `instruction(q)`. Addition, subtraction and multiplication have none.
 - Left card: the question in large type, the estimate or tip line, then the written layout drawn by the topic's `render()`. A fraction question is about twice the usual size, and its card takes more of the width. It scales down to the width, and on iPad and laptop it also scales down to the height left above the bottom bar. It does not go below a readable size; if it still will not fit, that card scrolls inside itself.
 - Right: the step list. The current or key step is highlighted. On iPad and laptop the list scrolls inside its own card, and "Show me each step" scrolls the current step into view. On a phone the page scrolls as usual.
@@ -114,9 +115,13 @@ The mockup canvas has nine screens. Build these:
 - **Reference first.** The heading stays the question (`31 ÷ 10 = ?`, or the plain sum for written methods) until **Show solution**. That opens the complete working and the full answer. **Show me each step** is optional on written methods: Next walks one digit at a time. The two digits in use are shaded, the digit just written is orange, the current step is highlighted, and later steps are grey. Back from the first step returns to the whole answer. Estimate first is still optional on the calculation topics. Fractions show **Tip:** instead, because that line is not an estimate. Place value and converting units use the same numbered step cards as the other topics, and **Show me each step** highlights the current step and greys the later ones. The digits appear in their new places on the **Do the jumps** step.
 
 ### Summary
-- "6 out of 8. Nice work." with a row of question tiles (tick, or the error tag in orange).
+- A teacher link with a title puts that title at the top ("Week 5 Homework"), then "Multiplication · Level 5", then the score. With no title, the heading is **Session summary**.
+- Under the score: "Finished Sunday 4 October, 6:12 pm", the date and time the last question was marked.
+- If the teacher set a finish message, a highlighted box near the top says "Your teacher says: Screenshot your work and upload it to your homework assignment."
+- The title, score, question tiles, finish message and finished time fit in one screenshot on iPad and phone.
+- A row of question tiles (tick, or the error tag in orange).
 - **What to watch**: the most common error tag plus a short tip from the topic. Button: **Try 4 more like these**, which makes a mini-session of the same tricky type.
-- **Next time**: the level suggestion (rule below). Button: Back to home.
+- **Next time**: the level suggestion (rule below). Staying put says "Get 7 or more twice in a row to move on to Level 7: Decimals, different places." Button: Back to home.
 - Footer: "Show your teacher: this summary is saved on this device." and "Last 5 sessions: 5, 6, 5, 7, 6".
 
 ### Class link builder (teachers and parents)

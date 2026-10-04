@@ -18,15 +18,42 @@ const Summary = (function () {
     return count + (count === 1 ? ' error was' : ' errors were') + ' in the ' + name + '.';
   }
 
-  function completedStamp() {
-    const d = new Date();
+  function finishedText(session) {
+    const d = session.finishedAt ? new Date(session.finishedAt) : new Date();
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     let h = d.getHours();
     const am = h < 12 ? 'am' : 'pm';
     h = h % 12 || 12;
     const min = String(d.getMinutes()).padStart(2, '0');
-    return days[d.getDay()] + ' ' + d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear() + ', ' + h + ':' + min + ' ' + am;
+    return 'Finished ' + days[d.getDay()] + ' ' + d.getDate() + ' ' + months[d.getMonth()] + ', ' + h + ':' + min + ' ' + am;
+  }
+
+  function summarySub(session) {
+    if (session.set && session.rows && session.rows.length) {
+      return session.rows.map(function (row) {
+        return EM.shortName(row.topic) + ' \u00b7 Level ' + row.level;
+      }).join(' \u00b7 ');
+    }
+    if (session.mix) return 'Daily mix';
+    const topic = EM.topics[session.topicId];
+    if (!topic) return '';
+    return topic.name + (session.level ? ' \u00b7 Level ' + session.level : '');
+  }
+
+  function summaryHead(session, score, total) {
+    const title = session.title && String(session.title).trim();
+    const heading = title || 'Session summary';
+    const sub = summarySub(session);
+    const fin = session.fin && String(session.fin).trim();
+    const box = fin
+      ? '<p class="teacher-says"><strong>Your teacher says:</strong> ' + EM.escapeHtml(fin) + '</p>'
+      : '';
+    return '<h1>' + EM.escapeHtml(heading) + '</h1>' +
+      (sub ? '<p class="summary-sub">' + EM.escapeHtml(sub) + '</p>' : '') +
+      box +
+      '<p class="summary-score">' + scoreHeading(score, total) + '</p>' +
+      '<p class="summary-when">' + finishedText(session) + '</p>';
   }
 
   function weakestChip(results) {
@@ -74,24 +101,6 @@ const Summary = (function () {
     return score + ' out of ' + total;
   }
 
-  function finishLine(session) {
-    const text = (session.fin && String(session.fin).trim()) ||
-      'Take a screenshot of this card and share it with your teacher.';
-    return '<p class="hw-fin">' + EM.escapeHtml(text) + '</p>';
-  }
-
-  function hwCard(session, score, total, parts) {
-    if (!(session.set || session.title || session.due || session.fin)) return '';
-    const title = session.title || (session.set ? 'A set' : (session.levelName || 'Homework'));
-    const due = session.due ? '<p>Due: ' + EM.escapeHtml(EM.formatDue(session.due)) + '</p>' : '';
-    return '<section class="hw-card" id="homeworkCard"><p class="eyebrow">Homework done</p><h2>' +
-      EM.escapeHtml(title) + '</h2>' + due +
-      '<p>Completed ' + completedStamp() + '</p>' +
-      '<p class="hw-score">' + scoreHeading(score, total) + '</p>' +
-      '<p>' + parts.join(' · ') + '</p>' +
-      finishLine(session) + '</section>';
-  }
-
   function openMix() {
     const session = EM.session;
     const score = session.results.filter(function (r) { return r.correct; }).length;
@@ -111,9 +120,8 @@ const Summary = (function () {
       : '<section class="watch"><p class="eyebrow warn">What to watch</p><h2>' + weakest.name + ' was the weakest.</h2><p>' + parts.join(' · ') + '</p></section>';
     const recent = Store.recentScores('mix', 5);
     document.getElementById('app').innerHTML =
-      '<div class="shell summary"><p class="eyebrow">Daily mix</p><h1>' + scoreHeading(score, total) + '</h1>' +
-      hwCard(session, score, total, parts) +
-      '<ol class="q-row">' + tiles + '</ol><div class="summary-grid">' + watch +
+      '<div class="shell summary"><div id="summaryShot">' + summaryHead(session, score, total) +
+      '<ol class="q-row">' + tiles + '</ol></div><div class="summary-grid">' + watch +
       '<section class="next-card"><p class="eyebrow light">Next time</p><h2>Each topic stays on its saved level.</h2>' +
       '<p>A daily mix uses the level saved on this device for each topic.</p>' +
       '<button type="button" class="btn light" id="homeBtn">Back to home</button></section></div>' +
@@ -139,9 +147,8 @@ const Summary = (function () {
       ? ''
       : '<section class="watch"><p class="eyebrow warn">What to watch</p><h2>' + grouped.weakest.name + ' was the weakest.</h2><p>' + grouped.parts.join(' · ') + '</p></section>';
     document.getElementById('app').innerHTML =
-      '<div class="shell summary"><p class="eyebrow">Your practice</p>' +
-      hwCard(session, score, total, grouped.parts) +
-      '<h1>' + scoreHeading(score, total) + '</h1><ol class="q-row">' + tiles + '</ol>' +
+      '<div class="shell summary"><div id="summaryShot">' + summaryHead(session, score, total) +
+      '<ol class="q-row">' + tiles + '</ol></div>' +
       (watch ? '<div class="summary-grid">' + watch + '</div>' : '') +
       '<button type="button" class="btn ghost" id="homeBtn">Back to home</button></div>';
     document.getElementById('homeBtn').onclick = function () { EM.home(); };
@@ -192,19 +199,17 @@ const Summary = (function () {
         : '');
 
     const nextHtml = suggestNext
-      ? '<h2>Try Level ' + next.id + ' tomorrow.</h2><p>You scored 7 or more twice in a row. Level ' + next.id + ', ' + next.name.toLowerCase() + ', is suggested next.</p>'
+      ? '<h2>Try Level ' + next.id + ' tomorrow.</h2><p>You scored 7 or more twice in a row. Move on to Level ' + next.id + ': ' + next.name + '.</p>'
       : '<h2>Stay on Level ' + session.level + ' tomorrow.</h2><p>' + (next
-        ? 'Get 7 or more twice in a row and Level ' + next.id + ', ' + next.name.toLowerCase() + ', is suggested next.'
+        ? 'Get 7 or more twice in a row to move on to Level ' + next.id + ': ' + next.name + '.'
         : 'This is the last subtraction level. Another strong round will keep it steady.') + '</p>';
 
     const recent = Store.recentScores(session.topicId, 5);
     const ext = Store.extensionsFor(session.topicId);
     const extLine = ext ? '<p class="ext-line">Extensions: ' + ext.score + ' of ' + ext.of + '</p>' : '';
     document.getElementById('app').innerHTML =
-      '<div class="shell summary"><p class="eyebrow">' + topic.name + ' · Level ' + session.level + ' · ' + session.levelName +
-      '</p><h1>' + scoreHeading(score, total) + '</h1>' +
-      hwCard(session, score, total, [topic.name + ' ' + score + '/' + total]) +
-      extLine + '<ol class="q-row">' + tiles + '</ol>' +
+      '<div class="shell summary"><div id="summaryShot">' + summaryHead(session, score, total) +
+      extLine + '<ol class="q-row">' + tiles + '</ol></div>' +
       '<div class="summary-grid">' + watch + '<section class="next-card"><p class="eyebrow light">Next time</p>' +
       nextHtml + '<button type="button" class="btn light" id="homeBtn">Back to home</button></section></div>' +
       '<footer class="summary-foot"><span>Show your teacher: this summary is saved on this device.</span><span>Last 5 sessions: ' +

@@ -24,6 +24,97 @@ const Player = (function () {
     tag = null;
   }
 
+  function confirmLeave() {
+    const session = EM.session;
+    const assigned = !!(session.set || session.mix || session.assigned);
+    if (!assigned) return true;
+    return window.confirm('Leave this practice? Your answers so far won\u2019t be saved.');
+  }
+
+  function awaitingStart() {
+    const session = EM.session;
+    if (!session || session.begun) return false;
+    return !!(session.title || session.msg || session.due);
+  }
+
+  function countPhrase(n) {
+    return n + (n === 1 ? ' question' : ' questions');
+  }
+
+  function practiceRows(session) {
+    if (session.set && session.rows && session.rows.length) {
+      return session.rows.map(function (row) {
+        const topic = EM.topics[row.topic];
+        const meta = topic ? EM.levelMeta(topic, row.level) : null;
+        return {
+          name: topic ? topic.name : EM.shortName(row.topic),
+          level: row.level,
+          levelName: meta ? meta.name : '',
+          count: row.count
+        };
+      });
+    }
+    if (session.mix) {
+      return [{ name: 'Daily mix', level: 0, levelName: '', count: session.count }];
+    }
+    return [{
+      name: topicName(session),
+      level: session.level || 0,
+      levelName: session.levelName || '',
+      count: session.count
+    }];
+  }
+
+  function topicName(session) {
+    const topic = EM.topics[session.topicId];
+    return topic ? topic.name : 'Practice';
+  }
+
+  function practiceHtml(session) {
+    return practiceRows(session).map(function (row) {
+      let line = EM.escapeHtml(row.name);
+      if (row.level) {
+        line += ' \u00b7 Level ' + row.level;
+        if (row.levelName) line += ', ' + EM.escapeHtml(row.levelName);
+      }
+      if (row.count) line += ' \u00b7 ' + countPhrase(row.count);
+      return line;
+    }).join('<br>');
+  }
+
+  function paintStart() {
+    const session = EM.session;
+    const title = session.title ? '<h1>' + EM.escapeHtml(session.title) + '</h1>' : '';
+    const due = session.due
+      ? '<p class="start-due">Due ' + EM.escapeHtml(EM.formatDue(session.due)) + '</p>'
+      : '';
+    const msg = session.msg ? '<p class="start-msg">' + EM.escapeHtml(session.msg) + '</p>' : '';
+    const fin = session.fin
+      ? '<p class="start-when"><strong>When you finish:</strong> ' + EM.escapeHtml(session.fin) + '</p>'
+      : '';
+    document.getElementById('app').innerHTML =
+      '<div class="shell play start-shell"><header class="play-top"><div class="play-nav">' +
+      '<button type="button" class="btn ghost" id="leave">\u2190 Exit</button>' +
+      '<button type="button" class="btn ghost icon-btn" id="toHome" aria-label="Home">' + EM.icons.home + '</button>' +
+      '</div></header><section class="start-card">' + title + due + msg +
+      '<p class="start-practice">' + practiceHtml(session) + '</p>' + fin +
+      '<button type="button" class="btn primary start-btn" id="beginPractice">Start</button></section></div>';
+    document.getElementById('leave').onclick = function () {
+      if (!confirmLeave()) return;
+      EM.home();
+    };
+    document.getElementById('toHome').onclick = function () {
+      if (!confirmLeave()) return;
+      EM.home();
+    };
+    document.getElementById('beginPractice').onclick = function () {
+      session.begun = true;
+      resetQuestion();
+      paint(true);
+    };
+    window.scrollTo(0, 0);
+  }
+
   function paint(scrollTop) {
     const session = EM.session;
     const question = q();
@@ -229,10 +320,6 @@ const Player = (function () {
       };
     });
 
-    function confirmLeave() {
-      if (!assigned) return true;
-      return window.confirm('Leave this practice? Your answers so far won\u2019t be saved.');
-    }
     document.getElementById('leave').onclick = function () {
       if (!confirmLeave()) return;
       if (assigned) EM.home();
@@ -482,6 +569,7 @@ const Player = (function () {
     });
     session.index += 1;
     if (session.index >= session.questions.length) {
+      session.finishedAt = new Date();
       Summary.open();
       return;
     }
@@ -492,7 +580,8 @@ const Player = (function () {
   return {
     open: function () {
       resetQuestion();
-      paint(true);
+      if (awaitingStart()) paintStart();
+      else paint(true);
     }
   };
 })();
