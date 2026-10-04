@@ -473,7 +473,7 @@ h2 { font-size: 22px; margin: 0; }
 .bus-board {
   display: grid;
   grid-template-rows: auto 3px auto;
-  align-items: end;
+  align-items: stretch;
 }
 .bus-ans, .bus-slot {
   display: flex;
@@ -481,15 +481,14 @@ h2 { font-size: 22px; margin: 0; }
   align-items: flex-end;
   min-height: 1.2em;
 }
-.bus-ans { grid-row: 1; }
+.bus-ans { grid-row: 1; align-self: end; }
 .bus-rule {
   grid-row: 2;
   height: 3px;
   align-self: stretch;
   background: var(--ink);
 }
-.bus-slot { grid-row: 3; padding-top: 6px; position: relative; }
-.bus-slot:has(.bus-fig.ph) { padding-top: 1.15em; }
+.bus-slot { grid-row: 3; align-self: stretch; padding-top: 0.72em; position: relative; }
 .bus-slot.bracket::before {
   content: "";
   position: absolute;
@@ -527,8 +526,9 @@ h2 { font-size: 22px; margin: 0; }
 }
 .bus-figwrap:has(.bus-fig.ph) .bus-rem {
   top: auto;
-  bottom: calc(100% + 3px);
+  bottom: calc(100% + 2px);
   left: 0;
+  font-size: 0.42em;
   transform: translateX(calc(-100% - 3px));
 }
 .bus-r { font-size: 0.62em; font-weight: 760; padding: 0 4px 2px; justify-content: flex-start; white-space: nowrap; }
@@ -699,6 +699,14 @@ h2 { font-size: 22px; margin: 0; }
   line-height: 1.4;
 }
 .pct-frac { font-size: clamp(28px, 3.4vw, 44px); }
+.pct-frac-line {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0.35em 0.5em;
+  font-size: clamp(22px, 2.8vw, 34px); font-weight: 760; max-width: 100%;
+}
+.pct-bus { margin: 4px 0 8px; max-width: 100%; }
+.pct-bus .bus { font-size: clamp(22px, 3vw, 32px); }
+.pct-shift { margin: 4px 0 8px; max-width: 100%; }
+.method-tabs + .pct-kicker { margin-top: 0; }
 .frac-calc { display: flex; flex-wrap: wrap; gap: 0.35em 1.1em; margin: 14px 0 0; font-weight: 760; font-size: clamp(18px, 2.4vw, 28px); max-width: 100%; }
 .frac-res { color: var(--teal); }
 .bar-model { max-width: 100%; margin-top: 16px; }
@@ -789,9 +797,9 @@ h2 { font-size: 22px; margin: 0; }
 .step {
   display: flex; gap: 8px; align-items: flex-start;
   border: 1px solid var(--line); border-radius: 12px; padding: 6px 10px; background: #fff;
-  width: 100%; max-width: 100%; height: auto; overflow-wrap: break-word;
+  width: 100%; max-width: 100%; height: auto; overflow: visible; overflow-wrap: break-word;
 }
-.step > div { min-width: 0; flex: 1; }
+.step > div { min-width: 0; flex: 1; overflow: visible; }
 .step.done { padding: 3px 10px; }
 .col-link {
   margin-top: 6px; padding: 0; border: 0; background: none; color: var(--teal);
@@ -1043,6 +1051,7 @@ h2 { font-size: 22px; margin: 0; }
     min-height: 0;
     overflow: auto;
   }
+  .shell.play .steps-col .step-fold { padding-bottom: 28px; }
   .shell.play .dock {
     flex: none;
     margin-top: 8px;

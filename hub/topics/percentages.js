@@ -7,13 +7,17 @@
     3: 'Find the nearest easy percentage, then add or take away.',
     4: 'Change the percentage to a decimal first.',
     5: 'Find the discount, then take it off.',
-    6: 'Make the denominator 100'
+    6: 'Make the denominator 100, or divide the numerator by the denominator and \u00d7 100.'
   };
   const METHOD_LABEL = {
     build: 'Build up',
     bench: 'Near a benchmark',
-    decimal: 'Decimal \u00d7 amount'
+    decimal: 'Decimal \u00d7 amount',
+    hundred: 'Make the denominator 100',
+    divide: 'Divide, then \u00d7 100'
   };
+  const FRIENDLY_D = [2, 4, 5, 10, 20, 25, 50];
+  const OTHER_D = [8, 40, 16, 80];
   const ITEMS = ['jumper', 'hat', 'book', 'game', 'shirt', 'ball'];
 
   function ri(min, max) {
@@ -62,7 +66,9 @@
   }
 
   function methodsFor(q) {
-    if (!q || q.kind !== 'of') return [];
+    if (!q) return [];
+    if (q.kind === 'outof') return q.friendly ? ['hundred', 'divide'] : ['divide'];
+    if (q.kind !== 'of') return [];
     if (q.level === 1) return ['build'];
     const list = ['build'];
     if (benchmark(q.pct)) list.push('bench');
@@ -71,6 +77,7 @@
   }
 
   function defaultMethod(q) {
+    if (q.kind === 'outof') return q.friendly ? 'hundred' : 'divide';
     if (q.level === 3 && benchmark(q.pct)) return 'bench';
     if (q.level === 4) return 'decimal';
     return 'build';
@@ -197,21 +204,52 @@
     };
   }
 
+  function atMost1(p) {
+    return p > 0 && p < 100 && Math.abs(p * 10 - Math.round(p * 10)) < 1e-6;
+  }
+  function pctShow(p) {
+    const r = Math.round(p * 100) / 100;
+    if (Math.abs(r - Math.round(r)) < 1e-9) return String(Math.round(r));
+    if (Math.abs(r * 10 - Math.round(r * 10)) < 1e-9) return (Math.round(r * 10) / 10).toFixed(1);
+    return r.toFixed(2);
+  }
   function outQuestion(n, d, tricky) {
     const mul = 100 / d;
     const percent = n * mul;
+    const shown = pctShow(percent);
+    const bus = EM.topics.div.busOf(n, d);
     return {
       kind: 'outof',
       n: n,
       d: d,
       mul: mul,
+      friendly: 100 % d === 0,
       percent: percent,
+      decimalText: bus.text,
+      busHtml: bus.html,
+      leadingPh: bus.leadingPh,
       answer: percent,
-      answerText: percent + '%',
+      answerText: shown + '%',
       equation: n + ' out of ' + d,
       tricky: !!tricky,
-      check: 'Check: ' + percent + ' out of 100 is ' + percent + '%\u00a0\u2713'
+      check: 'Check: ' + shown + ' out of 100 is ' + shown + '%\u00a0\u2713'
     };
+  }
+  function outPair(tricky) {
+    const friendly = Math.random() < 0.5;
+    const dens = friendly ? FRIENDLY_D : OTHER_D;
+    for (let guard = 0; guard < 40; guard++) {
+      const d = pick(dens);
+      const ns = [];
+      for (let n = 1; n < d; n++) {
+        if (!atMost1(n * 100 / d)) continue;
+        if (tricky && n < Math.max(2, Math.floor(d / 5))) continue;
+        if (!tricky && d >= 20 && n > 12) continue;
+        ns.push(n);
+      }
+      if (ns.length) return outQuestion(pick(ns), d, tricky);
+    }
+    return outQuestion(3, 8, tricky);
   }
 
   function normal(level) {
@@ -233,9 +271,7 @@
     if (level === 5) {
       return discountQuestion(pick([5, 10, 15, 20, 25, 50]), pick([20, 40, 60, 80, 100]), pick(ITEMS), false);
     }
-    const pairs = [[1, 2], [1, 4], [3, 4], [1, 5], [2, 5], [3, 5], [4, 5], [1, 10], [3, 10], [7, 10], [9, 10]];
-    const pair = pick(pairs);
-    return outQuestion(pair[0], pair[1], false);
+    return outPair(false);
   }
 
   function trickyQ(level) {
@@ -257,9 +293,7 @@
     if (level === 5) {
       return discountQuestion(pick([5, 12, 15, 35]), pick([48, 60, 75, 85, 120, 250]), pick(ITEMS), true);
     }
-    const pairs = [[18, 25], [9, 20], [7, 20], [11, 20], [13, 25], [17, 25], [19, 25], [7, 50], [13, 50], [21, 50], [33, 50]];
-    const pair = pick(pairs);
-    return outQuestion(pair[0], pair[1], true);
+    return outPair(true);
   }
 
   function rowStep(pct, q) {
@@ -432,9 +466,21 @@
     };
   }
 
+  function divideWorking(q) {
+    const shown = pctShow(q.percent);
+    return {
+      divide: true,
+      steps: [
+        teach('Write it as a fraction', q.n + ' out of ' + q.d + ' is ' + miniFrac(q.n, q.d), 'Decimal point'),
+        teach('Divide the numerator by the denominator', q.n + ' \u00f7 ' + q.d + ' = ' + q.decimalText, 'Decimal point'),
+        teach('Times by 100', 'The digits move 2 places left: ' + q.decimalText + ' \u00d7 100 = ' + shown, 'Decimal point')
+      ]
+    };
+  }
+
   function workingFor(q, method) {
     if (q.kind === 'discount') return discountWorking(q);
-    if (q.kind === 'outof') return outWorking(q);
+    if (q.kind === 'outof') return method === 'divide' ? divideWorking(q) : outWorking(q);
     if (method === 'bench' && benchmark(q.pct)) return benchWorking(q);
     if (method === 'decimal') return decimalWorking(q);
     return buildWorking(q);
@@ -470,14 +516,90 @@
     return '<p class="div-answer"><strong>Answer: ' + text + '</strong><span class="div-check">' + check + '</span></p>';
   }
 
+  const PV_LABEL = { 2: 'H', 1: 'T', 0: 'O', '-1': 't', '-2': 'h', '-3': 'th' };
+
+  function digitMap(text) {
+    const bits = String(text).split('.');
+    const whole = bits[0] || '0';
+    const frac = bits[1] || '';
+    const map = {};
+    let sigMin = null;
+    let sigMax = null;
+    function put(pos, digit) {
+      map[pos] = digit;
+      if (!digit) return;
+      if (sigMin === null || pos < sigMin) sigMin = pos;
+      if (sigMax === null || pos > sigMax) sigMax = pos;
+    }
+    for (let i = 0; i < whole.length; i++) put(whole.length - 1 - i, Number(whole.charAt(i)));
+    for (let i = 0; i < frac.length; i++) put(-1 - i, Number(frac.charAt(i)));
+    if (sigMin === null) { sigMin = 0; sigMax = 0; map[0] = 0; }
+    const top = Math.max(0, sigMax);
+    for (let pos = top; pos >= sigMin; pos--) if (map[pos] == null) map[pos] = 0;
+    return { map: map, sigMin: sigMin, sigMax: sigMax };
+  }
+
+  function times100Chart(decimalText) {
+    const parsed = digitMap(decimalText);
+    const moved = {};
+    for (let pos = parsed.sigMin; pos <= parsed.sigMax; pos++) moved[pos + 2] = parsed.map[pos] || 0;
+    const keys = Object.keys(moved).map(Number);
+    const lo = Math.min.apply(null, keys);
+    const hi = Math.max.apply(null, keys);
+    const gaps = [];
+    if (lo > 0) { for (let pos = lo - 1; pos >= 0; pos--) gaps.push(pos); }
+    let min = Math.min(0, parsed.sigMin, lo);
+    let max = Math.max(0, parsed.sigMax, hi);
+    min = Math.max(-3, min - 1);
+    max = Math.min(3, max + 1);
+    const cols = [];
+    for (let pos = max; pos >= 0; pos--) cols.push({ id: String(pos), label: PV_LABEL[pos] || '' });
+    cols.push({ id: 'dot', label: '\u00b7' });
+    for (let pos = -1; pos >= min; pos--) cols.push({ id: String(pos), label: PV_LABEL[pos] || '' });
+    const start = {};
+    const startHi = {};
+    for (let pos = Math.max(0, parsed.sigMax); pos >= parsed.sigMin; pos--) {
+      start[String(pos)] = { text: String(parsed.map[pos] || 0), kind: '' };
+      if (parsed.map[pos]) startHi[String(pos)] = true;
+    }
+    Object.keys(startHi).forEach(function (key) { start[key].kind = 'move'; });
+    const answer = {};
+    Object.keys(moved).forEach(function (key) {
+      answer[key] = { text: String(moved[key]), kind: 'move' };
+    });
+    gaps.forEach(function (pos) { answer[String(pos)] = { text: '0', kind: 'ph' }; });
+    return PlaceChart.render({
+      columns: cols,
+      start: start,
+      answer: answer,
+      answerLabel: '\u00d7 100',
+      arrow: {
+        from: String(parsed.sigMax),
+        to: String(parsed.sigMax + 2),
+        label: '2 places left'
+      }
+    });
+  }
+
   function render(q, stepIndex, el) {
     const pack = workingFor(q, q.method);
     let html = '<div class="pct-work">' + tabsHtml(q);
-    if (pack.out) {
+    if (pack.divide) {
+      const shown = pctShow(q.percent);
+      html += '<p class="pct-kicker">Write it as a fraction.</p>' +
+        '<div class="pct-frac-line"><span>' + q.n + ' out of ' + q.d + ' is</span>' + miniFrac(q.n, q.d) + '</div>' +
+        '<p class="pct-kicker">Divide the numerator by the denominator.</p>' +
+        '<div class="pct-bus">' + q.busHtml + '</div>' +
+        (q.leadingPh ? '<p class="mult-note">The placeholder 0 at the front isn\u2019t needed when we write the answer: ' + q.decimalText + '</p>' : '') +
+        '<p class="pct-line">' + q.n + ' \u00f7 ' + q.d + ' = ' + q.decimalText + '</p>' +
+        '<p class="pct-kicker">Times by 100.</p>' +
+        '<div class="pct-shift">' + times100Chart(q.decimalText) + '</div>' +
+        '<p class="pct-line">' + q.decimalText + ' \u00d7 100 = ' + shown + '</p>';
+    } else if (pack.out) {
       html += '<p class="pct-rule">What you do to the top, you do to the bottom.</p>' +
         '<div class="frac-board of-line pct-frac">' + stack(q.n, q.d, q.mul) +
         '<span class="frac-op">=</span>' + stack(q.n * q.mul, 100, 0) +
-        '<span class="frac-op">=</span><span class="frac-res">' + q.percent + '%</span></div>';
+        '<span class="frac-op">=</span><span class="frac-res">' + pctShow(q.percent) + '%</span></div>';
     } else if (pack.mul) {
       html += '<p class="pct-lead">' + q.pct + '% = ' + decText(q.pct) + '</p><div class="pct-mul"></div>';
       const dp = (decText(q.pct).split('.')[1] || '').length;
@@ -530,13 +652,17 @@
     q.level = level;
     q.tricky = !!opts.tricky;
     if (q.kind === 'of') q.check = halfCheck(q);
-    applyMethod(q, q.kind === 'of' ? defaultMethod(q) : 'build');
+    applyMethod(q, (q.kind === 'of' || q.kind === 'outof') ? defaultMethod(q) : 'build');
     return q;
   }
 
   function strategy(q) {
     if (q.kind === 'discount') {
       return '<strong>Another way:</strong> ' + q.pct + '% off means you pay ' + q.pay + '%.';
+    }
+    if (q.kind === 'outof' && q.method === 'divide') {
+      const unit = pctShow(100 / q.d);
+      return miniFrac(1, q.d) + ' = ' + unit + '%, so ' + miniFrac(q.n, q.d) + ' = ' + q.answerText;
     }
     if (q.kind === 'outof') {
       return '<strong>Make the denominator 100</strong><br>What you do to the top, you do to the bottom.';
@@ -567,7 +693,7 @@
           type: 'Percentage',
           kind: 'number',
           expect: String(q.percent),
-          hint: 'Make the denominator 100',
+          hint: TIPS[6],
           p: 'Write ' + q.n + ' out of ' + q.d + ' as a percentage. Give the number only.',
           a: q.n + '/' + q.d + ' = ' + (q.n * q.mul) + '/100 = <strong>' + q.percent + '%</strong>'
         });

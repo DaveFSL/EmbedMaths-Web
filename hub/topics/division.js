@@ -136,9 +136,12 @@ const Division = (function () {
         text += '.';
         seen = true;
       }
-      if (!col.inAnswer) return;
-      text += String(col.q);
-      seen = true;
+    if (!col.inAnswer) {
+      if (seen) text += String(col.q);
+      return;
+    }
+    text += String(col.q);
+    seen = true;
     });
     return text || '0';
   }
@@ -213,7 +216,7 @@ const Division = (function () {
     const frac = bits[1] || '';
     const digits = (whole + frac).split('').map(Number);
     const decimalAt = whole.length;
-    const extraLimit = mode === 'recurring' ? 3 : mode === 'decimal' ? 2 : 0;
+    const extraLimit = mode === 'through' ? 4 : mode === 'recurring' ? 3 : mode === 'decimal' ? 2 : 0;
     const ran = run(digits, divisor, decimalAt, extraLimit, mode === 'recurring');
     const cols = ran.cols;
     const answerText = shownAnswer(cols);
@@ -863,6 +866,15 @@ const Division = (function () {
     ],
     errorTags: ['Times fact', 'Regrouping', 'Placeholder zero', 'Remainder', 'Decimal point'],
     tips: TIPS,
+    busOf: function (dividend, divisor) {
+      const q = buildRecord(String(dividend), divisor, 9, 'through');
+      let wholeSkip = 0;
+      q.cols.forEach(function (col) {
+        if (col.added || col.pointBefore) return;
+        if (!col.inAnswer) wholeSkip += 1;
+      });
+      return { html: busHtml(q, null), text: q.answerText, leadingPh: wholeSkip > 1 };
+    },
     makeQuestion: function (level, opts) {
       opts = opts || {};
       if (opts.force) {

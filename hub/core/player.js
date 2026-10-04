@@ -332,7 +332,8 @@ const Player = (function () {
     }
     const cRect = current.getBoundingClientRect();
     const sRect = scroller.getBoundingClientRect();
-    if (cRect.bottom > sRect.bottom - 8) scroller.scrollTop += cRect.bottom - sRect.bottom + 12;
+    const pad = 28;
+    if (cRect.bottom > sRect.bottom - pad) scroller.scrollTop += cRect.bottom - sRect.bottom + pad;
     else if (cRect.top < sRect.top + 8) scroller.scrollTop -= sRect.top - cRect.top + 12;
   }
 
@@ -419,6 +420,10 @@ const Player = (function () {
       const grid = el.querySelector('.pv-grid');
       if (grid && el.scrollWidth > el.clientWidth + 1) fitFont(grid, el);
     });
+    document.querySelectorAll('.pct-bus').forEach(function (el) {
+      const bus = el.querySelector('.bus');
+      if (bus) fitFont(bus, el);
+    });
     fitPaperHeight();
     pinDock();
   }
@@ -448,7 +453,7 @@ const Player = (function () {
     const dock = shell && shell.querySelector('.dock');
     if (!shell || !dock) return;
     if (window.matchMedia('(max-width: 700px)').matches) {
-      shell.style.paddingBottom = (dock.offsetHeight + 8) + 'px';
+      shell.style.paddingBottom = (dock.offsetHeight + 28) + 'px';
     } else shell.style.paddingBottom = '';
   }
 
